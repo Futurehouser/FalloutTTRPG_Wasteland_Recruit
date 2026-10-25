@@ -78,14 +78,43 @@ const HAZARDS = {
   mine: { kind: "Occasional (trap)", name: "Frag mine in a doorway", text: "Disarm with AGI + Explosives, difficulty 2, or it explodes for 6 combat dice of Physical damage." },
 };
 
-function makeObstacle(level) {
+const OBSTACLE_KINDS = { mech: 0, elec: 1, collapse: 2 };
+function makeObstacle(level, kind, name) {
   const diff = Math.min(4, Math.max(1, Math.round(level / 3) + randint(0, 1)));
-  return choice([
+  const list = [
     { name: "Locked door / padlock", test: `PER + Lockpick, difficulty ${diff}`, alt: "A key or a strong crowbar (STR + Athletics, difficulty " + (diff + 1) + ", noisy)" },
     { name: "Terminal-controlled security door", test: `INT + Science, difficulty ${diff}`, alt: "A password found elsewhere opens it instantly" },
     { name: "Collapsed section", test: `STR or AGI + Athletics, difficulty ${diff}`, alt: `Scout another way in with PER + Survival, difficulty ${Math.max(1, diff - 1)}` },
-  ].map(o => Object.assign(o, { time: `${diff * 10} minutes (2 AP halves it)` })));
+  ].map(o => Object.assign(o, { time: `${diff * 10} minutes (2 AP halves it)` }));
+  const o = kind in OBSTACLE_KINDS ? list[OBSTACLE_KINDS[kind]] : choice(list);
+  if (name) o.name = name;
+  return o;
 }
+
+// Places described by the Encounter Randomizer's "Something worth exploring" results.
+// Each one fixes what the generator may pick, so the location matches the encounter's description.
+const SITE_LOCATIONS = {
+  "Abandoned shack": { type: "Abandoned shack", names: ["a boarded-up roadside shack", "a squatter's shack", "an old trapper's shack"],
+    scales: ["Small"], degrees: [0, 3, 4, 2], theme: ["Junk", "Food"], extra: ["Beverages", "Weapons (Melee)", "Clothing", "Chems"],
+    inh: ["Animals", "Feral Ghouls"], inhChance: 0.35, hazards: ["rotten", "shelving"], hazardChance: 0.5,
+    obstacle: { chance: 0.25, kind: "mech", name: "Jammed back-room door" },
+    nested: ["a loose floorboard hiding a stash", "a locked tin footlocker"], nestedChance: 0.4 },
+  "Crashed vertibird": { type: "Crash site", names: ["a crashed vertibird", "a downed Army vertibird", "a vertibird wreck in a crater"],
+    scales: ["Small", "Average"], degrees: [5, 3, 1, 0], theme: ["Ammunition", "Weapons (Ranged)", "Armor"],
+    extra: ["Chems", "Junk", "Weapons (Thrown/Explosives)"], inh: ["Robots", "Raiders", "Super Mutants"], inhChance: 0.35,
+    hazards: ["fuel", "rad", "wires"], hazardChance: 0.7, obstacle: { chance: 1, kind: "mech", name: "Sealed cargo hatch" },
+    nested: ["the cockpit's weapons locker", "a sealed military ammo crate"], nestedChance: 0.55 },
+  "Overturned truck": { type: "Road wreck", names: ["an overturned delivery truck", "a jackknifed cargo truck", "an overturned Nuka-Cola truck"],
+    scales: ["Small"], degrees: [1, 3, 3, 2], theme: ["Junk", "Beverages", "Food"], extra: ["Clothing", "Oddities & Valuables", "Chems"],
+    inh: ["Raiders", "Animals"], inhChance: 0.3, hazards: ["fuel", "gas"], hazardChance: 0.55,
+    obstacle: { chance: 0.5, kind: "collapse", name: "Crushed cargo doors" },
+    nested: ["a lockbox under the driver's seat", "the glovebox safe"], nestedChance: 0.4 },
+  "Hidden cellar": { type: "Hidden cellar", names: ["a hidden root cellar", "a forgotten family fallout shelter", "a smuggler's cellar"],
+    scales: ["Small"], degrees: [6, 2, 0, 0], theme: ["Food", "Beverages", "Chems"], extra: ["Ammunition", "Oddities & Valuables", "Weapons (Ranged)"],
+    inh: ["Animals", "Feral Ghouls"], inhChance: 0.45, hazards: ["toxic", "rotten", "shotgun"], hazardChance: 0.5,
+    obstacle: { chance: 0.85, kind: "mech", name: "Rusted-shut trapdoor" },
+    nested: ["a locked strongbox", "a hidden niche behind the shelves"], nestedChance: 0.5 },
+};
 
 function itemRanges(loc, scale, degree, raiders) {
   const cut = { "Untouched": -1, "Partly Searched": 0, "Mostly Searched": 1, "Heavily Searched": 2 }[degree];
@@ -104,18 +133,20 @@ function itemRanges(loc, scale, degree, raiders) {
 }
 
 function generateLocation(opts = {}) {
-  const loc = choice(LOCATIONS);
+  const site = opts.site && SITE_LOCATIONS[opts.site];
+  const loc = site || choice(LOCATIONS);
   const partyLevel = opts.level ? +opts.level : randint(1, 8);
   const level = Math.max(1, partyLevel + randint(-1, 2));
   const scale = opts.scale && opts.scale !== "Random" ? opts.scale : choice(loc.scales);
   const degree = opts.degree && opts.degree !== "Random"
-    ? opts.degree : wpick(Object.keys(DEGREES), [1, 4, 4, 2]);
+    ? opts.degree : wpick(Object.keys(DEGREES), loc.degrees || [1, 4, 4, 2]);
 
   const out = { type: loc.type, name: choice(loc.names), level, scale, degree,
-                difficulty: DEGREES[degree], time: SCALES[scale].time };
+                difficulty: DEGREES[degree], time: SCALES[scale].time,
+                fromEncounter: site ? { site: opts.site, text: opts.text || "" } : null };
 
   // inhabitants
-  const inhChance = { Tiny: 0, Small: 0.4, Average: 0.6, Large: 0.8 }[scale];
+  const inhChance = scale === "Tiny" ? 0 : loc.inhChance != null ? loc.inhChance : { Small: 0.4, Average: 0.6, Large: 0.8 }[scale];
   if (rnd() < inhChance) {
     const group = choice(loc.inh);
     const [lo, hi] = SCALES[scale].inh;
@@ -125,9 +156,11 @@ function generateLocation(opts = {}) {
                         leader: rnd() < 0.5 ? Math.min(level + 2, level + randint(0, 2)) : null };
   }
   out.items = itemRanges(loc, scale, degree, out.inhabitants && out.inhabitants.group === "Raiders");
-  if (rnd() < 0.5) out.obstacle = makeObstacle(level);
-  if (rnd() < 0.55) out.hazard = HAZARDS[choice(loc.hazards)];
-  if (scale !== "Tiny" && scale !== "Small" ? rnd() < 0.5 : rnd() < 0.2) {
+  if (loc.obstacle) { if (rnd() < loc.obstacle.chance) out.obstacle = makeObstacle(level, loc.obstacle.kind, loc.obstacle.name); }
+  else if (rnd() < 0.5) out.obstacle = makeObstacle(level);
+  if (rnd() < (loc.hazardChance != null ? loc.hazardChance : 0.55)) out.hazard = HAZARDS[choice(loc.hazards)];
+  const nestedChance = loc.nestedChance != null ? loc.nestedChance : scale !== "Tiny" && scale !== "Small" ? 0.5 : 0.2;
+  if (rnd() < nestedChance) {
     const cats = sample(loc.theme.concat(["Oddities & Valuables", "Ammunition"]), 2).filter((c, i, a) => a.indexOf(c) === i);
     out.nested = { name: choice(loc.nested), level: level + randint(1, 2),
                    scale: "Tiny", degree: "Untouched", items: cats.map(c => ({ cat: c, min: 1, max: 2 })),

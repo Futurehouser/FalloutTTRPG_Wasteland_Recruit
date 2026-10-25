@@ -94,9 +94,20 @@ const itemChips = items => items.map(i =>
   `<span class="chip" data-cat="${esc(i.cat)}">${esc(i.cat)} <b>${i.min}-${i.max}</b></span>`).join("");
 const obstacleHtml = o => `<b>${esc(o.name)}</b>: ${esc(o.test)}. Takes ${esc(o.time)}.<br><span class="muted">Alternative: ${esc(o.alt)}.</span>`;
 
-$("sc-gen").onclick = () => {
-  const L = generateLocation({ level: $("sc-level").value, scale: $("sc-scale").value, degree: $("sc-degree").value });
-  let h = `<div class="card"><h3>${esc(L.name)}</h3><div class="muted">${esc(L.type)}</div>
+$("sc-gen").onclick = () => showLocation(generateLocation({ level: $("sc-level").value, scale: $("sc-scale").value, degree: $("sc-degree").value }));
+
+// called by the Encounter Randomizer: build the place its discovery describes
+function scavengeFromEncounter({ site, level, text }) {
+  $("sc-level").value = String(Math.min(20, Math.max(1, level)));
+  $("sc-scale").value = "Random"; $("sc-degree").value = "Random";
+  showPage("scavenge");
+  showLocation(generateLocation({ level, site, text }));
+}
+
+function showLocation(L) {
+  let h = `<div class="card">${L.fromEncounter ? `<div class="from-enc">&#127956; From your encounter: <b>${esc(L.fromEncounter.site)}</b>${L.fromEncounter.text ? `. ${esc(L.fromEncounter.text)}` : ""}
+      <br><span class="muted">Tap Generate Location for a different random place.</span></div>` : ""}
+    <h3>${esc(L.name)}</h3><div class="muted">${esc(L.type)}</div>
     <div class="badges"><span class="badge">Level <b>${L.level}</b></span><span class="badge">Scale <b>${L.scale}</b></span>
     <span class="badge">Degree <b>${L.degree}</b></span></div>
     <h4>Search</h4><div><b>PER + Survival</b>, difficulty <b>${L.difficulty}</b>. Takes <b>${L.time}</b> (spend 2 AP to halve it).
@@ -120,7 +131,7 @@ $("sc-gen").onclick = () => {
     $("lt-cat").value = ch.dataset.cat; $("lt-roll").value = ""; $("lt-out").innerHTML = "";
     buildLootEditor(); showPage("loot");
   }));
-};
+}
 
 // ------------------------------------------------------------------ 3. loot roller
 LOOT_CATEGORIES.forEach(c => $("lt-cat").insertAdjacentHTML("beforeend", `<option>${esc(c)}</option>`));

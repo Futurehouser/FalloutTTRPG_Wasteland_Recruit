@@ -142,9 +142,7 @@ const Encounter = (() => {
       showPage("combat");
       toast("Enemies added. Check your stats and weapon, then Start combat");
     };
-    if ($e("en-scav")) $e("en-scav").onclick = () => {
-      $("sc-level").value = String(Math.min(20, enc.level)); showPage("scavenge"); $("sc-gen").click();
-    };
+    if ($e("en-scav")) $e("en-scav").onclick = () => scavengeFromEncounter({ site: enc.subtitle, level: enc.level, text: enc.text });
     if ($e("en-loot")) $e("en-loot").onclick = () => showPage("loot");
   }
 
