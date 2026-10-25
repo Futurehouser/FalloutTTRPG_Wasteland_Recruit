@@ -711,7 +711,17 @@ const Combat = (() => {
     await ready;
     if (S) render(); else renderSetup();
   }
-  return { show };
+  // pre-fill the setup with enemies (from the Encounter Randomizer); "busy" if a fight is running
+  async function prepare(groups) {
+    if (!ready) ready = init();
+    await ready;
+    if (S && S.phase === "fight") return "busy";
+    if (S) { S = null; save(); }
+    if (!setup) newSetup();
+    setup.groups = groups.map(g => ({ id: g.id, count: g.count }));
+    return "ok";
+  }
+  return { show, prepare };
 })();
 
 // Weapons offered in the combat setup: the character-generator weapons (rulebook stats)

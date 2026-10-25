@@ -27,6 +27,7 @@
     <button data-page="create"><span class="n">5</span>Create Character</button>
     <button data-page="roster"><span class="n">6</span>Saved Characters</button>
     <button data-page="combat"><span class="n">7</span>Combat Assistant</button>
+    <button data-page="encounter"><span class="n">8</span>Encounter Randomizer</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
   </nav>
   <div class="foot">Version <span id="app-version"></span><br>Fan-made tool for the Fallout 2d20 tabletop game.</div>
@@ -48,6 +49,7 @@
       <button class="tile" data-go="create"><span class="ic">&#9998;</span><b>Create Character</b><small>Enter your own character</small></button>
       <button class="tile" data-go="roster"><span class="ic">&#128101;</span><b>Saved Characters</b><small>Your party: view, edit, level up</small></button>
       <button class="tile" data-go="combat"><span class="ic">&#9876;</span><b>Combat Assistant</b><small>Run a fight step by step</small></button>
+      <button class="tile" data-go="encounter"><span class="ic">&#127956;</span><b>Encounter Randomizer</b><small>What happens when you rest or travel</small></button>
     </div>
   </section>
 
@@ -177,6 +179,25 @@
     <div class="bar"><button class="btn" id="cr-clear">Clear form</button></div>
   </section>
 
+  <!-- 8. encounter randomizer -->
+  <section class="page" id="page-encounter" data-title="Encounter Randomizer">
+    <h2>Encounter Randomizer</h2>
+    <p class="hint">When the party rests or travels, roll 2d20 and pick the party's level. You get an encounter that fits them:
+      enemies are only chosen if they suit that level, and their numbers scale with the party's size.</p>
+    <div class="row">
+      <div><label class="f">The party is&hellip;</label><select id="en-mode"><option value="travel">Traveling</option><option value="rest">Resting</option></select></div>
+      <div><label class="f">Party level</label><select id="en-level"></select></div>
+      <div><label class="f">Party size</label><input type="number" id="en-size" min="1" max="8" value="4"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div><label class="f">2d20 result</label><input type="number" id="en-roll" min="2" max="40" inputmode="numeric" placeholder="2 - 40"></div>
+      <div style="align-self:end"><button class="btn" id="en-roll2" style="width:100%">&#127922; Roll 2d20 for me</button></div>
+    </div>
+    <div style="height:10px"></div>
+    <button class="big" id="en-gen">GENERATE ENCOUNTER</button>
+    <div id="en-out"></div>
+  </section>
+
   <!-- 7. combat assistant -->
   <section class="page" id="page-combat" data-title="Combat Assistant">
     <h2>Combat Assistant</h2>
@@ -220,5 +241,6 @@
 <script charset="utf-8" src="app.js"></script>
 <script charset="utf-8" src="enemies.js"></script>
 <script charset="utf-8" src="combat.js"></script>
+<script charset="utf-8" src="encounter.js"></script>
 </body>
 </html>
