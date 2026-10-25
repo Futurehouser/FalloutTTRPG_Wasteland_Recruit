@@ -549,11 +549,97 @@ async function deleteChar(c) {
   toast(`${c.name} deleted`);
 }
 
+// ------------------------------------------------------------------ home: rearrange the tiles
+// Mouse: click and drag. Touch: press and hold (~350 ms), then drag; a quick swipe still scrolls.
+const Tiles = (() => {
+  const grid = document.querySelector(".tiles");
+  const order = () => [...grid.querySelectorAll(".tile")].map(t => t.dataset.go);
+  const DEFAULT = order();
+  const apply = ids => {
+    const all = ids.filter(id => DEFAULT.includes(id)).concat(DEFAULT.filter(id => !ids.includes(id))); // new tools go last
+    all.forEach(id => grid.appendChild(grid.querySelector(`.tile[data-go="${id}"]`)));
+  };
+  let drag = null, pending = null, justDragged = false;
+
+  function begin(tile, x, y) {
+    const r = tile.getBoundingClientRect();
+    const ghost = tile.cloneNode(true);
+    ghost.classList.add("tile-ghost");
+    Object.assign(ghost.style, { width: r.width + "px", height: r.height + "px", left: "0px", top: "0px" });
+    document.body.appendChild(ghost);
+    tile.classList.add("dragging");
+    drag = { tile, ghost, dx: x - r.left, dy: y - r.top };
+    move(x, y);
+    if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) { /* not supported */ }
+  }
+  function move(x, y) {
+    drag.ghost.style.transform = `translate(${x - drag.dx}px, ${y - drag.dy}px) scale(1.05)`;
+    const over = document.elementFromPoint(x, y);
+    const target = over && over.closest(".tiles .tile");
+    if (target && target !== drag.tile) {
+      const tiles = [...grid.children];
+      grid.insertBefore(drag.tile, tiles.indexOf(target) < tiles.indexOf(drag.tile) ? target : target.nextSibling);
+    }
+    const main = $("main"), edge = 70;
+    if (y < edge) main.scrollBy(0, -12); else if (y > window.innerHeight - edge) main.scrollBy(0, 12);
+  }
+  function end() {
+    if (!drag) return;
+    drag.ghost.remove();
+    drag.tile.classList.remove("dragging");
+    drag = null;
+    justDragged = true; setTimeout(() => (justDragged = false), 350);
+    Platform.saveJSON("home_order", order());
+  }
+
+  // mouse
+  grid.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    const tile = e.target.closest(".tile");
+    if (tile) pending = { tile, x: e.clientX, y: e.clientY };
+  });
+  window.addEventListener("pointermove", e => {
+    if (e.pointerType !== "mouse") return;
+    if (drag) { e.preventDefault(); move(e.clientX, e.clientY); return; }
+    if (pending && Math.hypot(e.clientX - pending.x, e.clientY - pending.y) > 6) { begin(pending.tile, e.clientX, e.clientY); pending = null; }
+  });
+  window.addEventListener("pointerup", e => { if (e.pointerType === "mouse") { pending = null; end(); } });
+
+  // touch: long press starts the drag
+  let timer = null, start = null;
+  grid.addEventListener("touchstart", e => {
+    const tile = e.target.closest(".tile");
+    if (!tile || e.touches.length > 1) return;
+    const t = e.touches[0];
+    start = { x: t.clientX, y: t.clientY };
+    timer = setTimeout(() => { timer = null; begin(tile, start.x, start.y); }, 350);
+  }, { passive: true });
+  grid.addEventListener("touchmove", e => {
+    const t = e.touches[0];
+    if (drag) { e.preventDefault(); move(t.clientX, t.clientY); return; }
+    if (timer && Math.hypot(t.clientX - start.x, t.clientY - start.y) > 10) { clearTimeout(timer); timer = null; } // it's a scroll
+  }, { passive: false });
+  const touchEnd = e => { if (timer) { clearTimeout(timer); timer = null; } if (drag) { e.preventDefault(); end(); } };
+  grid.addEventListener("touchend", touchEnd, { passive: false });
+  grid.addEventListener("touchcancel", touchEnd, { passive: false });
+
+  // a drop must not also count as a tap on the tile
+  grid.addEventListener("click", e => { if (justDragged) { e.stopPropagation(); e.preventDefault(); } }, true);
+  grid.addEventListener("contextmenu", e => e.preventDefault());
+  $("tiles-reset").onclick = () => { apply(DEFAULT); Platform.saveJSON("home_order", null); toast("Tiles back in their original order"); };
+
+  async function restore() {
+    const saved = await Platform.loadJSON("home_order", null);
+    if (Array.isArray(saved)) apply(saved);
+  }
+  return { restore, order };
+})();
+
 // ------------------------------------------------------------------ start
 (async () => {
   const start = location.hash.slice(1);
   showPage($("page-" + start) ? start : "home");
-  await Promise.all([loadRoster(), loadLootOverrides()]);
+  await Promise.all([loadRoster(), loadLootOverrides(), Tiles.restore()]);
   buildLootEditor();
   setTimeout(() => Updater.check(false), 1500); // ask about new versions on startup
 })();

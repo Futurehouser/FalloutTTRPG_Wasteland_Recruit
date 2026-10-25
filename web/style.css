@@ -181,6 +181,17 @@ h4.sec { margin: 16px 0 4px; font-size: 13px; letter-spacing: 1px; text-transfor
 .sb-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
 .sb-grid .stat b { font-size: 18px; }
 @media (max-width: 520px) { .sb-grid { grid-template-columns: repeat(4, 1fr); } }
+/* party member cards in the combat setup */
+.member-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.member-head .btn { padding: 6px 10px; }
+.fighter.party { border-left: 4px solid var(--blue); }
+/* rearranging home tiles */
+.tiles .tile { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.tiles .tile.dragging { opacity: .25; border-style: dashed; }
+.tile-ghost { position: fixed; z-index: 60; pointer-events: none; margin: 0; box-shadow: 0 14px 34px #000a;
+              border-color: var(--amber) !important; transform: scale(1.05); opacity: .95; }
+.tiles-hint { text-align: center; margin-top: 14px; }
+.linkbtn { background: none; border: none; color: var(--amber); text-decoration: underline; cursor: pointer; padding: 0 4px; font-size: inherit; }
 #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #000d; color: var(--green); padding: 10px 16px;
          border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 90%; text-align: center; z-index: 50; }
 #toast.show { opacity: 1; }
