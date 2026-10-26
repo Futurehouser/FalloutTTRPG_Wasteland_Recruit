@@ -6,7 +6,7 @@ const AVATAR_RACES = { human: "Human", ghoul: "Ghoul", mutant: "Super Mutant", r
 // guess the kind from an origin text like "Vault Dweller", "Ghoul" or "Mister Handy"
 function raceFromOrigin(origin) {
   const o = String(origin || "").toLowerCase();
-  if (/ghoul/.test(o)) return "ghoul";
+  if (/ghoul|necr[oó]fago/.test(o)) return "ghoul";
   if (/mutant/.test(o)) return "mutant";
   if (/handy|gutsy|nanny|robot|protectron|assaultron|synth|farmhand|nurse/.test(o)) return "robot";
   return "human";

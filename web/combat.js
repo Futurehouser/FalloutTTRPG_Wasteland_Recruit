@@ -13,7 +13,8 @@ const Combat = (() => {
   const d6 = () => 1 + Math.floor(Math.random() * 6);
   const num = (v, d = 0) => { const n = parseInt(v, 10); return isNaN(n) ? d : n; };
   const drVal = v => (v === "Imm" ? Infinity : num(v));
-  const drTxt = v => (v === "Imm" || v === Infinity ? "Imm" : v);
+  const drTxt = v => (v === "Imm" || v === Infinity ? T("Imm") : v);
+  const locTo = loc => T("the " + loc.toLowerCase()); // "the left arm" -> "el brazo izquierdo"
 
   let S = null;               // the whole combat state (saved after every change)
   let setup = null;           // setup form state
@@ -40,11 +41,11 @@ const Combat = (() => {
   function diceInputs(id, n, max) {
     return `<div class="dice-in" id="${id}">${Array.from({ length: n }, (_, i) =>
       `<input type="number" min="1" max="${max}" inputmode="numeric" placeholder="d${max}" data-i="${i}">`).join("")}
-      <button class="btn" data-roll="${id}" data-max="${max}">&#127922; Roll for me</button></div>`;
+      <button class="btn" data-roll="${id}" data-max="${max}">&#127922; ${T("Roll for me")}</button></div>`;
   }
   function readDice(id, max) {
     const vals = [...document.querySelectorAll(`#${id} input`)].map(i => num(i.value, 0));
-    if (vals.some(v => v < 1 || v > max)) { toast(`Enter every die (1-${max}), or tap Roll for me`); return null; }
+    if (vals.some(v => v < 1 || v > max)) { toast(T("Enter every die (1-{max}), or tap Roll for me", { max })); return null; }
     return vals;
   }
   function wireRolls() {
@@ -90,17 +91,18 @@ const Combat = (() => {
       const rr = drVal(dr.r);
       rad = rr === Infinity ? 0 : Math.max(0, effects - rr);
     }
-    const parts = [`${total} rolled`];
-    if (vicious) parts.push(`+${vicious} Vicious`);
-    if (res === Infinity) parts.push(`immune to ${TYPE_NAME[type]}`);
-    else if (res) parts.push(`-${blocked} DR (${res}${pierce ? `, ${pierce} ignored by Piercing` : ""})`);
-    return { dmg, rad, crit: dmg >= 5, text: `${parts.join(", ")} = <b>${dmg}</b> damage to the ${location.toLowerCase()}` + (rad ? ` + <b>${rad}</b> radiation` : "") };
+    const parts = [T("{n} rolled", { n: total })];
+    if (vicious) parts.push(T("+{n} Vicious", { n: vicious }));
+    if (res === Infinity) parts.push(T("immune to {type}", { type: T(TYPE_NAME[type]) }));
+    else if (res) parts.push(T(pierce ? "-{b} DR ({res}, {p} ignored by Piercing)" : "-{b} DR ({res})", { b: blocked, res, p: pierce }));
+    return { dmg, rad, crit: dmg >= 5, text: T("{parts} = <b>{dmg}</b> damage to {loc}", { parts: parts.join(", "), dmg, loc: locTo(location) }) +
+      (rad ? " " + T("+ <b>{n}</b> radiation", { n: rad }) : "") };
   }
 
   // ------------------------------------------------------------------ SETUP
   const MAX_PARTY = 8;
   function newMember(i) {
-    return { charId: "", name: `Player ${i + 1}`, hp: 10, maxHp: 10, def: 1, init: 10, dr: { p: 0, e: 0, r: 0, po: 0 },
+    return { charId: "", name: T("Player {n}", { n: i + 1 }), hp: 10, maxHp: 10, def: 1, init: 10, dr: { p: 0, e: 0, r: 0, po: 0 },
              weapon: "", w: { skill: "Small Guns", tn: 10, crit: 1, cd: 3, type: "p", eff: [], pierce: 1, rate: 2, range: "C", ammo: 20 },
              meleeBonus: 0 };
   }
@@ -135,7 +137,7 @@ const Combat = (() => {
     if ($("cs-ap")) setup.ap = Math.min(6, Math.max(0, num(v("cs-ap"), 0)));
     setup.members.forEach((m, i) => {
       if (!$("cs-name-" + i)) return;
-      Object.assign(m, { name: v("cs-name-" + i).trim() || `Player ${i + 1}`, hp: num(v("cs-hp-" + i), 10), maxHp: num(v("cs-maxhp-" + i), 10),
+      Object.assign(m, { name: v("cs-name-" + i).trim() || T("Player {n}", { n: i + 1 }), hp: num(v("cs-hp-" + i), 10), maxHp: num(v("cs-maxhp-" + i), 10),
         def: num(v("cs-def-" + i), 1), init: num(v("cs-init-" + i), 10) });
       ["p", "e", "r", "po"].forEach(k => (m.dr[k] = v(`cs-dr-${k}-${i}`).trim().toLowerCase().startsWith("i") ? "Imm" : num(v(`cs-dr-${k}-${i}`), 0)));
       Object.assign(m.w, { skill: v("cs-skill-" + i), tn: num(v("cs-tn-" + i), 10), crit: num(v("cs-crit-" + i), 1), cd: num(v("cs-cd-" + i), 3),
@@ -147,35 +149,35 @@ const Combat = (() => {
 
   function memberCard(m, i, chars) {
     const w = m.w;
-    return `<div class="card member"><div class="member-head"><h4 style="margin:0">Party member ${i + 1}</h4>
-        ${setup.members.length > 1 ? `<button class="btn danger" data-rmm="${i}" title="Remove from the party">&#10005;</button>` : ""}</div>
-      <div class="row"><div><label class="f">Saved character (fills in the stats)</label><select data-mchar="${i}">
-        <option value="">Enter stats by hand</option>${chars.map(c => `<option value="${esc(c.id)}" ${c.id === m.charId ? "selected" : ""}>${esc(c.name)} (level ${c.level || 1})</option>`).join("")}</select></div>
-        <div><label class="f">Name</label><input type="text" id="cs-name-${i}" value="${esc(m.name)}"></div></div>
+    return `<div class="card member"><div class="member-head"><h4 style="margin:0">${T("Party member {n}", { n: i + 1 })}</h4>
+        ${setup.members.length > 1 ? `<button class="btn danger" data-rmm="${i}" title="${T("Remove from the party")}">&#10005;</button>` : ""}</div>
+      <div class="row"><div><label class="f">${T("Saved character (fills in the stats)")}</label><select data-mchar="${i}">
+        <option value="">${T("Enter stats by hand")}</option>${chars.map(c => `<option value="${esc(c.id)}" ${c.id === m.charId ? "selected" : ""}>${esc(c.name)} (${T("level {n}", { n: c.level || 1 })})</option>`).join("")}</select></div>
+        <div><label class="f">${T("Name")}</label><input type="text" id="cs-name-${i}" value="${esc(m.name)}"></div></div>
       <div class="row" style="margin-top:8px">
-        <div><label class="f">Current HP</label><input type="number" id="cs-hp-${i}" value="${m.hp}"></div>
-        <div><label class="f">Max HP</label><input type="number" id="cs-maxhp-${i}" value="${m.maxHp}"></div>
-        <div><label class="f">Defense</label><input type="number" id="cs-def-${i}" value="${m.def}"></div>
-        <div><label class="f">Initiative</label><input type="number" id="cs-init-${i}" value="${m.init}"></div></div>
+        <div><label class="f">${T("Current HP")}</label><input type="number" id="cs-hp-${i}" value="${m.hp}"></div>
+        <div><label class="f">${T("Max HP")}</label><input type="number" id="cs-maxhp-${i}" value="${m.maxHp}"></div>
+        <div><label class="f">${T("Defense")}</label><input type="number" id="cs-def-${i}" value="${m.def}"></div>
+        <div><label class="f">${T("Initiative")}</label><input type="number" id="cs-init-${i}" value="${m.init}"></div></div>
       <div class="row" style="margin-top:8px">
-        ${["p", "e", "r", "po"].map(k => `<div><label class="f">${TYPE_NAME[k]} DR</label><input type="text" id="cs-dr-${k}-${i}" value="${drTxt(m.dr[k])}"></div>`).join("")}</div>
-      <h4 style="margin:14px 0 6px">Weapon</h4>
-      <div class="row"><div><label class="f">Weapon</label><select data-mweapon="${i}" id="cs-weapon-${i}"><option value="">Custom weapon</option>
-        ${Object.keys(WEAPONS_FOR_COMBAT).map(n => `<option ${n === m.weapon ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></div>
-        <div><label class="f">Skill</label><select data-mskill="${i}" id="cs-skill-${i}">${COMBAT_SKILLS.map(k => `<option ${k === w.skill ? "selected" : ""}>${k}</option>`).join("")}</select></div></div>
+        ${["p", "e", "r", "po"].map(k => `<div><label class="f">${T(TYPE_NAME[k] + " DR")}</label><input type="text" id="cs-dr-${k}-${i}" value="${drTxt(m.dr[k])}"></div>`).join("")}</div>
+      <h4 style="margin:14px 0 6px">${T("Weapon")}</h4>
+      <div class="row"><div><label class="f">${T("Weapon")}</label><select data-mweapon="${i}" id="cs-weapon-${i}"><option value="">${T("Custom weapon")}</option>
+        ${Object.keys(WEAPONS_FOR_COMBAT).map(n => `<option value="${esc(n)}" ${n === m.weapon ? "selected" : ""}>${esc(T(n))}</option>`).join("")}</select></div>
+        <div><label class="f">${T("Skill")}</label><select data-mskill="${i}" id="cs-skill-${i}">${COMBAT_SKILLS.map(k => `<option value="${k}" ${k === w.skill ? "selected" : ""}>${T(k)}</option>`).join("")}</select></div></div>
       <div class="row" style="margin-top:8px">
-        <div><label class="f">Target number</label><input type="number" id="cs-tn-${i}" value="${w.tn}"></div>
-        <div><label class="f">Critical on d20 &le;</label><input type="number" id="cs-crit-${i}" min="1" value="${w.crit}"></div>
-        <div><label class="f">Damage (CD)</label><input type="number" id="cs-cd-${i}" min="1" value="${w.cd}"></div>
-        <div><label class="f">Damage type</label><select id="cs-type-${i}">${Object.entries(TYPE_NAME).map(([k, n]) => `<option value="${k}" ${k === w.type ? "selected" : ""}>${n}</option>`).join("")}</select></div></div>
+        <div><label class="f">${T("Target number")}</label><input type="number" id="cs-tn-${i}" value="${w.tn}"></div>
+        <div><label class="f">${T("Critical on d20 ≤")}</label><input type="number" id="cs-crit-${i}" min="1" value="${w.crit}"></div>
+        <div><label class="f">${T("Damage (CD)")}</label><input type="number" id="cs-cd-${i}" min="1" value="${w.cd}"></div>
+        <div><label class="f">${T("Damage type")}</label><select id="cs-type-${i}">${Object.entries(TYPE_NAME).map(([k, n]) => `<option value="${k}" ${k === w.type ? "selected" : ""}>${T(n)}</option>`).join("")}</select></div></div>
       <div class="row" style="margin-top:8px">
-        <div><label class="f">Fire rate</label><input type="number" id="cs-rate-${i}" min="0" value="${w.rate}"></div>
-        <div><label class="f">Ideal range</label><select id="cs-range-${i}">${RANGES.map(r => `<option value="${r}" ${r === w.range ? "selected" : ""}>${RANGE_NAME[r]}</option>`).join("")}</select></div>
-        <div><label class="f">Ammo / throwables</label><input type="number" id="cs-ammo-${i}" min="0" value="${w.ammo}"></div>
-        <div><label class="f">Piercing rating</label><input type="number" id="cs-pierce-${i}" min="1" value="${w.pierce}"></div></div>
-      <label class="f" style="margin-top:8px">Damage effects</label>
-      <div id="cs-effs-${i}" class="effs">${EFFECT_NAMES.map(e => `<label><input type="checkbox" value="${e}" ${w.eff.includes(e) ? "checked" : ""}> ${e}</label>`).join("")}</div>
-      <p class="hint" style="margin:8px 0 0">${isMelee(w.skill) ? `Melee: the melee damage bonus (+${m.meleeBonus} CD) is added automatically.` : "Ranged: extra ammo can be spent each turn, up to the fire rate."}</p></div>`;
+        <div><label class="f">${T("Fire rate")}</label><input type="number" id="cs-rate-${i}" min="0" value="${w.rate}"></div>
+        <div><label class="f">${T("Ideal range")}</label><select id="cs-range-${i}">${RANGES.map(r => `<option value="${r}" ${r === w.range ? "selected" : ""}>${T(RANGE_NAME[r])}</option>`).join("")}</select></div>
+        <div><label class="f">${T("Ammo / throwables")}</label><input type="number" id="cs-ammo-${i}" min="0" value="${w.ammo}"></div>
+        <div><label class="f">${T("Piercing rating")}</label><input type="number" id="cs-pierce-${i}" min="1" value="${w.pierce}"></div></div>
+      <label class="f" style="margin-top:8px">${T("Damage effects")}</label>
+      <div id="cs-effs-${i}" class="effs">${EFFECT_NAMES.map(e => `<label><input type="checkbox" value="${e}" ${w.eff.includes(e) ? "checked" : ""}> ${T(e)}</label>`).join("")}</div>
+      <p class="hint" style="margin:8px 0 0">${isMelee(w.skill) ? T("Melee: the melee damage bonus (+{n} CD) is added automatically.", { n: m.meleeBonus }) : T("Ranged: extra ammo can be spent each turn, up to the fire rate.")}</p></div>`;
   }
 
   function renderSetup() {
@@ -184,63 +186,61 @@ const Combat = (() => {
     const chars = ROSTER.slice().sort((a, b) => a.name.localeCompare(b.name));
     const groups = {};
     allTemplates().forEach(t => (groups[t.group] = groups[t.group] || []).push(t));
-    const tplOptions = Object.entries(groups).map(([g, list]) => `<optgroup label="${esc(g)}">${list.map(t =>
-      `<option value="${esc(t.id)}">${esc(t.name)} (lvl ${t.level} ${esc(t.type)})</option>`).join("")}</optgroup>`).join("");
+    const tplOptions = Object.entries(groups).map(([g, list]) => `<optgroup label="${esc(T(g))}">${list.map(t =>
+      `<option value="${esc(t.id)}">${esc(T(t.name))} (${T("lvl")} ${t.level} ${esc(T(t.type))})</option>`).join("")}</optgroup>`).join("");
     const enemyList = s.groups.length ? s.groups.map((g, i) => {
       const t = allTemplates().find(x => x.id === g.id);
-      return t ? `<div class="pcard"><div class="t"><b>${g.count} &times; ${esc(t.name)}</b>
-        <small>Level ${t.level} ${esc(t.type)} &middot; HP ${t.hp} &middot; Defense ${t.def} &middot; DR ${drTxt(t.dr.p)}/${drTxt(t.dr.e)}/${drTxt(t.dr.r)}/${drTxt(t.dr.po)} &middot; ${xpFor(t.level, t.type)} XP each</small></div>
+      return t ? `<div class="pcard"><div class="t"><b>${g.count} &times; ${esc(T(t.name))}</b>
+        <small>${T("Level")} ${t.level} ${esc(T(t.type))} &middot; ${T("HP")} ${t.hp} &middot; ${T("Defense")} ${t.def} &middot; ${T("DR")} ${drTxt(t.dr.p)}/${drTxt(t.dr.e)}/${drTxt(t.dr.r)}/${drTxt(t.dr.po)} &middot; ${T("{n} XP each", { n: xpFor(t.level, t.type) })}</small></div>
         <button class="btn danger" data-rmg="${i}">&#10005;</button></div>` : "";
-    }).join("") : `<div class="muted" style="font-size:13px">No enemies added yet.</div>`;
+    }).join("") : `<div class="muted" style="font-size:13px">${T("No enemies added yet.")}</div>`;
 
     root().innerHTML = `
-    <h4 class="sec" style="margin-top:4px">1. The party (${s.members.length})</h4>
-    <p class="hint" style="margin:0 0 4px">Add every player character. Each one gets their own turn and their own weapon.
-      DR is from armor (use the torso values, or type Imm if immune).</p>
+    <h4 class="sec" style="margin-top:4px">${T("1. The party ({n})", { n: s.members.length })}</h4>
+    <p class="hint" style="margin:0 0 4px">${T("Add every player character. Each one gets their own turn and their own weapon. DR is from armor (use the torso values, or type Imm if immune).")}</p>
     ${s.members.map((m, i) => memberCard(m, i, chars)).join("")}
-    <div class="bar"><button class="btn" id="cs-addm" ${s.members.length >= MAX_PARTY ? "disabled" : ""}>+ Add party member</button>
-      <div style="flex:1"><label class="f">Group AP pool</label><input type="number" id="cs-ap" min="0" max="6" value="${s.ap}"></div></div>
+    <div class="bar"><button class="btn" id="cs-addm" ${s.members.length >= MAX_PARTY ? "disabled" : ""}>${T("+ Add party member")}</button>
+      <div style="flex:1"><label class="f">${T("Group AP pool")}</label><input type="number" id="cs-ap" min="0" max="6" value="${s.ap}"></div></div>
 
-    <div class="card"><h4 style="margin-top:0">2. Enemies</h4>
-      <div class="row"><div style="flex:3 1 200px"><label class="f">Enemy</label><select id="cs-tpl">${tplOptions}</select></div>
-        <div style="flex:1 1 70px"><label class="f">How many</label><input type="number" id="cs-count" min="1" max="12" value="1"></div>
-        <div style="flex:1 1 90px;align-self:end"><button class="btn primary" id="cs-add" style="width:100%">+ Add</button></div></div>
+    <div class="card"><h4 style="margin-top:0">${T("2. Enemies")}</h4>
+      <div class="row"><div style="flex:3 1 200px"><label class="f">${T("Enemy")}</label><select id="cs-tpl">${tplOptions}</select></div>
+        <div style="flex:1 1 70px"><label class="f">${T("How many")}</label><input type="number" id="cs-count" min="1" max="12" value="1"></div>
+        <div style="flex:1 1 90px;align-self:end"><button class="btn primary" id="cs-add" style="width:100%">${T("+ Add")}</button></div></div>
       <div id="cs-groups" style="margin-top:8px">${enemyList}</div>
-      <p class="hint" style="margin:8px 0 0">The built-in enemies use this app's own stats, made with the rulebook's NPC formulas.
-        To fight a creature exactly as printed in your book, add it below.</p>
-      <details class="card" style="margin:8px 0 0"><summary style="cursor:pointer;font-weight:700">Add your own enemy (from your book)</summary>${customForm()}</details></div>
+      <p class="hint" style="margin:8px 0 0">${T("The built-in enemies use this app's own stats, made with the rulebook's NPC formulas. To fight a creature exactly as printed in your book, add it below.")}</p>
+      <details class="card" style="margin:8px 0 0"><summary style="cursor:pointer;font-weight:700">${T("Add your own enemy (from your book)")}</summary>${customForm()}</details></div>
 
-    <button class="big" id="cs-start">START COMBAT</button>`;
+    <button class="big" id="cs-start">${T("START COMBAT")}</button>`;
     wireSetup();
   }
 
   function customForm() {
-    const list = CUSTOM.length ? CUSTOM.map((c, i) => `<div class="pcard"><div class="t"><b>${esc(c.name)}</b><small>Level ${c.level} ${esc(c.type)} &middot; HP ${c.hp}</small></div>
+    const list = CUSTOM.length ? CUSTOM.map((c, i) => `<div class="pcard"><div class="t"><b>${esc(c.name)}</b><small>${T("Level")} ${c.level} ${esc(T(c.type))} &middot; ${T("HP")} ${c.hp}</small></div>
       <button class="btn danger" data-rmc="${i}">&#10005;</button></div>`).join("") : "";
     const atkRow = n => `<div class="row" style="margin-top:6px">
-      <div style="flex:2 1 120px"><label class="f">Attack ${n} name</label><input type="text" id="ce-a${n}-name" placeholder="${n === 1 ? "Claws" : "(optional)"}"></div>
-      <div><label class="f">TN</label><input type="number" id="ce-a${n}-tn"></div>
-      <div><label class="f">Skill rank (crit)</label><input type="number" id="ce-a${n}-crit" value="1"></div>
-      <div><label class="f">Damage CD</label><input type="number" id="ce-a${n}-cd"></div>
-      <div><label class="f">Type</label><select id="ce-a${n}-type">${Object.entries(TYPE_NAME).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></div>
-      <div style="flex:2 1 140px"><label class="f">Effects (e.g. Piercing 1, Vicious)</label><input type="text" id="ce-a${n}-eff"></div>
-      <div><label class="f">Fire rate (ranged)</label><input type="number" id="ce-a${n}-rate" placeholder="melee"></div></div>`;
+      <div style="flex:2 1 120px"><label class="f">${T("Attack {n} name", { n })}</label><input type="text" id="ce-a${n}-name" placeholder="${n === 1 ? T("Claws") : T("(optional)")}"></div>
+      <div><label class="f">${T("TN")}</label><input type="number" id="ce-a${n}-tn"></div>
+      <div><label class="f">${T("Skill rank (crit)")}</label><input type="number" id="ce-a${n}-crit" value="1"></div>
+      <div><label class="f">${T("Damage CD")}</label><input type="number" id="ce-a${n}-cd"></div>
+      <div><label class="f">${T("Type")}</label><select id="ce-a${n}-type">${Object.entries(TYPE_NAME).map(([k, v]) => `<option value="${k}">${T(v)}</option>`).join("")}</select></div>
+      <div style="flex:2 1 140px"><label class="f">${T("Effects (e.g. Piercing 1, Vicious)")}</label><input type="text" id="ce-a${n}-eff"></div>
+      <div><label class="f">${T("Fire rate (ranged)")}</label><input type="number" id="ce-a${n}-rate" placeholder="${T("melee")}"></div></div>`;
     return `<div class="row" style="margin-top:8px">
-      <div style="flex:2 1 160px"><label class="f">Name</label><input type="text" id="ce-name"></div>
-      <div><label class="f">Level</label><input type="number" id="ce-level" value="1"></div>
-      <div><label class="f">Type</label><select id="ce-type">${Object.keys(XP_MULT).map(t => `<option>${t}</option>`).join("")}</select></div>
-      <div><label class="f">Kind</label><select id="ce-kind"><option value="creature">Creature</option><option value="character">Character</option></select></div></div>
+      <div style="flex:2 1 160px"><label class="f">${T("Name")}</label><input type="text" id="ce-name"></div>
+      <div><label class="f">${T("Level")}</label><input type="number" id="ce-level" value="1"></div>
+      <div><label class="f">${T("Type")}</label><select id="ce-type">${Object.keys(XP_MULT).map(t => `<option value="${t}">${T(t)}</option>`).join("")}</select></div>
+      <div><label class="f">${T("Kind")}</label><select id="ce-kind"><option value="creature">${T("Creature")}</option><option value="character">${T("Character")}</option></select></div></div>
     <div class="row" style="margin-top:6px">
-      <div><label class="f">HP</label><input type="number" id="ce-hp"></div>
-      <div><label class="f">Defense</label><input type="number" id="ce-def" value="1"></div>
-      <div><label class="f">Initiative</label><input type="number" id="ce-init"></div>
-      ${["p", "e", "r", "po"].map(k => `<div><label class="f">${TYPE_NAME[k]} DR</label><input type="text" id="ce-dr-${k}" value="0"></div>`).join("")}</div>
+      <div><label class="f">${T("HP")}</label><input type="number" id="ce-hp"></div>
+      <div><label class="f">${T("Defense")}</label><input type="number" id="ce-def" value="1"></div>
+      <div><label class="f">${T("Initiative")}</label><input type="number" id="ce-init"></div>
+      ${["p", "e", "r", "po"].map(k => `<div><label class="f">${T(TYPE_NAME[k] + " DR")}</label><input type="text" id="ce-dr-${k}" value="0"></div>`).join("")}</div>
     ${atkRow(1)}${atkRow(2)}
     <div class="row" style="margin-top:6px">
-      <div><label class="f">Caps (d20s)</label><input type="number" id="ce-wealth" value="0"></div>
-      <div><label class="f">Junk (combat dice)</label><input type="number" id="ce-junk" value="0"></div>
-      <div style="flex:3 1 200px"><label class="f">Inventory / butchery / salvage notes</label><input type="text" id="ce-notes"></div></div>
-    <button class="btn primary" id="ce-save" style="margin-top:8px">Save enemy</button>
+      <div><label class="f">${T("Caps (d20s)")}</label><input type="number" id="ce-wealth" value="0"></div>
+      <div><label class="f">${T("Junk (combat dice)")}</label><input type="number" id="ce-junk" value="0"></div>
+      <div style="flex:3 1 200px"><label class="f">${T("Inventory / butchery / salvage notes")}</label><input type="text" id="ce-notes"></div></div>
+    <button class="btn primary" id="ce-save" style="margin-top:8px">${T("Save enemy")}</button>
     <div style="margin-top:8px">${list}</div>`;
   }
 
@@ -276,7 +276,7 @@ const Combat = (() => {
     root().querySelectorAll("[data-rmc]").forEach(b => (b.onclick = async () => {
       readSetupForm();
       const c = CUSTOM[+b.dataset.rmc];
-      if (!(await confirmBox(`Delete your enemy "${c.name}"?`))) return;
+      if (!(await confirmBox(T('Delete your enemy "{name}"?', { name: c.name })))) return;
       CUSTOM.splice(+b.dataset.rmc, 1);
       setup.groups = setup.groups.filter(g => g.id !== c.id);
       await Platform.saveJSON("custom_enemies", CUSTOM);
@@ -287,7 +287,7 @@ const Combat = (() => {
       const v = id => $(id).value.trim();
       const name = v("ce-name");
       if (!name || !num(v("ce-hp"), 0) || !v("ce-a1-name") || !num(v("ce-a1-tn"), 0) || !num(v("ce-a1-cd"), 0)) {
-        toast("Name, HP and attack 1 (name, TN, damage) are needed"); return;
+        toast(T("Name, HP and attack 1 (name, TN, damage) are needed")); return;
       }
       const attacks = [1, 2].filter(n => v(`ce-a${n}-name`) && num(v(`ce-a${n}-tn`), 0)).map(n => atk(v(`ce-a${n}-name`), num(v(`ce-a${n}-tn`)),
         num(v(`ce-a${n}-crit`), 1), num(v(`ce-a${n}-cd`), 1), v(`ce-a${n}-type`),
@@ -300,7 +300,7 @@ const Combat = (() => {
         wealth: num(v("ce-wealth"), 0), junk: num(v("ce-junk"), 0), notes: v("ce-notes") };
       CUSTOM.push(c);
       await Platform.saveJSON("custom_enemies", CUSTOM);
-      toast(`${name} saved to your enemies`);
+      toast(T("{name} saved to your enemies", { name }));
       renderSetup();
     };
     $("cs-start").onclick = start;
@@ -308,17 +308,17 @@ const Combat = (() => {
 
   function start() {
     readSetupForm();
-    if (!setup.groups.length) { toast("Add at least one enemy"); return; }
+    if (!setup.groups.length) { toast(T("Add at least one enemy")); return; }
     const enemies = [];
     setup.groups.forEach(g => {
       const t = allTemplates().find(x => x.id === g.id);
       if (!t) return;
       for (let i = 1; i <= g.count; i++) enemies.push(Object.assign(JSON.parse(JSON.stringify(t)), {
-        uid: "e" + enemies.length, name: g.count > 1 ? `${t.name} ${i}` : t.name, maxHp: t.hp,
+        uid: "e" + enemies.length, name: g.count > 1 ? `${T(t.name)} ${i}` : T(t.name), maxHp: t.hp,
         status: "active", stunned: false, persist: null, letRipUsed: false }));
     });
     const players = setup.members.map((m, i) => {
-      const w = Object.assign({ name: m.weapon || "Custom weapon" }, JSON.parse(JSON.stringify(m.w)));
+      const w = Object.assign({ name: T(m.weapon || "Custom weapon") }, JSON.parse(JSON.stringify(m.w)));
       w.eff = w.eff.map(e => (e === "Piercing" ? `Piercing ${m.w.pierce}` : e));
       return { uid: "P" + i, charId: m.charId, name: m.name, hp: m.hp, maxHp: m.maxHp, def: m.def, init: m.init,
         dr: Object.assign({}, m.dr), meleeBonus: m.meleeBonus, ammo: m.w.ammo, stunned: false, persist: null,
@@ -329,7 +329,7 @@ const Combat = (() => {
     S.order = players.map(p => p.uid).concat(enemies.map(e => e.uid))
       .sort((a, b) => initOf(b) - initOf(a) || (isP(a) === isP(b) ? 0 : isP(a) ? -1 : 1));
     S.turnIdx = 0; S.turn = null;
-    log(`Combat starts. Initiative: ${S.order.map(id => `${nameOf(id)} (${initOf(id)})`).join(", ")}.`);
+    log(T("Combat starts. Initiative: {list}.", { list: S.order.map(id => `${nameOf(id)} (${initOf(id)})`).join(", ") }));
     beginTurn();
   }
   const isP = id => id[0] === "P";
@@ -345,7 +345,7 @@ const Combat = (() => {
   // ------------------------------------------------------------------ turn flow
   function beginTurn() {
     if (checkVictory()) return;
-    if (!standing().length) { S.phase = "defeat"; S.turn = null; log("The whole party is down."); render(); return; }
+    if (!standing().length) { S.phase = "defeat"; S.turn = null; log(T("The whole party is down.")); render(); return; }
     const id = S.order[S.turnIdx];
     if (isP(id) ? pl(id).status !== "up" : enemy(id).status !== "active") return endTurn();
     S.turn = { actor: id, step: isP(id) ? "aim" : "eatk" };
@@ -365,25 +365,25 @@ const Combat = (() => {
       const faces = Array.from({ length: e.persist.cd }, d6), r = scoreCD(faces);
       const res = resolveDamage({ total: r.total, effects: 0, eff: [], type: e.persist.type, dr: e.dr, location: "body" });
       e.hp = Math.max(0, e.hp - res.dmg); e.persist.rounds--;
-      log(`${e.name} suffers persistent damage: ${res.dmg} (HP ${e.hp}/${e.maxHp}).`);
-      if (e.hp <= 0) { e.status = "killed"; log(`${e.name} is killed by persistent damage.`); }
+      log(T("{name} suffers persistent damage: {n} (HP {hp}/{max}).", { name: e.name, n: res.dmg, hp: e.hp, max: e.maxHp }));
+      if (e.hp <= 0) { e.status = "killed"; log(T("{name} is killed by persistent damage.", { name: e.name })); }
     });
     S.players.filter(p => p.status === "up" && p.persist && p.persist.rounds > 0).forEach(p => {
       const faces = Array.from({ length: p.persist.cd }, d6), r = scoreCD(faces);
       const res = resolveDamage({ total: r.total, effects: 0, eff: [], type: p.persist.type, dr: p.dr, location: "body" });
       p.hp = Math.max(0, p.hp - res.dmg); p.persist.rounds--;
-      log(`${p.name} suffers persistent damage: ${res.dmg} (HP ${p.hp}/${p.maxHp}).`);
-      if (p.hp <= 0) { p.status = "down"; log(`${p.name} goes down.`); }
+      log(T("{name} suffers persistent damage: {n} (HP {hp}/{max}).", { name: p.name, n: res.dmg, hp: p.hp, max: p.maxHp }));
+      if (p.hp <= 0) { p.status = "down"; log(T("{name} goes down.", { name: p.name })); }
     });
     S.round++; S.turnIdx = 0;
-    log(`Round ${S.round} begins.`);
+    log(T("Round {n} begins.", { n: S.round }));
   }
   function checkVictory() {
     if (S.phase !== "fight") return true;
     if (alive().length) return false;
     S.phase = "victory"; S.turn = null;
     S.rewards = computeRewards();
-    log("All enemies dealt with. Victory!");
+    log(T("All enemies dealt with. Victory!"));
     render();
     return true;
   }
@@ -395,29 +395,29 @@ const Combat = (() => {
   }
   function combatantsHtml() {
     const cur = S.turn && S.turn.actor;
-    const tags = o => [o.stunned ? "Stunned" : "", o.persist && o.persist.rounds > 0 ? `Persistent ${o.persist.rounds}` : ""].filter(Boolean)
+    const tags = o => [o.stunned ? T("Stunned") : "", o.persist && o.persist.rounds > 0 ? `${T("Persistent")} ${o.persist.rounds}` : ""].filter(Boolean)
       .map(t => `<span class="badge">${t}</span>`).join(" ");
     return S.order.map(id => {
       if (isP(id)) {
         const p = pl(id);
         const ctl = S.editHp === p.uid
           ? `<div class="deal"><input type="number" id="hp-${p.uid}" value="${p.hp}" min="0" max="${p.maxHp}" style="width:72px">
-              <button class="btn primary" data-hpok="${p.uid}">OK</button><button class="btn" data-hpno="1">Cancel</button></div>`
-          : `<button class="btn" data-sethp="${p.uid}" title="Healing, stimpaks, reviving">Set HP</button>`;
+              <button class="btn primary" data-hpok="${p.uid}">${T("OK")}</button><button class="btn" data-hpno="1">${T("Cancel")}</button></div>`
+          : `<button class="btn" data-sethp="${p.uid}" title="${T("Healing, stimpaks, reviving")}">${T("Set HP")}</button>`;
         return `<div class="fighter party ${cur === id ? "now" : ""} ${p.status !== "up" ? "down" : ""}"><div class="t"><b>${esc(p.name)}</b>
-          ${p.status !== "up" ? `<span class="badge">Down</span>` : ""} ${tags(p)}
-          <small>HP ${p.hp}/${p.maxHp} &middot; Defense ${p.def} &middot; DR ${drTxt(p.dr.p)}/${drTxt(p.dr.e)}/${drTxt(p.dr.r)}/${drTxt(p.dr.po)} &middot; ${esc(p.w.name)} &middot; Ammo ${p.ammo} &middot; Init ${p.init}</small>${bar(p.hp, p.maxHp)}</div>${ctl}</div>`;
+          ${p.status !== "up" ? `<span class="badge">${T("Down")}</span>` : ""} ${tags(p)}
+          <small>${T("HP")} ${p.hp}/${p.maxHp} &middot; ${T("Defense")} ${p.def} &middot; ${T("DR")} ${drTxt(p.dr.p)}/${drTxt(p.dr.e)}/${drTxt(p.dr.r)}/${drTxt(p.dr.po)} &middot; ${esc(T(p.w.name))} &middot; ${T("Ammo")} ${p.ammo} &middot; ${T("Init")} ${p.init}</small>${bar(p.hp, p.maxHp)}</div>${ctl}</div>`;
       }
       const e = enemy(id);
-      const st = e.status === "active" ? "" : `<span class="badge">${e.status === "killed" ? "Killed" : "Overcome"}</span>`;
+      const st = e.status === "active" ? "" : `<span class="badge">${e.status === "killed" ? T("Killed") : T("Overcome")}</span>`;
       let btn;
-      if (e.status !== "active") btn = `<button class="btn" data-undo="${e.uid}">Undo</button>`;
-      else if (S.dealing === e.uid) btn = `<div class="deal"><button class="btn danger" data-kill="${e.uid}">Killed</button>
-        <button class="btn" data-over="${e.uid}" title="Fled, surrendered or avoided: XP but no loot">Overcome</button>
-        <button class="btn" data-dealno="1">Cancel</button></div>`;
-      else btn = `<button class="btn" data-deal="${e.uid}">Dealt with?</button>`;
+      if (e.status !== "active") btn = `<button class="btn" data-undo="${e.uid}">${T("Undo")}</button>`;
+      else if (S.dealing === e.uid) btn = `<div class="deal"><button class="btn danger" data-kill="${e.uid}">${T("Killed")}</button>
+        <button class="btn" data-over="${e.uid}" title="${T("Fled, surrendered or avoided: XP but no loot")}">${T("Overcome")}</button>
+        <button class="btn" data-dealno="1">${T("Cancel")}</button></div>`;
+      else btn = `<button class="btn" data-deal="${e.uid}">${T("Dealt with?")}</button>`;
       return `<div class="fighter ${cur === e.uid ? "now" : ""} ${e.status !== "active" ? "down" : ""}"><div class="t"><b>${esc(e.name)}</b> ${st} ${tags(e)}
-        <small>HP ${e.hp}/${e.maxHp} &middot; Defense ${e.def} &middot; DR ${drTxt(e.dr.p)}/${drTxt(e.dr.e)}/${drTxt(e.dr.r)}/${drTxt(e.dr.po)} &middot; Init ${e.init}</small>${bar(e.hp, e.maxHp)}</div>${btn}</div>`;
+        <small>${T("HP")} ${e.hp}/${e.maxHp} &middot; ${T("Defense")} ${e.def} &middot; ${T("DR")} ${drTxt(e.dr.p)}/${drTxt(e.dr.e)}/${drTxt(e.dr.r)}/${drTxt(e.dr.po)} &middot; ${T("Init")} ${e.init}</small>${bar(e.hp, e.maxHp)}</div>${btn}</div>`;
     }).join("");
   }
 
@@ -427,28 +427,27 @@ const Combat = (() => {
     if (S.phase === "victory") return renderVictory();
     if (S.phase === "defeat") return renderDefeat();
     root().innerHTML = `
-      <div class="badges"><span class="badge">Round <b>${S.round}</b></span>
-        <span class="badge">Group AP <b>${S.ap}</b> <button class="mini" id="cb-apm">&minus;</button><button class="mini" id="cb-app">+</button></span>
-        <span class="badge">Turn: <b>${esc(nameOf(S.turn.actor))}</b></span>
-        <span class="badge">Party standing <b>${standing().length}/${S.players.length}</b></span></div>
+      <div class="badges"><span class="badge">${T("Round")} <b>${S.round}</b></span>
+        <span class="badge">${T("Group AP")} <b>${S.ap}</b> <button class="mini" id="cb-apm">&minus;</button><button class="mini" id="cb-app">+</button></span>
+        <span class="badge">${T("Turn:")} <b>${esc(nameOf(S.turn.actor))}</b></span>
+        <span class="badge">${T("Party standing")} <b>${standing().length}/${S.players.length}</b></span></div>
       <div class="card" id="cb-turn">${turnHtml()}</div>
-      <h4 class="sec">Combatants (in initiative order)</h4>
+      <h4 class="sec">${T("Combatants (in initiative order)")}</h4>
       <div>${combatantsHtml()}</div>
-      <p class="hint">Use <b>Set HP</b> for healing, stimpaks or reviving a downed party member. Use <b>Dealt with?</b> when an enemy dies, flees,
-        surrenders or is avoided: <b>Killed</b> enemies can be looted, <b>Overcome</b> ones only give XP.</p>
-      <div class="bar"><button class="btn danger" id="cb-abandon">Abandon combat</button></div>
-      <details class="card"><summary style="cursor:pointer;font-weight:700">Combat log</summary>
+      <p class="hint">${T("Use <b>Set HP</b> for healing, stimpaks or reviving a downed party member. Use <b>Dealt with?</b> when an enemy dies, flees, surrenders or is avoided: <b>Killed</b> enemies can be looted, <b>Overcome</b> ones only give XP.")}</p>
+      <div class="bar"><button class="btn danger" id="cb-abandon">${T("Abandon combat")}</button></div>
+      <details class="card"><summary style="cursor:pointer;font-weight:700">${T("Combat log")}</summary>
         <div class="log">${S.log.map(l => `<div>${l}</div>`).join("")}</div></details>`;
     $("cb-apm").onclick = () => { S.ap = Math.max(0, S.ap - 1); render(); };
     $("cb-app").onclick = () => { S.ap = Math.min(6, S.ap + 1); render(); };
-    $("cb-abandon").onclick = async () => { if (await confirmBox("Abandon this combat? Progress is lost.", "Abandon")) { S = null; save(); renderSetup(); } };
+    $("cb-abandon").onclick = async () => { if (await confirmBox(T("Abandon this combat? Progress is lost."), T("Abandon"))) { S = null; save(); renderSetup(); } };
     root().querySelectorAll("[data-deal]").forEach(b => (b.onclick = () => { S.dealing = b.dataset.deal; render(); }));
     root().querySelectorAll("[data-dealno]").forEach(b => (b.onclick = () => { S.dealing = null; render(); }));
     root().querySelectorAll("[data-kill]").forEach(b => (b.onclick = () => dealtWith(b.dataset.kill, "killed")));
     root().querySelectorAll("[data-over]").forEach(b => (b.onclick = () => dealtWith(b.dataset.over, "overcome")));
     root().querySelectorAll("[data-undo]").forEach(b => (b.onclick = () => {
       const e = enemy(b.dataset.undo); e.status = "active"; if (e.hp <= 0) e.hp = 1;
-      log(`${e.name} is back in the fight.`); render();
+      log(T("{name} is back in the fight.", { name: e.name })); render();
     }));
     root().querySelectorAll("[data-sethp]").forEach(b => (b.onclick = () => { S.editHp = b.dataset.sethp; render(); }));
     root().querySelectorAll("[data-hpno]").forEach(b => (b.onclick = () => { S.editHp = null; render(); }));
@@ -457,7 +456,7 @@ const Combat = (() => {
       p.hp = Math.min(p.maxHp, Math.max(0, num($("hp-" + p.uid).value, p.hp)));
       const was = p.status;
       p.status = p.hp > 0 ? "up" : "down";
-      log(`${p.name}'s HP set to ${p.hp}${was !== "up" && p.status === "up" ? ": back in the fight" : ""}.`);
+      log(T(was !== "up" && p.status === "up" ? "{name}'s HP set to {hp}: back in the fight." : "{name}'s HP set to {hp}.", { name: p.name, hp: p.hp }));
       S.editHp = null; render();
     }));
     wireTurn();
@@ -467,7 +466,7 @@ const Combat = (() => {
   function dealtWith(uid, how) {
     const e = enemy(uid);
     e.status = how; S.dealing = null;
-    log(`${e.name} is ${how}.`);
+    log(T(how === "killed" ? "{name} is killed." : "{name} is overcome.", { name: e.name }));
     if (S.turn && S.turn.actor === uid) return endTurn();
     if (!checkVictory()) render();
   }
@@ -475,8 +474,8 @@ const Combat = (() => {
   // ------------------------------------------------------------------ the current turn
   function turnHtml() {
     const t = S.turn;
-    if (t.step === "stunned") return `<h3>${esc(nameOf(t.actor))} is stunned</h3><p>They lose their normal actions this turn (AP can still be spent).</p>
-      <button class="btn primary" id="t-end">End turn</button>`;
+    if (t.step === "stunned") return `<h3>${T("{name} is stunned", { name: esc(nameOf(t.actor)) })}</h3><p>${T("They lose their normal actions this turn (AP can still be spent).")}</p>
+      <button class="btn primary" id="t-end">${T("End turn")}</button>`;
     if (isP(t.actor)) { const p = actor(); return playerTurnHtml(t, p, p.w); }
     return enemyTurnHtml(t, enemy(t.actor));
   }
@@ -484,74 +483,74 @@ const Combat = (() => {
   function playerTurnHtml(t, p, w) {
     const ranged = !isMelee(w.skill);
     if (t.step === "aim") {
-      const opts = alive().map(e => `<option value="${e.uid}" ${t.target === e.uid ? "selected" : ""}>${esc(e.name)} (Def ${e.def}, HP ${e.hp})</option>`).join("");
-      return `<h3>${esc(p.name)}'s turn: attack with ${esc(w.name)}</h3>
-        <p class="hint">TN ${w.tn}, critical on d20 &le; ${w.crit}. Step 1: choose the target and situation.</p>
-        <div class="row"><div><label class="f">Target</label><select id="t-target">${opts}</select></div>
-          ${ranged ? `<div><label class="f">Distance to target</label><select id="t-range">${RANGES.map(r => `<option value="${r}">${RANGE_NAME[r]}</option>`).join("")}</select></div>` : ""}
-          <div><label class="f">Bonus d20 bought with AP</label><select id="t-buy">${[0, 1, 2, 3].map(n => `<option value="${n}">${n} (${BUY_COST[n]} AP)</option>`).join("")}</select></div></div>
+      const opts = alive().map(e => `<option value="${e.uid}" ${t.target === e.uid ? "selected" : ""}>${esc(e.name)} (${T("Def")} ${e.def}, ${T("HP")} ${e.hp})</option>`).join("");
+      return `<h3>${T("{name}'s turn: attack with {w}", { name: esc(p.name), w: esc(T(w.name)) })}</h3>
+        <p class="hint">${T("TN {tn}, critical on d20 ≤ {crit}. Step 1: choose the target and situation.", { tn: w.tn, crit: w.crit })}</p>
+        <div class="row"><div><label class="f">${T("Target")}</label><select id="t-target">${opts}</select></div>
+          ${ranged ? `<div><label class="f">${T("Distance to target")}</label><select id="t-range">${RANGES.map(r => `<option value="${r}">${T(RANGE_NAME[r])}</option>`).join("")}</select></div>` : ""}
+          <div><label class="f">${T("Bonus d20 bought with AP")}</label><select id="t-buy">${[0, 1, 2, 3].map(n => `<option value="${n}">${n} (${BUY_COST[n]} ${T("AP")})</option>`).join("")}</select></div></div>
         <div class="effs" style="margin-top:8px">
-          <label><input type="checkbox" id="t-called"> Aim at a specific hit location (+1 difficulty)</label>
-          <select id="t-calledloc" style="width:auto">${LOCS.map(([, n]) => `<option>${n}</option>`).join("")}</select>
-          <label><input type="checkbox" id="t-sneak"> Sneak attack (enemy unaware: -1 difficulty, Vicious)</label>
-          ${ranged ? `<label><input type="checkbox" id="t-reach"> An enemy is within reach of ${esc(p.name)} (+2 difficulty)</label>` : ""}</div>
-        <div class="bar"><button class="btn primary" id="t-next">Next: roll to hit</button><button class="btn" id="t-end">Do something else / end turn</button></div>`;
+          <label><input type="checkbox" id="t-called"> ${T("Aim at a specific hit location (+1 difficulty)")}</label>
+          <select id="t-calledloc" style="width:auto">${LOCS.map(([, n]) => `<option value="${n}">${T(n)}</option>`).join("")}</select>
+          <label><input type="checkbox" id="t-sneak"> ${T("Sneak attack (enemy unaware: -1 difficulty, Vicious)")}</label>
+          ${ranged ? `<label><input type="checkbox" id="t-reach"> ${T("An enemy is within reach of {name} (+2 difficulty)", { name: esc(p.name) })}</label>` : ""}</div>
+        <div class="bar"><button class="btn primary" id="t-next">${T("Next: roll to hit")}</button><button class="btn" id="t-end">${T("Do something else / end turn")}</button></div>`;
     }
     const e = enemy(t.target);
-    if (t.step === "roll") return `<h3>${esc(p.name)} rolls to hit ${esc(e.name)}</h3>
-      <p>Roll <b>${t.dice}d20</b>. Each die &le; <b>${w.tn}</b> is 1 success, &le; <b>${w.crit}</b> is 2 successes, a 20 is a complication.
-      You need <b>${t.diff}</b> success${t.diff === 1 ? "" : "es"}.</p>${diceInputs("t-d20", t.dice, 20)}
-      <div class="bar"><button class="btn primary" id="t-check">Check result</button></div>`;
-    if (t.step === "loc") return `<h3>Hit! Where did it land?</h3><p>${t.testText}</p>
-      <p>Roll 1d20 for the hit location (1-2 head, 3-8 torso, 9-11 left arm, 12-14 right arm, 15-17 left leg, 18-20 right leg).</p>
-      ${diceInputs("t-loc", 1, 20)}<div class="bar"><button class="btn primary" id="t-locok">Set location</button></div>`;
+    if (t.step === "roll") return `<h3>${T("{name} rolls to hit {target}", { name: esc(p.name), target: esc(e.name) })}</h3>
+      <p>${TP(t.diff, "Roll <b>{dice}d20</b>. Each die ≤ <b>{tn}</b> is 1 success, ≤ <b>{crit}</b> is 2 successes, a 20 is a complication. You need <b>{n}</b> success.",
+        "Roll <b>{dice}d20</b>. Each die ≤ <b>{tn}</b> is 1 success, ≤ <b>{crit}</b> is 2 successes, a 20 is a complication. You need <b>{n}</b> successes.", { dice: t.dice, tn: w.tn, crit: w.crit })}</p>${diceInputs("t-d20", t.dice, 20)}
+      <div class="bar"><button class="btn primary" id="t-check">${T("Check result")}</button></div>`;
+    if (t.step === "loc") return `<h3>${T("Hit! Where did it land?")}</h3><p>${t.testText}</p>
+      <p>${T("Roll 1d20 for the hit location (1-2 head, 3-8 torso, 9-11 left arm, 12-14 right arm, 15-17 left leg, 18-20 right leg).")}</p>
+      ${diceInputs("t-loc", 1, 20)}<div class="bar"><button class="btn primary" id="t-locok">${T("Set location")}</button></div>`;
     if (t.step === "dmg") {
       const maxExtra = ranged && !isThrown(w.skill) ? Math.max(0, Math.min(w.rate, p.ammo - 1)) : 3;
-      return `<h3>Damage to ${esc(e.name)} (${t.location})</h3><p>${t.testText}</p>
-        <p>Base damage: <b>${t.baseCd} CD</b>${t.sneakBonus ? " (includes +2 CD sneak attack)" : ""}.
-        ${ranged && !isThrown(w.skill) ? "Spend extra ammo (each shot adds +1 CD, up to the fire rate):" : "Spend AP for extra damage (+1 CD each, up to 3):"}</p>
-        <div class="row"><div><select id="t-extra">${Array.from({ length: maxExtra + 1 }, (_, i) => `<option value="${i}">+${i} CD${ranged && !isThrown(w.skill) ? ` (${i} extra ammo)` : ` (${i} AP)`}</option>`).join("")}</select></div>
-          <div><button class="btn" id="t-setcd">Set dice</button></div></div>
-        <div id="t-cdwrap" style="margin-top:8px">${t.cdCount ? `<p>Roll <b>${t.cdCount}</b> combat dice (d6: 1=1, 2=2, 3-4=0, 5-6=1+Effect).</p>${diceInputs("t-cd", t.cdCount, 6)}
-          <div class="bar"><button class="btn primary" id="t-apply">Apply damage</button></div>` : ""}</div>`;
+      return `<h3>${T("Damage to {name} ({loc})", { name: esc(e.name), loc: T(t.location) })}</h3><p>${t.testText}</p>
+        <p>${T("Base damage: <b>{n} CD</b>", { n: t.baseCd })}${t.sneakBonus ? " " + T("(includes +2 CD sneak attack)") : ""}.
+        ${ranged && !isThrown(w.skill) ? T("Spend extra ammo (each shot adds +1 CD, up to the fire rate):") : T("Spend AP for extra damage (+1 CD each, up to 3):")}</p>
+        <div class="row"><div><select id="t-extra">${Array.from({ length: maxExtra + 1 }, (_, i) => `<option value="${i}">+${i} ${T("CD")}${ranged && !isThrown(w.skill) ? ` (${T("{n} extra ammo", { n: i })})` : ` (${i} ${T("AP")})`}</option>`).join("")}</select></div>
+          <div><button class="btn" id="t-setcd">${T("Set dice")}</button></div></div>
+        <div id="t-cdwrap" style="margin-top:8px">${t.cdCount ? `<p>${T("Roll <b>{n}</b> combat dice (d6: 1=1, 2=2, 3-4=0, 5-6=1+Effect).", { n: t.cdCount })}</p>${diceInputs("t-cd", t.cdCount, 6)}
+          <div class="bar"><button class="btn primary" id="t-apply">${T("Apply damage")}</button></div>` : ""}</div>`;
     }
-    if (t.step === "burst") return `<h3>Burst: ${t.burstLeft} extra target${t.burstLeft > 1 ? "s" : ""}</h3><p>${t.resultText}</p>
-      <p>Each Effect lets the attack hit another enemy within Close range of ${esc(e.name)} (1 extra ammo each). Pick who else got hit:</p>
-      <div class="effs">${alive().filter(x => x.uid !== t.target).map(x => `<label><input type="checkbox" class="t-bt" value="${x.uid}"> ${esc(x.name)}</label>`).join("") || "<span class='muted'>No other enemies left.</span>"}</div>
-      <div class="bar"><button class="btn primary" id="t-burst">Apply to selected</button><button class="btn" id="t-noburst">Skip</button></div>`;
-    return `<h3>${t.hit ? "Attack resolved" : "Missed"}</h3><p>${t.resultText || t.testText}</p>
-      <div class="bar"><button class="btn primary" id="t-end">End turn</button></div>`;
+    if (t.step === "burst") return `<h3>${TP(t.burstLeft, "Burst: {n} extra target", "Burst: {n} extra targets")}</h3><p>${t.resultText}</p>
+      <p>${T("Each Effect lets the attack hit another enemy within Close range of {name} (1 extra ammo each). Pick who else got hit:", { name: esc(e.name) })}</p>
+      <div class="effs">${alive().filter(x => x.uid !== t.target).map(x => `<label><input type="checkbox" class="t-bt" value="${x.uid}"> ${esc(x.name)}</label>`).join("") || `<span class='muted'>${T("No other enemies left.")}</span>`}</div>
+      <div class="bar"><button class="btn primary" id="t-burst">${T("Apply to selected")}</button><button class="btn" id="t-noburst">${T("Skip")}</button></div>`;
+    return `<h3>${t.hit ? T("Attack resolved") : T("Missed")}</h3><p>${t.resultText || t.testText}</p>
+      <div class="bar"><button class="btn primary" id="t-end">${T("End turn")}</button></div>`;
   }
 
   function enemyTurnHtml(t, e) {
     if (t.step === "eatk") {
       const up = standing();
       const pick = t.victim && pl(t.victim) && pl(t.victim).status === "up" ? t.victim : choice(up).uid;
-      return `<h3>${esc(e.name)}'s turn</h3>
-        <div class="row"><div><label class="f">It attacks&hellip;</label><select id="t-victim">${up.map(p =>
-          `<option value="${p.uid}" ${p.uid === pick ? "selected" : ""}>${esc(p.name)} (Def ${p.def}, HP ${p.hp}/${p.maxHp})</option>`).join("")}</select></div>
-          <div><label class="f">With</label><select id="t-atk">${e.attacks.map((a, i) =>
-          `<option value="${i}">${esc(a.name)}: TN ${a.tn}, ${a.cd} CD ${TYPE_NAME[a.type]}${a.eff.length ? ", " + esc(a.eff.join(", ")) : ""}${a.ranged ? " (ranged)" : ""}</option>`).join("")}</select></div></div>
-        ${e.attacks.some(a => a.ranged) && !e.letRipUsed ? `<label class="effs"><input type="checkbox" id="t-rip"> Let rip (once per combat, ranged only: +CD equal to fire rate, Burst for free)</label>` : ""}
-        <p class="hint">A random standing party member is pre-selected; change it to whoever the GM picks. It needs successes equal to that character's Defense.</p>
-        <div class="bar"><button class="btn primary" id="t-enext">Next: roll to hit</button><button class="btn" id="t-end">It does something else / end turn</button></div>`;
+      return `<h3>${T("{name}'s turn", { name: esc(e.name) })}</h3>
+        <div class="row"><div><label class="f">${T("It attacks…")}</label><select id="t-victim">${up.map(p =>
+          `<option value="${p.uid}" ${p.uid === pick ? "selected" : ""}>${esc(p.name)} (${T("Def")} ${p.def}, ${T("HP")} ${p.hp}/${p.maxHp})</option>`).join("")}</select></div>
+          <div><label class="f">${T("With")}</label><select id="t-atk">${e.attacks.map((a, i) =>
+          `<option value="${i}">${esc(T(a.name))}: ${T("TN")} ${a.tn}, ${a.cd} ${T("CD")} ${T(TYPE_NAME[a.type])}${a.eff.length ? ", " + esc(a.eff.map(x => T(x)).join(", ")) : ""}${a.ranged ? ` (${T("ranged")})` : ""}</option>`).join("")}</select></div></div>
+        ${e.attacks.some(a => a.ranged) && !e.letRipUsed ? `<label class="effs"><input type="checkbox" id="t-rip"> ${T("Let rip (once per combat, ranged only: +CD equal to fire rate, Burst for free)")}</label>` : ""}
+        <p class="hint">${T("A random standing party member is pre-selected; change it to whoever the GM picks. It needs successes equal to that character's Defense.")}</p>
+        <div class="bar"><button class="btn primary" id="t-enext">${T("Next: roll to hit")}</button><button class="btn" id="t-end">${T("It does something else / end turn")}</button></div>`;
     }
     const a = e.attacks[t.atk], v = pl(t.victim);
-    if (t.step === "eroll") return `<h3>${esc(e.name)} attacks ${esc(v.name)}: ${esc(a.name)}</h3>
-      <p>Roll <b>2d20</b> for it. Each die &le; <b>${a.tn}</b> is 1 success, &le; <b>${a.crit}</b> is 2. It needs <b>${t.diff}</b> (${esc(v.name)}'s Defense).</p>
-      ${diceInputs("t-d20", 2, 20)}<div class="bar"><button class="btn primary" id="t-echeck">Check result</button></div>`;
-    if (t.step === "eloc") return `<h3>${esc(v.name)} is hit!</h3><p>${t.testText}</p><p>Roll 1d20 for the hit location.</p>
-      ${diceInputs("t-loc", 1, 20)}<div class="bar"><button class="btn primary" id="t-elocok">Set location</button></div>`;
-    if (t.step === "edmg") return `<h3>Damage to ${esc(v.name)} (${t.location})</h3><p>${t.testText}</p>
-      <p>Roll <b>${t.cdCount}</b> combat dice for ${esc(a.name)}${t.rip ? " (let rip included)" : ""}.</p>
-      ${diceInputs("t-cd", t.cdCount, 6)}<div class="bar"><button class="btn primary" id="t-eapply">Apply damage</button></div>`;
-    if (t.step === "down") return `<h3>${esc(v.name)} is down!</h3><p>${t.resultText}</p>
-      <p>At 0 HP a character is dying (see the Damage and Injury rules). If someone stabilizes or heals them, set their HP and they keep fighting.
-      ${standing().length ? "" : "<b>Nobody else in the party is standing.</b>"}</p>
-      <div class="row"><div><label class="f">${esc(v.name)}'s HP now</label><input type="number" id="t-sethp" value="1"></div></div>
-      <div class="bar"><button class="btn primary" id="t-revive">Keep fighting</button><button class="btn danger" id="t-staydown">They stay down</button></div>`;
-    return `<h3>${t.hit ? "Attack resolved" : "It missed"}</h3><p>${t.resultText || t.testText}</p>
-      <div class="bar"><button class="btn primary" id="t-end">End turn</button></div>`;
+    if (t.step === "eroll") return `<h3>${T("{name} attacks {victim}: {atk}", { name: esc(e.name), victim: esc(v.name), atk: esc(T(a.name)) })}</h3>
+      <p>${T("Roll <b>2d20</b> for it. Each die ≤ <b>{tn}</b> is 1 success, ≤ <b>{crit}</b> is 2. It needs <b>{n}</b> ({victim}'s Defense).", { tn: a.tn, crit: a.crit, n: t.diff, victim: esc(v.name) })}</p>
+      ${diceInputs("t-d20", 2, 20)}<div class="bar"><button class="btn primary" id="t-echeck">${T("Check result")}</button></div>`;
+    if (t.step === "eloc") return `<h3>${T("{name} is hit!", { name: esc(v.name) })}</h3><p>${t.testText}</p><p>${T("Roll 1d20 for the hit location.")}</p>
+      ${diceInputs("t-loc", 1, 20)}<div class="bar"><button class="btn primary" id="t-elocok">${T("Set location")}</button></div>`;
+    if (t.step === "edmg") return `<h3>${T("Damage to {name} ({loc})", { name: esc(v.name), loc: T(t.location) })}</h3><p>${t.testText}</p>
+      <p>${T(t.rip ? "Roll <b>{n}</b> combat dice for {atk} (let rip included)." : "Roll <b>{n}</b> combat dice for {atk}.", { n: t.cdCount, atk: esc(T(a.name)) })}</p>
+      ${diceInputs("t-cd", t.cdCount, 6)}<div class="bar"><button class="btn primary" id="t-eapply">${T("Apply damage")}</button></div>`;
+    if (t.step === "down") return `<h3>${T("{name} is down!", { name: esc(v.name) })}</h3><p>${t.resultText}</p>
+      <p>${T("At 0 HP a character is dying (see the Damage and Injury rules). If someone stabilizes or heals them, set their HP and they keep fighting.")}
+      ${standing().length ? "" : `<b>${T("Nobody else in the party is standing.")}</b>`}</p>
+      <div class="row"><div><label class="f">${T("{name}'s HP now", { name: esc(v.name) })}</label><input type="number" id="t-sethp" value="1"></div></div>
+      <div class="bar"><button class="btn primary" id="t-revive">${T("Keep fighting")}</button><button class="btn danger" id="t-staydown">${T("They stay down")}</button></div>`;
+    return `<h3>${t.hit ? T("Attack resolved") : T("It missed")}</h3><p>${t.resultText || t.testText}</p>
+      <div class="bar"><button class="btn primary" id="t-end">${T("End turn")}</button></div>`;
   }
 
   function wireTurn() {
@@ -561,19 +560,19 @@ const Combat = (() => {
     // ---------------- party member
     on("t-next", () => {
       const e = enemy($("t-target").value), buy = num($("t-buy").value);
-      if (BUY_COST[buy] > S.ap) { toast(`Not enough AP in the pool (${S.ap})`); return; }
+      if (BUY_COST[buy] > S.ap) { toast(T("Not enough AP in the pool ({n})", { n: S.ap })); return; }
       S.ap -= BUY_COST[buy];
-      let diff = e.def, notes = [`Defense ${e.def}`];
+      let diff = e.def, notes = [T("Defense {n}", { n: e.def })];
       if (!isMelee(w.skill)) {
         const pen = Math.abs(RANGES.indexOf($("t-range").value) - RANGES.indexOf(w.range));
-        if (pen) { diff += pen; notes.push(`+${pen} range`); }
-        if ($("t-reach") && $("t-reach").checked) { diff += 2; notes.push("+2 enemy within reach"); }
+        if (pen) { diff += pen; notes.push(T("+{n} range", { n: pen })); }
+        if ($("t-reach") && $("t-reach").checked) { diff += 2; notes.push(T("+2 enemy within reach")); }
       }
       const called = $("t-called").checked, sneak = $("t-sneak").checked;
-      if (called) { diff += 1; notes.push("+1 called shot"); }
-      if (sneak) { diff = Math.max(0, diff - 1); notes.push("-1 sneak attack"); }
+      if (called) { diff += 1; notes.push(T("+1 called shot")); }
+      if (sneak) { diff = Math.max(0, diff - 1); notes.push(T("-1 sneak attack")); }
       Object.assign(t, { target: e.uid, diff, diffNotes: notes.join(", "), dice: 2 + buy, called: called ? $("t-calledloc").value : null, sneak, step: "roll" });
-      if (buy) log(`${p.name} buys ${buy} bonus d20 for ${BUY_COST[buy]} AP.`);
+      if (buy) log(T("{name} buys {n} bonus d20 for {ap} AP.", { name: p.name, n: buy, ap: BUY_COST[buy] }));
       render();
     });
     on("t-check", () => {
@@ -582,11 +581,14 @@ const Combat = (() => {
       const r = scoreTest(rolls, w.tn, w.crit), e = enemy(t.target);
       t.hit = r.succ >= t.diff;
       const extra = Math.max(0, r.succ - t.diff);
-      t.testText = `Rolled ${rolls.join(", ")}: <b>${r.succ}</b> success${r.succ === 1 ? "" : "es"} vs difficulty ${t.diff} (${t.diffNotes}).` +
-        (t.hit ? ` <b>Hit!</b>${extra ? ` ${extra} extra success${extra > 1 ? "es" : ""} &rarr; +${extra} AP.` : ""}` : " <b>Miss.</b>") +
-        (r.comps ? ` <span style="color:var(--red)">${r.comps} complication${r.comps > 1 ? "s" : ""} (the GM adds a problem, e.g. a jam).</span>` : "");
+      t.testText = TP(r.succ, "Rolled {rolls}: <b>{n}</b> success vs difficulty {d} ({notes}).", "Rolled {rolls}: <b>{n}</b> successes vs difficulty {d} ({notes}).",
+          { rolls: rolls.join(", "), d: t.diff, notes: t.diffNotes }) +
+        (t.hit ? ` <b>${T("Hit!")}</b>${extra ? " " + TP(extra, "{n} extra success → +{n} AP.", "{n} extra successes → +{n} AP.") : ""}` : ` <b>${T("Miss.")}</b>`) +
+        (r.comps ? ` <span style="color:var(--red)">${TP(r.comps, "{n} complication (the GM adds a problem, e.g. a jam).", "{n} complications (the GM adds a problem, e.g. a jam).")}</span>` : "");
       if (t.hit) S.ap = Math.min(6, S.ap + extra);
-      log(`${p.name} attacks ${e.name}: ${r.succ}/${t.diff} successes, ${t.hit ? "hit" : "miss"}${r.comps ? ", complication" : ""}.`);
+      log(T(t.hit ? (r.comps ? "{name} attacks {target}: {s}/{d} successes, hit, complication." : "{name} attacks {target}: {s}/{d} successes, hit.")
+        : (r.comps ? "{name} attacks {target}: {s}/{d} successes, miss, complication." : "{name} attacks {target}: {s}/{d} successes, miss."),
+        { name: p.name, target: e.name, s: r.succ, d: t.diff }));
       if (!isMelee(w.skill)) { p.ammo = Math.max(0, p.ammo - 1); }
       if (!t.hit) { t.step = "done"; return render(); }
       if (t.called) { t.location = t.called; startDmg(); } else t.step = "loc";
@@ -596,7 +598,7 @@ const Combat = (() => {
     on("t-setcd", () => {
       const extra = num($("t-extra").value);
       const usesAmmo = !isMelee(w.skill) && !isThrown(w.skill);
-      if (!usesAmmo && extra > S.ap) { toast(`Not enough AP in the pool (${S.ap})`); return; }
+      if (!usesAmmo && extra > S.ap) { toast(T("Not enough AP in the pool ({n})", { n: S.ap })); return; }
       t.extra = extra; t.cdCount = t.baseCd + extra; render();
     });
     on("t-apply", () => {
@@ -610,11 +612,11 @@ const Combat = (() => {
     on("t-burst", () => {
       const picked = [...document.querySelectorAll(".t-bt:checked")].map(i => i.value).slice(0, t.burstLeft);
       const lines = picked.map(uid => {
-        if (p.ammo <= 0) return `${esc(enemy(uid).name)}: out of ammo`;
+        if (p.ammo <= 0) return T("{name}: out of ammo", { name: esc(enemy(uid).name) });
         p.ammo--;
         return hitEnemy(enemy(uid), t.roll, t.effects, "torso");
       });
-      t.resultText += "<br>Burst: " + (lines.join("<br>") || "no extra targets");
+      t.resultText += "<br>" + T("Burst:") + " " + (lines.join("<br>") || T("no extra targets"));
       t.step = "done"; if (!checkVictory()) render();
     });
     on("t-noburst", () => { t.step = "done"; render(); });
@@ -632,9 +634,10 @@ const Combat = (() => {
       if (!rolls) return;
       const e = enemy(t.actor), a = e.attacks[t.atk], v = pl(t.victim), r = scoreTest(rolls, a.tn, a.crit);
       t.hit = r.succ >= t.diff;
-      t.testText = `${esc(e.name)} rolled ${rolls.join(", ")}: <b>${r.succ}</b> success${r.succ === 1 ? "" : "es"} vs ${esc(v.name)}'s Defense ${t.diff}. ${t.hit ? "<b>Hit!</b>" : "<b>Miss.</b>"}` +
-        (r.comps ? " It rolled a complication: something goes wrong for it." : "");
-      log(`${e.name} attacks ${v.name} with ${a.name}: ${t.hit ? "hit" : "miss"}.`);
+      t.testText = TP(r.succ, "{name} rolled {rolls}: <b>{n}</b> success vs {victim}'s Defense {d}.", "{name} rolled {rolls}: <b>{n}</b> successes vs {victim}'s Defense {d}.",
+          { name: esc(e.name), rolls: rolls.join(", "), victim: esc(v.name), d: t.diff }) + ` <b>${t.hit ? T("Hit!") : T("Miss.")}</b>` +
+        (r.comps ? " " + T("It rolled a complication: something goes wrong for it.") : "");
+      log(T(t.hit ? "{name} attacks {victim} with {atk}: hit." : "{name} attacks {victim} with {atk}: miss.", { name: e.name, victim: v.name, atk: T(a.name) }));
       t.step = t.hit ? "eloc" : "done"; render();
     });
     on("t-elocok", () => {
@@ -651,29 +654,29 @@ const Combat = (() => {
       const res = resolveDamage({ total: r.total, effects: r.effects, eff: a.eff, type: a.type, dr: v.dr, location: t.location });
       v.hp = Math.max(0, v.hp - res.dmg);
       const notes = [];
-      if (res.rad) { v.maxHp = Math.max(1, v.maxHp - res.rad); v.hp = Math.min(v.hp, v.maxHp); notes.push(`radiation lowers ${esc(v.name)}'s max HP to ${v.maxHp}`); }
-      if (r.effects && effectOf(a.eff, "Stun")) { v.stunned = true; notes.push(`${esc(v.name)} is stunned next turn`); }
-      if (r.effects && effectOf(a.eff, "Persistent")) { v.persist = { rounds: r.effects, cd: a.cd, type: a.type }; notes.push(`persistent damage for ${r.effects} round(s)`); }
-      if (res.crit) notes.push(`<b>critical hit: injury to the ${t.location.toLowerCase()}</b> (${injuryText(t.location)})`);
-      t.resultText = diceFaces(faces) + res.text + "." + (notes.length ? " " + notes.join("; ") + "." : "") + ` ${esc(v.name)} has <b>${v.hp}/${v.maxHp}</b> HP.`;
-      log(`${e.name} deals ${res.dmg} damage to ${v.name} (${v.hp}/${v.maxHp} HP).`);
+      if (res.rad) { v.maxHp = Math.max(1, v.maxHp - res.rad); v.hp = Math.min(v.hp, v.maxHp); notes.push(T("radiation lowers {name}'s max HP to {n}", { name: esc(v.name), n: v.maxHp })); }
+      if (r.effects && effectOf(a.eff, "Stun")) { v.stunned = true; notes.push(T("{name} is stunned next turn", { name: esc(v.name) })); }
+      if (r.effects && effectOf(a.eff, "Persistent")) { v.persist = { rounds: r.effects, cd: a.cd, type: a.type }; notes.push(TP(r.effects, "persistent damage for {n} round", "persistent damage for {n} rounds")); }
+      if (res.crit) notes.push(`<b>${T("critical hit: injury to {loc}", { loc: locTo(t.location) })}</b> (${injuryText(t.location)})`);
+      t.resultText = diceFaces(faces) + res.text + "." + (notes.length ? " " + notes.join("; ") + "." : "") + " " + T("{name} has <b>{hp}/{max}</b> HP.", { name: esc(v.name), hp: v.hp, max: v.maxHp });
+      log(T("{name} deals {n} damage to {victim} ({hp}/{max} HP).", { name: e.name, n: res.dmg, victim: v.name, hp: v.hp, max: v.maxHp }));
       if (v.hp <= 0) { v.status = "down"; t.step = "down"; } else t.step = "done";
       render();
     });
     on("t-revive", () => {
       const v = pl(t.victim);
       v.hp = Math.min(v.maxHp, Math.max(1, num($("t-sethp").value, 1))); v.status = "up";
-      log(`${v.name} keeps fighting with ${v.hp} HP.`); t.step = "done"; t.resultText = `${esc(v.name)} is back on their feet.`; render();
+      log(T("{name} keeps fighting with {n} HP.", { name: v.name, n: v.hp })); t.step = "done"; t.resultText = T("{name} is back on their feet.", { name: esc(v.name) }); render();
     });
     on("t-staydown", () => {
       const v = pl(t.victim);
-      log(`${v.name} is down.`); t.step = "done"; t.resultText = `${esc(v.name)} is down. Use Set HP if someone revives them later.`; render();
+      log(T("{name} is down.", { name: v.name })); t.step = "done"; t.resultText = T("{name} is down. Use Set HP if someone revives them later.", { name: esc(v.name) }); render();
     });
   }
 
   const INJURY = { Head: "lose a turn's actions or worse perception", Torso: "bleeding: 1 CD damage each turn", "Left arm": "drop what's held, arm unusable",
     "Right arm": "drop what's held, arm unusable", "Left leg": "fall prone, can't sprint", "Right leg": "fall prone, can't sprint" };
-  const injuryText = loc => INJURY[loc] || "injury";
+  const injuryText = loc => T(INJURY[loc] || "injury");
 
   function startDmg() {
     const p = actor(), w = p.w, t = S.turn;
@@ -690,27 +693,27 @@ const Combat = (() => {
     const res = resolveDamage({ total, effects, eff, type: w.type, dr: e.dr, location });
     e.hp = Math.max(0, e.hp - res.dmg - res.rad);
     const notes = [];
-    if (effects && effectOf(eff, "Stun")) { e.stunned = true; notes.push("stunned"); }
-    if (effects && effectOf(eff, "Persistent")) { e.persist = { rounds: effects, cd: w.cd, type: w.type }; notes.push(`persistent for ${effects} round(s)`); }
+    if (effects && effectOf(eff, "Stun")) { e.stunned = true; notes.push(T("stunned")); }
+    if (effects && effectOf(eff, "Persistent")) { e.persist = { rounds: effects, cd: w.cd, type: w.type }; notes.push(TP(effects, "persistent for {n} round", "persistent for {n} rounds")); }
     if (effects && effectOf(eff, "Breaking") && drVal(e.dr[w.type]) !== Infinity) {
-      e.dr[w.type] = Math.max(0, num(e.dr[w.type]) - effects); notes.push(`${TYPE_NAME[w.type]} DR broken down to ${e.dr[w.type]}`);
+      e.dr[w.type] = Math.max(0, num(e.dr[w.type]) - effects); notes.push(T(TYPE_NAME[w.type] + " DR broken down to {n}", { n: e.dr[w.type] }));
     }
-    if (res.crit) notes.push(`<b>critical hit: injury to the ${location.toLowerCase()}</b>`);
-    let txt = `${esc(e.name)}: ${res.text}${notes.length ? "; " + notes.join("; ") : ""}. HP <b>${e.hp}/${e.maxHp}</b>`;
-    if (e.hp <= 0) { e.status = "killed"; txt += ` &rarr; <b>${esc(e.name)} goes down!</b> (use Undo if they were spared, then mark them Overcome)`; }
-    log(`${e.name} takes ${res.dmg + res.rad} damage (${e.hp}/${e.maxHp} HP)${e.hp <= 0 ? " and goes down" : ""}.`);
+    if (res.crit) notes.push(`<b>${T("critical hit: injury to {loc}", { loc: locTo(location) })}</b>`);
+    let txt = `${esc(e.name)}: ${res.text}${notes.length ? "; " + notes.join("; ") : ""}. ${T("HP")} <b>${e.hp}/${e.maxHp}</b>`;
+    if (e.hp <= 0) { e.status = "killed"; txt += ` &rarr; <b>${T("{name} goes down!", { name: esc(e.name) })}</b> ${T("(use Undo if they were spared, then mark them Overcome)")}`; }
+    log(T(e.hp <= 0 ? "{name} takes {n} damage ({hp}/{max} HP) and goes down." : "{name} takes {n} damage ({hp}/{max} HP).", { name: e.name, n: res.dmg + res.rad, hp: e.hp, max: e.maxHp }));
     return txt;
   }
 
   function applyPlayerDamage(faces) {
     const t = S.turn, w = actor().w, e = enemy(t.target), r = scoreCD(faces);
     t.roll = r.total; t.effects = r.effects;
-    let txt = diceFaces(faces) + `${r.effects} Effect${r.effects === 1 ? "" : "s"}. ` + hitEnemy(e, r.total, r.effects, t.location);
+    let txt = diceFaces(faces) + TP(r.effects, "{n} Effect.", "{n} Effects.") + " " + hitEnemy(e, r.total, r.effects, t.location);
     // Spread: one extra hit per Effect for half the rolled damage on a random location
     if (r.effects && effectOf(w.eff, "Spread") && e.status === "active") {
       const extra = [];
       for (let i = 0; i < r.effects && e.status === "active"; i++) extra.push(hitEnemy(e, Math.floor(r.total / 2), 0, locFor(d20())));
-      txt += "<br>Spread: " + extra.join("<br>");
+      txt += "<br>" + T("Spread:") + " " + extra.join("<br>");
     }
     t.resultText = txt;
     if (r.effects && effectOf(w.eff, "Burst") && alive().some(x => x.uid !== e.uid)) { t.burstLeft = r.effects; t.step = "burst"; }
@@ -725,24 +728,24 @@ const Combat = (() => {
     S.enemies.forEach(e => {
       const x = xpFor(e.level, e.type);
       xp += x;
-      lines.push(`${esc(e.name)} (${e.status === "killed" ? "killed" : "overcome"}): <b>${x} XP</b>`);
+      lines.push(T(e.status === "killed" ? "{name} (killed): <b>{n} XP</b>" : "{name} (overcome): <b>{n} XP</b>", { name: esc(e.name), n: x }));
       if (e.status !== "killed") return;
       if (e.wealth) {
         const rolls = Array.from({ length: e.wealth }, d20), sum = rolls.reduce((a, b) => a + b, 0);
-        caps += sum; loot.push(`${esc(e.name)}: <b>${sum} caps</b> (${e.wealth}d20: ${rolls.join(", ")})`);
+        caps += sum; loot.push(T("{name}: <b>{n} caps</b> ({w}d20: {rolls})", { name: esc(e.name), n: sum, w: e.wealth, rolls: rolls.join(", ") }));
       }
-      (e.inventory || []).forEach(i => loot.push(`${esc(e.name)}: ${esc(i)}`));
+      (e.inventory || []).forEach(i => loot.push(`${esc(e.name)}: ${esc(T(i))}`));
       e.attacks.filter(a => a.ranged && a.ammo).forEach(a => {
         const pool = (LOOT_POOLS.Ammunition || []).find(x => x[0] === a.ammo);
         const qty = pool ? pool[1] + scoreCD(Array.from({ length: pool[2] }, d6)).total : 1 + d6();
-        loot.push(`${esc(e.name)}: <b>${qty}</b> ${esc(a.ammo)}`);
+        loot.push(`${esc(e.name)}: <b>${qty}</b> ${esc(T(a.ammo))}`);
       });
       if (e.junk) {
         const faces = Array.from({ length: e.junk }, d6), fx = faces.filter(f => f >= 5).length;
-        for (let i = 0; i < fx; i++) { const j = lootLookup("Junk", d20() + d20()); if (j) loot.push(`${esc(e.name)}: ${esc(j.name)} (junk)`); }
+        for (let i = 0; i < fx; i++) { const j = lootLookup("Junk", d20() + d20()); if (j) loot.push(T("{name}: {item} (junk)", { name: esc(e.name), item: esc(T(j.name)) })); }
       }
-      if (e.butchery) loot.push(`${esc(e.name)} can be butchered: ${esc(e.butchery)}`);
-      if (e.salvage) loot.push(`${esc(e.name)} can be salvaged: ${esc(e.salvage)}`);
+      if (e.butchery) loot.push(T("{name} can be butchered: {x}", { name: esc(e.name), x: esc(T(e.butchery)) }));
+      if (e.salvage) loot.push(T("{name} can be salvaged: {x}", { name: esc(e.name), x: esc(T(e.salvage)) }));
       if (e.notes) loot.push(`${esc(e.name)}: ${esc(e.notes)}`);
     });
     return { xp, caps, lines, loot };
@@ -751,31 +754,31 @@ const Combat = (() => {
   function renderVictory() {
     const R = S.rewards;
     const saved = S.players.filter(p => p.charId && ROSTER.find(c => c.id === p.charId));
-    root().innerHTML = `<div class="card victory"><div class="vt">&#9733; VICTORY! &#9733;</div>
-      <p>All enemies were dealt with in ${S.round} round${S.round > 1 ? "s" : ""}.</p>
-      <ul class="tight">${S.players.map(p => `<li><b>${esc(p.name)}</b>: ${p.status === "up" ? `${p.hp}/${p.maxHp} HP` : "down (needs help)"}, ${p.ammo} ammo left</li>`).join("")}</ul>
-      <div class="badges"><span class="badge">XP <b>${R.xp}</b> each</span><span class="badge">Caps <b>${R.caps}</b></span><span class="badge">Items <b>${R.loot.length}</b></span></div>
-      <h4>Experience (every party member gets the total)</h4><ul class="tight">${R.lines.map(l => `<li>${l}</li>`).join("")}</ul>
-      <h4>Loot from the fallen (split it as the party decides)</h4>${R.loot.length ? `<ul class="tight">${R.loot.map(l => `<li>${l}</li>`).join("")}</ul>` : `<p class="muted">Nothing to loot (only killed enemies can be looted).</p>`}
-      <p class="hint">Caps and junk were rolled for you: caps are d20s equal to each enemy's wealth, junk is combat dice where each Effect is one junk item from the Junk table.</p>
-      <div class="bar">${saved.length ? `<button class="btn primary" id="cb-note">Add rewards to the notes of ${saved.length === 1 ? esc(saved[0].name) : `${saved.length} saved characters`}</button>` : ""}
-        <button class="btn" id="cb-new">New combat</button></div></div>`;
+    root().innerHTML = `<div class="card victory"><div class="vt">&#9733; ${T("VICTORY!")} &#9733;</div>
+      <p>${TP(S.round, "All enemies were dealt with in {n} round.", "All enemies were dealt with in {n} rounds.")}</p>
+      <ul class="tight">${S.players.map(p => `<li><b>${esc(p.name)}</b>: ${p.status === "up" ? `${p.hp}/${p.maxHp} ${T("HP")}` : T("down (needs help)")}, ${T("{n} ammo left", { n: p.ammo })}</li>`).join("")}</ul>
+      <div class="badges"><span class="badge">${T("XP <b>{n}</b> each", { n: R.xp })}</span><span class="badge">${T("Caps")} <b>${R.caps}</b></span><span class="badge">${T("Items")} <b>${R.loot.length}</b></span></div>
+      <h4>${T("Experience (every party member gets the total)")}</h4><ul class="tight">${R.lines.map(l => `<li>${l}</li>`).join("")}</ul>
+      <h4>${T("Loot from the fallen (split it as the party decides)")}</h4>${R.loot.length ? `<ul class="tight">${R.loot.map(l => `<li>${l}</li>`).join("")}</ul>` : `<p class="muted">${T("Nothing to loot (only killed enemies can be looted).")}</p>`}
+      <p class="hint">${T("Caps and junk were rolled for you: caps are d20s equal to each enemy's wealth, junk is combat dice where each Effect is one junk item from the Junk table.")}</p>
+      <div class="bar">${saved.length ? `<button class="btn primary" id="cb-note">${saved.length === 1 ? T("Add rewards to the notes of {name}", { name: esc(saved[0].name) }) : T("Add rewards to the notes of {n} saved characters", { n: saved.length })}</button>` : ""}
+        <button class="btn" id="cb-new">${T("New combat")}</button></div></div>`;
     if ($("cb-note")) $("cb-note").onclick = async () => {
       const plain = s => s.replace(/<[^>]+>/g, "");
       for (const p of saved) {
         const c = ROSTER.find(x => x.id === p.charId);
-        c.notes = ((c.notes || "") + `\n\nCombat (${new Date().toLocaleDateString()}): +${R.xp} XP. Party loot: ${R.caps} caps` +
+        c.notes = ((c.notes || "") + "\n\n" + T("Combat ({date}): +{xp} XP. Party loot: {caps} caps", { date: new Date().toLocaleDateString(LANG), xp: R.xp, caps: R.caps }) +
           (R.loot.length ? "; " + R.loot.map(plain).join("; ") : "") + ".").trim();
         await addToRoster(c);
       }
-      $("cb-note").disabled = true; toast(`Rewards added to ${saved.map(p => p.name).join(", ")}`);
+      $("cb-note").disabled = true; toast(T("Rewards added to {list}", { list: saved.map(p => p.name).join(", ") }));
     };
     $("cb-new").onclick = () => { S = null; save(); renderSetup(); };
   }
   function renderDefeat() {
-    root().innerHTML = `<div class="card"><div class="vt" style="color:var(--red)">DEFEAT</div>
-      <p>The whole party is down in round ${S.round}: ${S.players.map(p => esc(p.name)).join(", ")}. Nothing is looted from this fight.</p>
-      <div class="bar"><button class="btn" id="cb-new">New combat</button></div></div>`;
+    root().innerHTML = `<div class="card"><div class="vt" style="color:var(--red)">${T("DEFEAT")}</div>
+      <p>${T("The whole party is down in round {n}: {list}. Nothing is looted from this fight.", { n: S.round, list: S.players.map(p => esc(p.name)).join(", ") })}</p>
+      <div class="bar"><button class="btn" id="cb-new">${T("New combat")}</button></div></div>`;
     $("cb-new").onclick = () => { S = null; save(); renderSetup(); };
   }
 

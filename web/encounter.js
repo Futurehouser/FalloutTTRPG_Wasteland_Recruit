@@ -96,25 +96,25 @@ const Encounter = (() => {
   }
 
   // ---- stat block for one enemy type
-  const drT = v => (v === "Imm" ? "Imm" : v);
+  const drT = v => (v === "Imm" ? T("Imm") : v);
   const TYPE = { p: "Physical", e: "Energy", r: "Radiation", po: "Poison" };
   function statBlock(t, count) {
-    const atks = t.attacks.map(a => `<tr><td><b>${esc(a.name)}</b>${a.ranged ? ` <span class="muted">(ranged${a.rate ? `, fire rate ${a.rate}` : ""})</span>` : ""}</td>
-      <td>TN ${a.tn}</td><td>${a.cd} CD ${TYPE[a.type]}</td><td class="muted">${esc((a.eff || []).join(", ") || "-")}</td></tr>`).join("");
-    const extra = [t.butchery && `Butchery: ${t.butchery}`, t.salvage && `Salvage: ${t.salvage}`,
-      t.inventory && `Carries: ${t.inventory.join(", ")}`, t.notes, t.wealth ? `Caps: ${t.wealth}d20` : ""].filter(Boolean);
-    return `<div class="card statblock"><div class="sb-head"><h3>${count} &times; ${esc(t.name)}</h3>
-        <span class="badge">Level <b>${t.level}</b> ${esc(t.type)}</span><span class="badge">${xpFor(t.level, t.type)} XP each</span></div>
+    const atks = t.attacks.map(a => `<tr><td><b>${esc(T(a.name))}</b>${a.ranged ? ` <span class="muted">(${a.rate ? T("ranged, fire rate {n}", { n: a.rate }) : T("ranged")})</span>` : ""}</td>
+      <td>${T("TN")} ${a.tn}</td><td>${a.cd} ${T("CD")} ${T(TYPE[a.type])}</td><td class="muted">${esc((a.eff || []).map(x => T(x)).join(", ") || "-")}</td></tr>`).join("");
+    const extra = [t.butchery && T("Butchery: {x}", { x: T(t.butchery) }), t.salvage && T("Salvage: {x}", { x: T(t.salvage) }),
+      t.inventory && T("Carries: {x}", { x: t.inventory.map(i => T(i)).join(", ") }), t.notes, t.wealth ? T("Caps: {n}d20", { n: t.wealth }) : ""].filter(Boolean);
+    return `<div class="card statblock"><div class="sb-head"><h3>${count} &times; ${esc(T(t.name))}</h3>
+        <span class="badge">${T("Level")} <b>${t.level}</b> ${esc(T(t.type))}</span><span class="badge">${T("{n} XP each", { n: xpFor(t.level, t.type) })}</span></div>
       <div class="sb-grid">
-        <div class="stat"><b>${t.hp}</b><small>HP</small></div><div class="stat"><b>${t.def}</b><small>Defense</small></div>
-        <div class="stat"><b>${t.init}</b><small>Initiative</small></div>
-        <div class="stat"><b>${drT(t.dr.p)}</b><small>Phys. DR</small></div><div class="stat"><b>${drT(t.dr.e)}</b><small>Energy DR</small></div>
-        <div class="stat"><b>${drT(t.dr.r)}</b><small>Rad. DR</small></div><div class="stat"><b>${drT(t.dr.po)}</b><small>Poison DR</small></div></div>
-      ${t.body ? `<div class="muted" style="font-size:13px;margin:6px 0">Body ${t.body} &middot; Mind ${t.mind}</div>` : ""}
-      ${t.special ? `<div class="muted" style="font-size:13px;margin:6px 0">${G.SPECIAL.map(k => `${k} ${t.special[k]}`).join(" &middot; ")}</div>` : ""}
+        <div class="stat"><b>${t.hp}</b><small>${T("HP")}</small></div><div class="stat"><b>${t.def}</b><small>${T("Defense")}</small></div>
+        <div class="stat"><b>${t.init}</b><small>${T("Initiative")}</small></div>
+        <div class="stat"><b>${drT(t.dr.p)}</b><small>${T("Phys. DR")}</small></div><div class="stat"><b>${drT(t.dr.e)}</b><small>${T("Energy DR")}</small></div>
+        <div class="stat"><b>${drT(t.dr.r)}</b><small>${T("Rad. DR")}</small></div><div class="stat"><b>${drT(t.dr.po)}</b><small>${T("Poison DR")}</small></div></div>
+      ${t.body ? `<div class="muted" style="font-size:13px;margin:6px 0">${T("Body")} ${t.body} &middot; ${T("Mind")} ${t.mind}</div>` : ""}
+      ${t.special ? `<div class="muted" style="font-size:13px;margin:6px 0">${G.SPECIAL.map(k => `${T(k)} ${t.special[k]}`).join(" &middot; ")}</div>` : ""}
       <table class="lt">${atks}</table>
       ${extra.length ? `<div class="muted" style="font-size:13px;margin-top:6px">${extra.map(esc).join("<br>")}</div>` : ""}
-      ${t.group === "Your enemies" ? "" : `<div class="muted" style="font-size:11px;margin-top:6px">App estimate. Add the book's stat block under Combat Assistant &rarr; Add your own enemy.</div>`}</div>`;
+      ${t.group === "Your enemies" ? "" : `<div class="muted" style="font-size:11px;margin-top:6px">${T("App estimate. Add the book's stat block under Combat Assistant → Add your own enemy.")}</div>`}</div>`;
   }
 
   // ---- page
@@ -122,25 +122,25 @@ const Encounter = (() => {
   function render(enc) {
     const out = $e("en-out");
     const icons = { fight: "&#9876;", hazard: "&#9888;", quiet: "&#127769;", people: "&#128100;", discovery: "&#128269;", friendly: "&#129309;", lucky: "&#127808;" };
-    let h = `<div class="card"><div class="muted">2d20 roll ${enc.roll}${enc.mode === "rest" ? ` (+3 for resting = ${enc.shifted})` : ""} &middot; party level ${enc.level}, ${enc.size} member${enc.size > 1 ? "s" : ""}</div>
-      <h3 style="margin-top:6px">${icons[enc.kind] || ""} ${esc(enc.title)}${enc.subtitle ? `: ${esc(enc.subtitle)}` : ""}</h3>
-      ${enc.diff ? `<div class="badges"><span class="badge">Difficulty <b>${enc.diff}</b></span><span class="badge">Total <b>${enc.xp}</b> XP</span></div>` : ""}
-      <p>${esc(enc.text)}</p>${enc.note ? `<p class="hint">${esc(enc.note)}</p>` : ""}`;
+    let h = `<div class="card"><div class="muted">${T("2d20 roll {n}", { n: enc.roll })}${enc.mode === "rest" ? ` (${T("+3 for resting = {n}", { n: enc.shifted })})` : ""} &middot; ${TP(enc.size, "party level {lvl}, {n} member", "party level {lvl}, {n} members", { lvl: enc.level })}</div>
+      <h3 style="margin-top:6px">${icons[enc.kind] || ""} ${esc(T(enc.title))}${enc.subtitle ? `: ${esc(T(enc.subtitle))}` : ""}</h3>
+      ${enc.diff ? `<div class="badges"><span class="badge">${T("Difficulty")} <b>${T(enc.diff)}</b></span><span class="badge">${T("Total <b>{n}</b> XP", { n: enc.xp })}</span></div>` : ""}
+      <p>${esc(T(enc.text))}</p>${enc.note ? `<p class="hint">${esc(T(enc.note))}</p>` : ""}`;
     if (enc.enemies) {
-      h += `<h4>Enemies</h4><ul class="tight">${enc.enemies.map(e => `<li><b>${e.count} &times; ${esc(e.t.name)}</b> (level ${e.t.level} ${esc(e.t.type)})</li>`).join("")}</ul>
-        <div class="bar"><button class="btn primary" id="en-fight">&#9876; Fight this in the Combat Assistant</button></div></div>
-        <h4 class="sec">Enemy stats</h4>${enc.enemies.map(e => statBlock(e.t, e.count)).join("")}`;
+      h += `<h4>${T("Enemies")}</h4><ul class="tight">${enc.enemies.map(e => `<li><b>${e.count} &times; ${esc(T(e.t.name))}</b> (${T("level {n}", { n: e.t.level })} ${esc(T(e.t.type))})</li>`).join("")}</ul>
+        <div class="bar"><button class="btn primary" id="en-fight">&#9876; ${T("Fight this in the Combat Assistant")}</button></div></div>
+        <h4 class="sec">${T("Enemy stats")}</h4>${enc.enemies.map(e => statBlock(e.t, e.count)).join("")}`;
     } else if (enc.kind === "discovery") {
-      h += `<div class="bar"><button class="btn primary" id="en-scav">&#127962; Build it with the Scavenging Location tool</button></div></div>`;
+      h += `<div class="bar"><button class="btn primary" id="en-scav">&#127962; ${T("Build it with the Scavenging Location tool")}</button></div></div>`;
     } else if (enc.kind === "lucky" && /Loot Roller/.test(enc.text)) {
-      h += `<div class="bar"><button class="btn primary" id="en-loot">&#128176; Open the Loot Roller</button></div></div>`;
+      h += `<div class="bar"><button class="btn primary" id="en-loot">&#128176; ${T("Open the Loot Roller")}</button></div></div>`;
     } else h += `</div>`;
     out.innerHTML = h;
     if ($e("en-fight")) $e("en-fight").onclick = async () => {
       const r = await Combat.prepare(enc.enemies.map(e => ({ id: e.t.id, count: e.count })));
-      if (r === "busy") { toast("A combat is already running: finish or abandon it first"); showPage("combat"); return; }
+      if (r === "busy") { toast(T("A combat is already running: finish or abandon it first")); showPage("combat"); return; }
       showPage("combat");
-      toast("Enemies added. Check your stats and weapon, then Start combat");
+      toast(T("Enemies added. Check your stats and weapon, then Start combat"));
     };
     if ($e("en-scav")) $e("en-scav").onclick = () => scavengeFromEncounter({ site: enc.subtitle, level: enc.level, text: enc.text });
     if ($e("en-loot")) $e("en-loot").onclick = () => showPage("loot");
@@ -151,7 +151,7 @@ const Encounter = (() => {
     $e("en-roll2").onclick = () => { $e("en-roll").value = randint(1, 20) + randint(1, 20); };
     $e("en-gen").onclick = async () => {
       const roll = parseInt($e("en-roll").value, 10);
-      if (!(roll >= 2 && roll <= 40)) { toast("Enter your 2d20 total (2-40), or tap Roll 2d20 for me"); return; }
+      if (!(roll >= 2 && roll <= 40)) { toast(T("Enter your 2d20 total (2-40), or tap Roll 2d20 for me")); return; }
       await loadCustom();
       last = generate({ roll, level: +$e("en-level").value, size: Math.min(8, Math.max(1, parseInt($e("en-size").value, 10) || 4)),
                         mode: $e("en-mode").value });

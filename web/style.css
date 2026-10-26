@@ -193,6 +193,17 @@ h4.sec { margin: 16px 0 4px; font-size: 13px; letter-spacing: 1px; text-transfor
 .tiles-hint { text-align: center; margin-top: 14px; }
 .linkbtn { background: none; border: none; color: var(--amber); text-decoration: underline; cursor: pointer; padding: 0 4px; font-size: inherit; }
 .from-enc { margin: -2px 0 10px; padding: 8px 10px; border-left: 3px solid var(--amber); background: #0f1115; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.4; }
+/* language picker (home page and side menu) */
+.lang-pick { display: inline-flex; gap: 4px; padding: 4px; margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.lang-pick button { display: flex; align-items: center; gap: 7px; padding: 7px 12px; border: none; border-radius: 9px; background: none;
+                    color: var(--muted); font-weight: 700; font-size: 14px; cursor: pointer; }
+.lang-pick button img { width: 24px; height: 16px; border-radius: 2px; box-shadow: 0 0 0 1px #0006; object-fit: cover; }
+.lang-pick button.on { background: var(--panel2); color: var(--amber); }
+.lang-pick button:not(.on):hover { color: var(--ink); }
+.lang-side { margin-top: auto; padding: 10px 16px 0; }
+.lang-side + .foot { margin-top: 0; }
+.lang-side .lang-pick { margin-top: 0; display: flex; }
+.lang-side .lang-pick button { flex: 1; justify-content: center; }
 #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #000d; color: var(--green); padding: 10px 16px;
          border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 90%; text-align: center; z-index: 50; }
 #toast.show { opacity: 1; }

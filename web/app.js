@@ -7,7 +7,7 @@ function toast(msg) {
   const t = $("toast"); t.textContent = msg; t.classList.add("show");
   clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), 2800);
 }
-function confirmBox(text, yesLabel = "Delete") {
+function confirmBox(text, yesLabel = T("Delete")) {
   return new Promise(res => {
     $("modal-text").textContent = text; $("modal-yes").textContent = yesLabel;
     $("modal").classList.add("show");
@@ -18,6 +18,8 @@ function confirmBox(text, yesLabel = "Delete") {
 }
 const clamp = (v, lo, hi, d) => { v = parseInt(v, 10); return isNaN(v) ? d : Math.min(hi, Math.max(lo, v)); };
 const safeName = s => (String(s).replace(/[^A-Za-z0-9 _-]+/g, "").trim().replace(/ /g, "_") || "character");
+
+I18N.start(); // translate the page's own text and add the language pickers
 
 // ------------------------------------------------------------------ navigation
 let currentPage = "home";
@@ -60,13 +62,13 @@ $("cg-gen").onclick = async () => {
     cgUrl = cv.toDataURL("image/png");
     const view = $("cg-view");
     view.innerHTML = ""; view.classList.remove("zoom");
-    const img = new Image(); img.src = cgUrl; img.alt = "Filled character sheet";
+    const img = new Image(); img.src = cgUrl; img.alt = T("Filled character sheet");
     img.onclick = () => view.classList.toggle("zoom");
     view.appendChild(img);
-    $("cg-info").innerHTML = `<b>${esc(cgChar.name)}</b> &mdash; ${esc(cgChar.origin)} (${esc(cgChar.pack)}), ${esc(cgChar.archetype)}<br><span class="q">${esc(cgChar.gimmick_short)}</span>`;
+    $("cg-info").innerHTML = `<b>${esc(cgChar.name)}</b> &mdash; ${esc(T(cgChar.origin))} (${esc(T(cgChar.pack))}), ${esc(T(cgChar.archetype))}<br><span class="q">${esc(cgChar.gimmick_short)}</span>`;
     $("cg-save").disabled = $("cg-share").disabled = $("cg-keep").disabled = false;
   } catch (e) {
-    $("cg-info").textContent = "Something went wrong: " + e;
+    $("cg-info").textContent = T("Something went wrong: {e}", { e });
   }
   $("cg-gen").disabled = false;
 };
@@ -76,23 +78,23 @@ $("cg-share").onclick = () => { if (cgUrl) { const r = Platform.shareImage(cgUrl
 $("cg-keep").onclick = async () => {
   if (!cgChar) return;
   const c = cgChar;
-  const perks = c.perks.map(([p, r]) => `${p} (rank ${r})`).join(", ");
+  const perks = c.perks.map(([p, r]) => T("{perk} (rank {r})", { perk: T(p), r })).join(", ");
   await addToRoster({
-    name: c.name, origin: c.origin, race: c.race, level: 1, special: Object.assign({}, c.special),
+    name: c.name, origin: T(c.origin), race: c.race, level: 1, special: Object.assign({}, c.special),
     maxHp: c.hp, carryWeight: c.carry_max,
     skills: Object.assign({}, c.skills), tags: c.tags.slice(), photo: null,
-    notes: `${c.gimmick_long}\n\nArchetype: ${c.archetype}. Equipment pack: ${c.pack}. Perks: ${perks || "none"}.` +
-           (c.survivor_traits.length ? ` Traits: ${c.survivor_traits.join(", ")}.` : ""),
+    notes: c.gimmick_long + "\n\n" + T("Archetype: {a}. Equipment pack: {p}. Perks: {perks}.", { a: T(c.archetype), p: T(c.pack), perks: perks || T("none") }) +
+           (c.survivor_traits.length ? " " + T("Traits: {t}.", { t: c.survivor_traits.map(x => T(x)).join(", ") }) : ""),
   });
   $("cg-keep").disabled = true;
-  toast(`${c.name} added to Saved Characters`);
+  toast(T("{name} added to Saved Characters", { name: c.name }));
 };
 
 // ------------------------------------------------------------------ 2. scavenging location
 for (let i = 1; i <= 20; i++) $("sc-level").insertAdjacentHTML("beforeend", `<option>${i}</option>`);
 const itemChips = items => items.map(i =>
-  `<span class="chip" data-cat="${esc(i.cat)}">${esc(i.cat)} <b>${i.min}-${i.max}</b></span>`).join("");
-const obstacleHtml = o => `<b>${esc(o.name)}</b>: ${esc(o.test)}. Takes ${esc(o.time)}.<br><span class="muted">Alternative: ${esc(o.alt)}.</span>`;
+  `<span class="chip" data-cat="${esc(i.cat)}">${esc(T(i.cat))} <b>${i.min}-${i.max}</b></span>`).join("");
+const obstacleHtml = o => `<b>${esc(T(o.name))}</b>: ${esc(o.test)}. ${T("Takes {time}.", { time: esc(o.time) })}<br><span class="muted">${T("Alternative: {alt}.", { alt: esc(o.alt) })}</span>`;
 
 $("sc-gen").onclick = () => showLocation(generateLocation({ level: $("sc-level").value, scale: $("sc-scale").value, degree: $("sc-degree").value }));
 
@@ -105,27 +107,26 @@ function scavengeFromEncounter({ site, level, text }) {
 }
 
 function showLocation(L) {
-  let h = `<div class="card">${L.fromEncounter ? `<div class="from-enc">&#127956; From your encounter: <b>${esc(L.fromEncounter.site)}</b>${L.fromEncounter.text ? `. ${esc(L.fromEncounter.text)}` : ""}
-      <br><span class="muted">Tap Generate Location for a different random place.</span></div>` : ""}
-    <h3>${esc(L.name)}</h3><div class="muted">${esc(L.type)}</div>
-    <div class="badges"><span class="badge">Level <b>${L.level}</b></span><span class="badge">Scale <b>${L.scale}</b></span>
-    <span class="badge">Degree <b>${L.degree}</b></span></div>
-    <h4>Search</h4><div><b>PER + Survival</b>, difficulty <b>${L.difficulty}</b>. Takes <b>${L.time}</b> (spend 2 AP to halve it).
-      A success gives the minimum rolls in each category. Each AP spent buys 1 extra roll, up to the maximum.</div>
-    <h4>Loot (min-max rolls)</h4><div>${itemChips(L.items)}</div>`;
+  let h = `<div class="card">${L.fromEncounter ? `<div class="from-enc">&#127956; ${T("From your encounter:")} <b>${esc(T(L.fromEncounter.site))}</b>${L.fromEncounter.text ? `. ${esc(T(L.fromEncounter.text))}` : ""}
+      <br><span class="muted">${T("Tap Generate Location for a different random place.")}</span></div>` : ""}
+    <h3>${esc(T(L.name))}</h3><div class="muted">${esc(T(L.type))}</div>
+    <div class="badges"><span class="badge">${T("Level")} <b>${L.level}</b></span><span class="badge">${T("Scale")} <b>${T(L.scale)}</b></span>
+    <span class="badge">${T("Degree")} <b>${T(L.degree)}</b></span></div>
+    <h4>${T("Search")}</h4><div>${T("<b>PER + Survival</b>, difficulty <b>{d}</b>. Takes <b>{time}</b> (spend 2 AP to halve it). A success gives the minimum rolls in each category. Each AP spent buys 1 extra roll, up to the maximum.", { d: L.difficulty, time: T(L.time) })}</div>
+    <h4>${T("Loot (min-max rolls)")}</h4><div>${itemChips(L.items)}</div>`;
   if (L.inhabitants) {
     const I = L.inhabitants;
-    h += `<h4>Inhabitants</h4><div><b>${I.count}</b> &times; ${esc(I.desc)} <span class="muted">(${esc(I.group)}, level ${I.level}${I.leader ? `, leader level ${I.leader}` : ""})</span><br>
-      <span class="muted">Sneaking in: AGI + Sneak opposed by their PER + Survival. Halve the number for big creatures, double it for small ones.</span></div>`;
-  } else h += `<h4>Inhabitants</h4><div class="muted">None right now. A complication can still bring some in.</div>`;
-  if (L.obstacle) h += `<h4>Obstacle</h4><div>${obstacleHtml(L.obstacle)}</div>`;
-  if (L.hazard) h += `<h4>Hazard</h4><div><b>${esc(L.hazard.name)}</b> <span class="muted">(${esc(L.hazard.kind)})</span>: ${esc(L.hazard.text)}</div>`;
+    h += `<h4>${T("Inhabitants")}</h4><div><b>${I.count}</b> &times; ${esc(T(I.desc))} <span class="muted">(${esc(T(I.group))}, ${T("level {n}", { n: I.level })}${I.leader ? `, ${T("leader level {n}", { n: I.leader })}` : ""})</span><br>
+      <span class="muted">${T("Sneaking in: AGI + Sneak opposed by their PER + Survival. Halve the number for big creatures, double it for small ones.")}</span></div>`;
+  } else h += `<h4>${T("Inhabitants")}</h4><div class="muted">${T("None right now. A complication can still bring some in.")}</div>`;
+  if (L.obstacle) h += `<h4>${T("Obstacle")}</h4><div>${obstacleHtml(L.obstacle)}</div>`;
+  if (L.hazard) h += `<h4>${T("Hazard")}</h4><div><b>${esc(T(L.hazard.name))}</b> <span class="muted">(${esc(T(L.hazard.kind))})</span>: ${esc(T(L.hazard.text))}</div>`;
   if (L.nested) {
     const N = L.nested;
-    h += `<h4>Hidden spot (reveal after the first successful search)</h4><div><b>${esc(N.name)}</b>: Tiny, Untouched, level ${N.level}.
-      Takes 1 minute to search once it's open.<br>${obstacleHtml(N.lock)}<div style="margin-top:6px">${itemChips(N.items)}</div></div>`;
+    h += `<h4>${T("Hidden spot (reveal after the first successful search)")}</h4><div><b>${esc(T(N.name))}</b>: ${T("Tiny, Untouched, level {n}. Takes 1 minute to search once it's open.", { n: N.level })}
+      <br>${obstacleHtml(N.lock)}<div style="margin-top:6px">${itemChips(N.items)}</div></div>`;
   }
-  h += `<h4>Complication ideas</h4><ul class="tight">${L.complications.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>`;
+  h += `<h4>${T("Complication ideas")}</h4><ul class="tight">${L.complications.map(c => `<li>${esc(T(c))}</li>`).join("")}</ul></div>`;
   $("sc-out").innerHTML = h;
   $("sc-out").querySelectorAll(".chip").forEach(ch => (ch.onclick = () => {
     $("lt-cat").value = ch.dataset.cat; $("lt-roll").value = ""; $("lt-out").innerHTML = "";
@@ -134,30 +135,30 @@ function showLocation(L) {
 }
 
 // ------------------------------------------------------------------ 3. loot roller
-LOOT_CATEGORIES.forEach(c => $("lt-cat").insertAdjacentHTML("beforeend", `<option>${esc(c)}</option>`));
+LOOT_CATEGORIES.forEach(c => $("lt-cat").insertAdjacentHTML("beforeend", `<option value="${esc(c)}">${esc(T(c))}</option>`));
 function showLoot(roll, dice) {
   const cat = $("lt-cat").value;
   const e = lootLookup(cat, roll);
-  if (!e) { $("lt-out").innerHTML = `<div class="card">Enter a number from 2 to 40.</div>`; return; }
-  const diceTxt = dice ? ` <span class="muted">(rolled ${dice[0]} + ${dice[1]})</span>` : "";
-  let h = `<div class="card result"><div class="muted">${esc(cat)} &middot; roll <b>${roll}</b>${diceTxt}</div>
-    <div class="item">${esc(e.name)}</div>`;
+  if (!e) { $("lt-out").innerHTML = `<div class="card">${T("Enter a number from 2 to 40.")}</div>`; return; }
+  const diceTxt = dice ? ` <span class="muted">(${T("rolled {a} + {b}", { a: dice[0], b: dice[1] })})</span>` : "";
+  let h = `<div class="card result"><div class="muted">${esc(T(cat))} &middot; ${T("roll")} <b>${roll}</b>${diceTxt}</div>
+    <div class="item">${esc(T(e.name))}</div>`;
   if (e.cd) {
-    h += `<div>Quantity: <b>${e.base}</b> + roll <b>${e.cd} d6</b> (combat ${e.cd === 1 ? "die" : "dice"}).</div>
-      <div class="muted" style="font-size:13px">Combat die faces: 1 = 1, 2 = 2, 3 or 4 = 0, 5 or 6 = 1 + Effect.</div>
-      <button class="btn" id="lt-cd" style="margin-top:8px">&#127922; Roll the ${e.cd} d6 for me</button><div id="lt-cdout"></div>`;
+    h += `<div>${TP(e.cd, "Quantity: <b>{base}</b> + roll <b>{n} d6</b> (combat die).", "Quantity: <b>{base}</b> + roll <b>{n} d6</b> (combat dice).", { base: e.base })}</div>
+      <div class="muted" style="font-size:13px">${T("Combat die faces: 1 = 1, 2 = 2, 3 or 4 = 0, 5 or 6 = 1 + Effect.")}</div>
+      <button class="btn" id="lt-cd" style="margin-top:8px">&#127922; ${T("Roll the {n} d6 for me", { n: e.cd })}</button><div id="lt-cdout"></div>`;
   } else {
-    h += `<div>Quantity: <b>${e.base || 1}</b>. No dice to roll.</div>`;
+    h += `<div>${T("Quantity: <b>{n}</b>. No dice to roll.", { n: e.base || 1 })}</div>`;
   }
-  h += `<div class="muted" style="font-size:13px;margin-top:8px">Tip: a player can spend 1 Luck point to shift the 2d20 result by up to the location's level.</div></div>`;
+  h += `<div class="muted" style="font-size:13px;margin-top:8px">${T("Tip: a player can spend 1 Luck point to shift the 2d20 result by up to the location's level.")}</div></div>`;
   $("lt-out").innerHTML = h;
   if (e.cd) $("lt-cd").onclick = () => {
     const r = rollCombatDice(e.cd);
     const faces = r.faces.map(f => {
       const v = CD_FACE_VALUE[f - 1];
-      return `<span class="die ${f >= 5 ? "fx" : v === 0 ? "zero" : ""}" title="face ${f}">${v}${f >= 5 ? "*" : ""}</span>`;
+      return `<span class="die ${f >= 5 ? "fx" : v === 0 ? "zero" : ""}" title="${T("face {n}", { n: f })}">${v}${f >= 5 ? "*" : ""}</span>`;
     }).join("");
-    $("lt-cdout").innerHTML = `<div class="dice">${faces}</div><div>Total: <b>${e.base} + ${r.total} = ${e.base + r.total}</b> ${esc(e.name)} <span class="muted">(* = Effect)</span></div>`;
+    $("lt-cdout").innerHTML = `<div class="dice">${faces}</div><div>${T("Total:")} <b>${e.base} + ${r.total} = ${e.base + r.total}</b> ${esc(T(e.name))} <span class="muted">(${T("* = Effect")})</span></div>`;
   };
 }
 $("lt-look").onclick = () => {
@@ -174,10 +175,10 @@ $("lt-cat").onchange = () => { $("lt-out").innerHTML = ""; buildLootEditor(); };
 
 function buildLootEditor() {
   const cat = $("lt-cat").value, t = lootTable(cat);
-  let h = `<table class="lt"><tr><th>2d20</th><th>Item</th><th>Qty</th><th>Dice</th></tr>`;
+  let h = `<table class="lt"><tr><th>2d20</th><th>${T("Item")}</th><th>${T("Qty")}</th><th>${T("Dice")}</th></tr>`;
   ROLLS.forEach(r => {
     const e = t[r];
-    h += `<tr><td class="r">${r}</td><td><input type="text" data-r="${r}" data-k="name" value="${esc(e.name)}"></td>
+    h += `<tr><td class="r">${r}</td><td><input type="text" data-r="${r}" data-k="name" value="${esc(T(e.name))}"></td>
       <td class="n"><input type="number" min="0" data-r="${r}" data-k="base" value="${e.base}"></td>
       <td class="n"><input type="number" min="0" max="20" data-r="${r}" data-k="cd" value="${e.cd}"></td></tr>`;
   });
@@ -187,17 +188,17 @@ $("lt-tsave").onclick = async () => {
   const cat = $("lt-cat").value, t = {};
   $("lt-table").querySelectorAll("input").forEach(inp => {
     const r = inp.dataset.r; t[r] = t[r] || {};
-    t[r][inp.dataset.k] = inp.dataset.k === "name" ? inp.value.trim() || "(nothing)" : Math.max(0, parseInt(inp.value, 10) || 0);
+    t[r][inp.dataset.k] = inp.dataset.k === "name" ? inp.value.trim() || T("(nothing)") : Math.max(0, parseInt(inp.value, 10) || 0);
   });
   LOOT_OVERRIDES[cat] = t;
-  toast((await Platform.saveJSON("loot_tables", LOOT_OVERRIDES)) ? `${cat} table saved` : "Could not save the table");
+  toast((await Platform.saveJSON("loot_tables", LOOT_OVERRIDES)) ? T("{cat} table saved", { cat: T(cat) }) : T("Could not save the table"));
 };
 $("lt-treset").onclick = async () => {
   const cat = $("lt-cat").value;
-  if (!(await confirmBox(`Reset the ${cat} table to the app's default? Your edits to it will be lost.`, "Reset"))) return;
+  if (!(await confirmBox(T("Reset the {cat} table to the app's default? Your edits to it will be lost.", { cat: T(cat) }), T("Reset")))) return;
   delete LOOT_OVERRIDES[cat];
   await Platform.saveJSON("loot_tables", LOOT_OVERRIDES);
-  buildLootEditor(); toast(`${cat} table reset`);
+  buildLootEditor(); toast(T("{cat} table reset", { cat: T(cat) }));
 };
 
 // ------------------------------------------------------------------ 4. random perk / suggestion
@@ -206,9 +207,9 @@ const pkChar = () => ROSTER.find(x => x.id === $("pk-char").value) || null;
 
 function fillCharSelect() {
   const sel = $("pk-char"), keep = sel.value;
-  sel.innerHTML = `<option value="">Nobody: fully random perk</option>` + ROSTER.slice()
+  sel.innerHTML = `<option value="">${T("Nobody: fully random perk")}</option>` + ROSTER.slice()
     .sort((a, b) => a.name.localeCompare(b.name))
-    .map(c => `<option value="${esc(c.id)}">${esc(c.name)} (level ${c.level || 1})</option>`).join("");
+    .map(c => `<option value="${esc(c.id)}">${esc(c.name)} (${T("level {n}", { n: c.level || 1 })})</option>`).join("");
   sel.value = ROSTER.some(c => c.id === keep) ? keep : "";
   updateCharInfo();
 }
@@ -218,8 +219,8 @@ function pointsGrid(special, cards) {
   const used = pointsUsed({ perkCards: cards });
   return `<div class="pts">${G.SPECIAL.map(k => {
     const u = used[k] || 0, max = special[k] || 0, over = u > max;
-    return `<div class="${u >= max ? "full" : ""}" style="${over ? "border-color:var(--red)" : ""}" title="${SPECIAL_FULL[k]}">
-      ${k}<br><b style="${over ? "color:var(--red)" : ""}">${u}/${max}</b></div>`;
+    return `<div class="${u >= max ? "full" : ""}" style="${over ? "border-color:var(--red)" : ""}" title="${T(SPECIAL_FULL[k])}">
+      ${T(k)}<br><b style="${over ? "color:var(--red)" : ""}">${u}/${max}</b></div>`;
   }).join("")}</div>`;
 }
 const cardsOwned = c => (c.perkCards || []).reduce((n, x) => n + x.rank, 0);
@@ -227,58 +228,57 @@ const cardsOwned = c => (c.perkCards || []).reduce((n, x) => n + x.rank, 0);
 function updateCharInfo() {
   const c = pkChar();
   pkSkip = [];
-  $("pk-gen").textContent = c ? "SUGGEST A PERK" : "RANDOM PERK";
+  $("pk-gen").textContent = c ? T("SUGGEST A PERK") : T("RANDOM PERK");
   if (!c) { $("pk-charinfo").innerHTML = ""; return; }
   const owned = cardsOwned(c), lvl = c.level || 1;
-  $("pk-charinfo").innerHTML = `<b>${esc(c.name)}</b>: level ${lvl}, ${owned} perk card${owned === 1 ? "" : "s"} picked
-    (Fallout 76 gives one per level${owned >= lvl ? `. <span style="color:var(--red)">All picks for this level are used: level up first, or treat the suggestion as a plan</span>` : ""}).
-    Points spent per S.P.E.C.I.A.L.:${pointsGrid(c.special, c.perkCards || [])}
-    ${isGhoul(c) ? "Ghoul origin: Ghoul perks are included." : "Ghoul perks are only suggested if the character's origin says Ghoul."}`;
+  $("pk-charinfo").innerHTML = `<b>${esc(c.name)}</b>: ${TP(owned, "level {lvl}, {n} perk card picked", "level {lvl}, {n} perk cards picked", { lvl })}
+    (${T("Fallout 76 gives one per level")}${owned >= lvl ? `. <span style="color:var(--red)">${T("All picks for this level are used: level up first, or treat the suggestion as a plan")}</span>` : ""}).
+    ${T("Points spent per S.P.E.C.I.A.L.:")}${pointsGrid(c.special, c.perkCards || [])}
+    ${isGhoul(c) ? T("Ghoul origin: Ghoul perks are included.") : T("Ghoul perks are only suggested if the character's origin says Ghoul.")}`;
 }
 $("pk-char").onchange = () => { updateCharInfo(); $("pk-out").innerHTML = ""; };
 
 function perkHtml(p, opts = {}) {
   const ranks = p.ranks.map((r, i) => `<div class="rank" style="${opts.rank === i + 1 ? "border-left-color:var(--green)" : opts.rank ? "opacity:.6" : ""}">
-    <b>Rank ${esc(r.rank)}</b>${opts.rank === i + 1 ? " &larr; suggested" : ""}: ${esc(r.desc)}</div>`).join("");
+    <b>${T("Rank {n}", { n: esc(r.rank) })}</b>${opts.rank === i + 1 ? ` &larr; ${T("suggested")}` : ""}: ${esc(r.desc)}</div>`).join("");
   return `<div class="card perk">
-    <img src="${esc(p.image)}" alt="${esc(p.name)} perk card" referrerpolicy="no-referrer" onerror="if(this.src!=='${esc(p.thumb)}')this.src='${esc(p.thumb)}'">
+    <img src="${esc(p.image)}" alt="${esc(p.name)}" referrerpolicy="no-referrer" onerror="if(this.src!=='${esc(p.thumb)}')this.src='${esc(p.thumb)}'">
     <div class="txt"><h3>${esc(p.name)}</h3>
-      <div class="badges"><span class="badge"><b>${esc(p.special)}</b></span><span class="badge">${esc(p.group)} perk</span>
-      <span class="badge">Unlocks at level <b>${esc(p.level)}</b></span><span class="badge">${p.ranks.length} rank${p.ranks.length > 1 ? "s" : ""}</span></div>
+      <div class="badges"><span class="badge"><b>${esc(T(p.special))}</b></span><span class="badge">${T(p.group === "Ghoul" ? "Ghoul perk" : "Regular perk")}</span>
+      <span class="badge">${T("Unlocks at level")} <b>${esc(p.level)}</b></span><span class="badge">${TP(p.ranks.length, "{n} rank", "{n} ranks")}</span></div>
       ${opts.extra || ""}${ranks}
-      <div class="muted" style="font-size:12px;margin-top:10px">Source: <a href="${esc(p.link)}" target="_blank" rel="noopener">fallout.wiki</a>
+      <div class="muted" style="font-size:12px;margin-top:10px">${T("Source:")} <a href="${esc(p.link)}" target="_blank" rel="noopener">fallout.wiki</a>
       &middot; ${opts.footer || ""}</div></div></div>`;
 }
 
 $("pk-gen").onclick = async () => {
   $("pk-gen").disabled = true;
-  $("pk-out").innerHTML = `<div class="card muted">Loading perks from fallout.wiki&hellip;</div>`;
+  $("pk-out").innerHTML = `<div class="card muted">${T("Loading perks from fallout.wiki…")}</div>`;
   try {
     const { perks, source } = await loadPerks();
     const g = $("pk-group").value, s = $("pk-special").value;
     const pool = perks.filter(p => (!g || p.group === g) && (!s || p.special.toLowerCase().startsWith(s.toLowerCase())));
-    const off = source === "cache" ? " &middot; offline copy" : "";
-    if (!pool.length) { $("pk-out").innerHTML = `<div class="card">No perks match those filters.</div>`; return; }
+    const off = source === "cache" ? ` &middot; ${T("offline copy")}` : "";
+    if (!pool.length) { $("pk-out").innerHTML = `<div class="card">${T("No perks match those filters.")}</div>`; return; }
     const ch = pkChar();
     if (!ch) {
-      $("pk-out").innerHTML = perkHtml(choice(pool), { footer: `${pool.length} perks in this pool${off}` });
+      $("pk-out").innerHTML = perkHtml(choice(pool), { footer: TP(pool.length, "{n} perk in this pool", "{n} perks in this pool") + off });
       return;
     }
     let { pick, total } = suggestPerk(ch, pool, pkSkip);
     if (!pick && pkSkip.length) { pkSkip = []; ({ pick, total } = suggestPerk(ch, pool, pkSkip)); }
     if (!pick) {
-      $("pk-out").innerHTML = `<div class="card">Nothing fits ${esc(ch.name)} right now: every S.P.E.C.I.A.L. is out of free points,
-        or the remaining perks need a higher level. Level up the character (Saved Characters &rarr; Level up), or loosen the filters.</div>`;
+      $("pk-out").innerHTML = `<div class="card">${T("Nothing fits {name} right now: every S.P.E.C.I.A.L. is out of free points, or the remaining perks need a higher level. Level up the character (Saved Characters → Level up), or loosen the filters.", { name: esc(ch.name) })}</div>`;
       return;
     }
     pkSkip.push(pick.perk.name);
-    const head = pick.kind === "upgrade" ? `Rank up to <b>${pick.rank}</b>` : "New perk card";
+    const head = pick.kind === "upgrade" ? T("Rank up to <b>{n}</b>", { n: pick.rank }) : T("New perk card");
     $("pk-out").innerHTML = perkHtml(pick.perk, {
       rank: pick.rank,
-      extra: `<div class="why"><b>${head}</b> for ${esc(ch.name)}: ${pick.reasons.map(esc).join("; ")}.</div>
-        <div class="bar" style="margin:8px 0"><button class="btn primary" id="pk-add">&#10010; Add to ${esc(ch.name)}</button>
-        <button class="btn" id="pk-again">&#8635; Suggest another</button></div>`,
-      footer: `${total} perk${total === 1 ? "" : "s"} fit this character${off}`,
+      extra: `<div class="why"><b>${head}</b> ${T("for {name}:", { name: esc(ch.name) })} ${pick.reasons.map(esc).join("; ")}.</div>
+        <div class="bar" style="margin:8px 0"><button class="btn primary" id="pk-add">&#10010; ${T("Add to {name}", { name: esc(ch.name) })}</button>
+        <button class="btn" id="pk-again">&#8635; ${T("Suggest another")}</button></div>`,
+      footer: TP(total, "{n} perk fits this character", "{n} perks fit this character") + off,
     });
     $("pk-again").onclick = () => $("pk-gen").click();
     $("pk-add").onclick = async () => {
@@ -288,8 +288,8 @@ $("pk-gen").onclick = async () => {
       const have = c.perkCards.find(x => x.name === pick.perk.name);
       if (have) have.rank = pick.rank; else c.perkCards.push(perkCardFrom(pick.perk, pick.rank));
       await addToRoster(c);
-      toast(`${pick.perk.name} rank ${pick.rank} added to ${c.name}`);
-      $("pk-add").disabled = true; $("pk-add").textContent = "Added ✓";
+      toast(T("{perk} rank {r} added to {name}", { perk: pick.perk.name, r: pick.rank, name: c.name }));
+      $("pk-add").disabled = true; $("pk-add").textContent = T("Added ✓");
       const keep = pkSkip; fillCharSelect(); pkSkip = keep;
     };
   } catch (e) {
@@ -302,9 +302,9 @@ $("pk-gen").onclick = async () => {
 // ------------------------------------------------------------------ 5. create / edit character
 let ROSTER = [], editingId = null, crPhoto = null, crCards = [];
 G.SPECIAL.forEach(a => $("cr-special").insertAdjacentHTML("beforeend",
-  `<div><label for="cr-s-${a}" title="${SPECIAL_FULL[a]}">${a}</label><input type="number" id="cr-s-${a}" min="1" max="12" value="5" inputmode="numeric"></div>`));
+  `<div><label for="cr-s-${a}" title="${T(SPECIAL_FULL[a])}">${T(a)}</label><input type="number" id="cr-s-${a}" min="1" max="12" value="5" inputmode="numeric"></div>`));
 G.SKILLS.forEach(([s, a]) => $("cr-skills").insertAdjacentHTML("beforeend",
-  `<div class="skill"><input type="checkbox" id="cr-t-${safeName(s)}" title="Tag skill"><span>${esc(s)} <i>[${a}]</i></span>
+  `<div class="skill"><input type="checkbox" id="cr-t-${safeName(s)}" title="${T("Tag skill")}"><span>${esc(T(s))} <i>[${T(a)}]</i></span>
    <input type="number" id="cr-k-${safeName(s)}" min="0" max="6" value="0" inputmode="numeric"></div>`));
 
 // photo if there is one, otherwise the default picture for the character's kind
@@ -317,28 +317,28 @@ const autoMaxHp = s => s.END + s.LCK;
 const autoCarry = s => 150 + 10 * s.STR;
 function crAutoHints() {
   const s = crSpecial();
-  $("cr-maxhp").placeholder = `Auto: ${autoMaxHp(s)}`;
-  $("cr-carry").placeholder = `Auto: ${autoCarry(s)}`;
+  $("cr-maxhp").placeholder = T("Auto: {n}", { n: autoMaxHp(s) });
+  $("cr-carry").placeholder = T("Auto: {n}", { n: autoCarry(s) });
 }
 function resetForm() {
   editingId = null; crPhoto = null; crCards = [];
-  $("cr-title").textContent = "Create Character";
-  $("cr-hint").innerHTML = "Fill in your character and save it. It will appear under <b>Saved Characters</b>.";
+  $("cr-title").textContent = T("Create Character");
+  $("cr-hint").innerHTML = T("Fill in your character and save it. It will appear under <b>Saved Characters</b>.");
   $("cr-levelup").hidden = true;
   $("cr-name").value = ""; $("cr-origin").value = ""; $("cr-level").value = 1; $("cr-notes").value = "";
   $("cr-race").value = ""; $("cr-maxhp").value = ""; $("cr-carry").value = "";
   G.SPECIAL.forEach(a => ($("cr-s-" + a).value = 5));
   G.SKILL_NAMES.forEach(s => { $("cr-k-" + safeName(s)).value = 0; $("cr-t-" + safeName(s)).checked = false; });
   crAvatar(); crAutoHints();
-  $("cr-save").textContent = "SAVE CHARACTER";
-  $("cr-clear").textContent = "Clear form";
+  $("cr-save").textContent = T("SAVE CHARACTER");
+  $("cr-clear").textContent = T("Clear form");
   renderCrCards();
 }
 function fillForm(c, levelUp = false) {
   editingId = c.id; crPhoto = c.photo || null;
   crCards = JSON.parse(JSON.stringify(c.perkCards || []));
-  $("cr-title").textContent = (levelUp ? "Level up " : "Edit ") + c.name;
-  $("cr-hint").innerHTML = "Change anything you need, then press <b>Save changes</b>. Nothing is changed until you save.";
+  $("cr-title").textContent = T(levelUp ? "Level up {name}" : "Edit {name}", { name: c.name });
+  $("cr-hint").innerHTML = T("Change anything you need, then press <b>Save changes</b>. Nothing is changed until you save.");
   $("cr-name").value = c.name; $("cr-origin").value = c.origin || ""; $("cr-notes").value = c.notes || "";
   $("cr-race").value = c.race || "";
   $("cr-maxhp").value = c.maxHp || ""; $("cr-carry").value = c.carryWeight || "";
@@ -351,11 +351,10 @@ function fillForm(c, levelUp = false) {
   crAvatar(); crAutoHints();
   const lu = $("cr-levelup");
   lu.hidden = !levelUp;
-  if (levelUp) lu.innerHTML = `&#11014; <b>${esc(c.name)}: level ${c.level || 1} &rarr; ${$("cr-level").value}</b><br>
-    Raise whatever went up this level (S.P.E.C.I.A.L., skill ranks, perk cards, notes), then press <b>Save changes</b>.
-    In Fallout 76 terms that's +1 to one S.P.E.C.I.A.L. and one new perk card. Use <b>Random FO76 Perk</b> afterwards for a suggestion.`;
-  $("cr-save").textContent = "SAVE CHANGES";
-  $("cr-clear").textContent = "Cancel editing";
+  if (levelUp) lu.innerHTML = `&#11014; <b>${T("{name}: level {a} → {b}", { name: esc(c.name), a: c.level || 1, b: $("cr-level").value })}</b><br>
+    ${T("Raise whatever went up this level (S.P.E.C.I.A.L., skill ranks, perk cards, notes), then press <b>Save changes</b>. In Fallout 76 terms that's +1 to one S.P.E.C.I.A.L. and one new perk card. Use <b>Random FO76 Perk</b> afterwards for a suggestion.")}`;
+  $("cr-save").textContent = T("SAVE CHANGES");
+  $("cr-clear").textContent = T("Cancel editing");
   renderCrCards();
 }
 
@@ -368,14 +367,14 @@ function crSpecial() {
 function renderCrCards() {
   const box = $("cr-cards");
   if (!crCards.length) {
-    box.innerHTML = `<div class="muted" style="font-size:13px">No perk cards yet. Add them here, or from the Random FO76 Perk page.</div>`;
+    box.innerHTML = `<div class="muted" style="font-size:13px">${T("No perk cards yet. Add them here, or from the Random FO76 Perk page.")}</div>`;
   } else {
     box.innerHTML = crCards.map((c, i) => `<div class="pcard"><img src="${esc(c.thumb || c.image)}" alt="" referrerpolicy="no-referrer">
-      <div class="t"><b>${esc(c.name)}</b><small>${esc(c.special)} &middot; unlocks at level ${c.level}</small></div>
-      <select data-i="${i}" title="Rank">${c.ranks.map((r, k) => `<option value="${k + 1}" ${k + 1 === c.rank ? "selected" : ""}>Rank ${k + 1} (cost ${r.cost})</option>`).join("")}</select>
-      <button class="btn danger" data-rm="${i}" title="Remove">&#10005;</button></div>`).join("");
+      <div class="t"><b>${esc(c.name)}</b><small>${esc(T(c.special))} &middot; ${T("unlocks at level {n}", { n: c.level })}</small></div>
+      <select data-i="${i}" title="${T("Rank")}">${c.ranks.map((r, k) => `<option value="${k + 1}" ${k + 1 === c.rank ? "selected" : ""}>${T("Rank {n} (cost {c})", { n: k + 1, c: r.cost })}</option>`).join("")}</select>
+      <button class="btn danger" data-rm="${i}" title="${T("Remove")}">&#10005;</button></div>`).join("");
   }
-  box.insertAdjacentHTML("beforeend", `<div class="muted" style="font-size:12px;margin-top:6px">Points spent / S.P.E.C.I.A.L. value (red = over the limit):</div>` + pointsGrid(crSpecial(), crCards));
+  box.insertAdjacentHTML("beforeend", `<div class="muted" style="font-size:12px;margin-top:6px">${T("Points spent / S.P.E.C.I.A.L. value (red = over the limit):")}</div>` + pointsGrid(crSpecial(), crCards));
   box.querySelectorAll("select[data-i]").forEach(sel => (sel.onchange = () => { crCards[+sel.dataset.i].rank = +sel.value; renderCrCards(); }));
   box.querySelectorAll("[data-rm]").forEach(b => (b.onclick = () => { crCards.splice(+b.dataset.rm, 1); renderCrCards(); }));
 }
@@ -384,20 +383,20 @@ G.SPECIAL.forEach(a => $("cr-s-" + a).addEventListener("input", renderCrCards));
 async function fillPerkList() {
   try {
     const { perks } = await loadPerks();
-    $("cr-perklist").innerHTML = perks.map(p => `<option value="${esc(p.name)}">${esc(p.special)}${p.group === "Ghoul" ? " (Ghoul)" : ""}</option>`).join("");
+    $("cr-perklist").innerHTML = perks.map(p => `<option value="${esc(p.name)}">${esc(T(p.special))}${p.group === "Ghoul" ? ` (${T("Ghoul")})` : ""}</option>`).join("");
     $("cr-cardnote").textContent = "";
   } catch (e) {
-    $("cr-cardnote").textContent = "The perk list downloads from fallout.wiki: connect to the internet once to add cards here.";
+    $("cr-cardnote").textContent = T("The perk list downloads from fallout.wiki: connect to the internet once to add cards here.");
   }
 }
 $("cr-cardadd").onclick = async () => {
   const name = $("cr-cardname").value.trim().toLowerCase();
   if (!name) return;
   let perks = [];
-  try { perks = (await loadPerks()).perks; } catch (e) { toast("Perk list not available offline yet"); return; }
+  try { perks = (await loadPerks()).perks; } catch (e) { toast(T("Perk list not available offline yet")); return; }
   const p = perks.find(x => x.name.toLowerCase() === name);
-  if (!p) { toast("Pick a perk name from the list"); return; }
-  if (crCards.some(c => c.name === p.name)) { toast(`${p.name} is already on this character`); return; }
+  if (!p) { toast(T("Pick a perk name from the list")); return; }
+  if (crCards.some(c => c.name === p.name)) { toast(T("{perk} is already on this character", { perk: p.name })); return; }
   crCards.push(perkCardFrom(p, 1));
   $("cr-cardname").value = "";
   renderCrCards();
@@ -411,7 +410,7 @@ function shrinkPhoto(file) {
     fr.onerror = rej;
     fr.onload = () => {
       const im = new Image();
-      im.onerror = () => rej(new Error("That file isn't an image this device can read."));
+      im.onerror = () => rej(new Error(T("That file isn't an image this device can read.")));
       im.onload = () => {
         const max = 480, k = Math.min(1, max / Math.max(im.width, im.height));
         const cv = document.createElement("canvas");
@@ -428,7 +427,7 @@ $("cr-photo").onchange = async e => {
   const f = e.target.files && e.target.files[0];
   if (!f) return;
   try { crPhoto = await shrinkPhoto(f); crAvatar(); }
-  catch (err) { toast(err.message || "Couldn't load that photo"); }
+  catch (err) { toast(err.message || T("Couldn't load that photo")); }
   e.target.value = "";
 };
 $("cr-nophoto").onclick = () => { crPhoto = null; crAvatar(); };
@@ -444,7 +443,7 @@ $("cr-clear").onclick = () => {
 
 $("cr-save").onclick = async () => {
   const name = $("cr-name").value.trim();
-  if (!name) { toast("Give your character a name first"); $("cr-name").focus(); return; }
+  if (!name) { toast(T("Give your character a name first")); $("cr-name").focus(); return; }
   const before = editingId ? ROSTER.find(x => x.id === editingId) : null;
   const c = {
     ...(before || {}), // keep anything this form doesn't show
@@ -462,7 +461,7 @@ $("cr-save").onclick = async () => {
   });
   const wasEditing = !!editingId;
   await addToRoster(c);
-  toast(wasEditing ? `${name} updated` : `${name} saved`);
+  toast(T(wasEditing ? "{name} updated" : "{name} saved", { name }));
   resetForm();
   openProfileId = c.id;
   showPage("roster");
@@ -473,7 +472,7 @@ let openProfileId = null;
 async function loadRoster() { ROSTER = await Platform.loadJSON("roster", []); }
 async function storeRoster() {
   const ok = await Platform.saveJSON("roster", ROSTER);
-  if (!ok) toast("Warning: could not save the character list");
+  if (!ok) toast(T("Warning: could not save the character list"));
   return ok;
 }
 async function addToRoster(c) {
@@ -488,9 +487,9 @@ function closeProfile() { openProfileId = null; renderRoster(); }
 function derived(c) {
   const s = c.special;
   return [
-    [c.maxHp ? "Max HP" : "Max HP (auto, level 1)", c.maxHp || autoMaxHp(s)], ["Initiative", s.PER + s.AGI],
-    ["Defense", s.AGI >= 9 ? 2 : 1], [c.carryWeight ? "Carry weight" : "Carry weight (auto)", (c.carryWeight || autoCarry(s)) + " lbs"],
-    ["Melee bonus", s.STR >= 11 ? "+3 CD" : s.STR >= 9 ? "+2 CD" : s.STR >= 7 ? "+1 CD" : "none"], ["Luck points", s.LCK],
+    [T(c.maxHp ? "Max HP" : "Max HP (auto, level 1)"), c.maxHp || autoMaxHp(s)], [T("Initiative"), s.PER + s.AGI],
+    [T("Defense"), s.AGI >= 9 ? 2 : 1], [T(c.carryWeight ? "Carry weight" : "Carry weight (auto)"), (c.carryWeight || autoCarry(s)) + " " + T("lbs")],
+    [T("Melee bonus"), s.STR >= 11 ? T("+{n} CD", { n: 3 }) : s.STR >= 9 ? T("+{n} CD", { n: 2 }) : s.STR >= 7 ? T("+{n} CD", { n: 1 }) : T("none")], [T("Luck points"), s.LCK],
   ];
 }
 
@@ -500,32 +499,32 @@ function renderRoster() {
   if (c) {
     list.innerHTML = "";
     const skills = G.SKILLS.filter(([s]) => c.skills[s] || (c.tags || []).includes(s));
-    prof.innerHTML = `<button class="btn" id="ro-back">&larr; All characters</button>
+    prof.innerHTML = `<button class="btn" id="ro-back">&larr; ${T("All characters")}</button>
       <div class="card"><div class="profile-head"><div class="avatar" id="ro-av"></div>
-        <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="muted">${esc(c.origin || "Unknown origin")} &middot; Level ${c.level || 1}</div></div></div>
-        <h4>S.P.E.C.I.A.L.</h4><div class="statgrid">${G.SPECIAL.map(a => `<div class="stat"><b>${c.special[a]}</b><small>${SPECIAL_FULL[a]}</small></div>`).join("")}</div>
-        <h4>Derived (from S.P.E.C.I.A.L., before gear and perks)</h4>
+        <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="muted">${esc(c.origin || T("Unknown origin"))} &middot; ${T("Level")} ${c.level || 1}</div></div></div>
+        <h4>S.P.E.C.I.A.L.</h4><div class="statgrid">${G.SPECIAL.map(a => `<div class="stat"><b>${c.special[a]}</b><small>${T(SPECIAL_FULL[a])}</small></div>`).join("")}</div>
+        <h4>${T("Derived (from S.P.E.C.I.A.L., before gear and perks)")}</h4>
         <div class="derived">${derived(c).map(([k, v]) => `<div class="stat"><b style="font-size:17px">${v}</b><small>${k}</small></div>`).join("")}</div>
-        <h4>Skills</h4>${skills.length ? `<table class="lt">${skills.map(([s, a]) => `<tr><td>${(c.tags || []).includes(s) ? "&#9733; " : ""}${esc(s)} <span class="muted">[${a}]</span></td>
-          <td style="text-align:right"><b>${c.skills[s] || 0}</b></td><td style="text-align:right" class="muted">TN ${c.special[a] + (c.skills[s] || 0)}</td></tr>`).join("")}</table>
-          <div class="muted" style="font-size:12px;margin-top:4px">&#9733; = Tag skill. TN = attribute + skill rank.</div>`
-          : `<div class="muted">No skill ranks yet.</div>`}
-        <h4>Fallout 76 perk cards</h4>
+        <h4>${T("Skills")}</h4>${skills.length ? `<table class="lt">${skills.map(([s, a]) => `<tr><td>${(c.tags || []).includes(s) ? "&#9733; " : ""}${esc(T(s))} <span class="muted">[${T(a)}]</span></td>
+          <td style="text-align:right"><b>${c.skills[s] || 0}</b></td><td style="text-align:right" class="muted">${T("TN")} ${c.special[a] + (c.skills[s] || 0)}</td></tr>`).join("")}</table>
+          <div class="muted" style="font-size:12px;margin-top:4px">${T("★ = Tag skill. TN = attribute + skill rank.")}</div>`
+          : `<div class="muted">${T("No skill ranks yet.")}</div>`}
+        <h4>${T("Fallout 76 perk cards")}</h4>
         ${(c.perkCards || []).length ? (c.perkCards || []).map(pc => `<div class="pcard"><img src="${esc(pc.thumb || pc.image)}" alt="" referrerpolicy="no-referrer">
-          <div class="t"><b>${esc(pc.name)}</b> <span class="muted">rank ${pc.rank} &middot; ${esc(pc.special)} &middot; cost ${cardCost(pc)}</span>
+          <div class="t"><b>${esc(pc.name)}</b> <span class="muted">${T("rank {n}", { n: pc.rank })} &middot; ${esc(T(pc.special))} &middot; ${T("cost {n}", { n: cardCost(pc) })}</span>
           <small style="white-space:normal">${esc((pc.ranks[pc.rank - 1] || {}).desc || "")}</small></div></div>`).join("")
-          + `<div class="muted" style="font-size:12px;margin-top:6px">Points spent / S.P.E.C.I.A.L. value:</div>` + pointsGrid(c.special, c.perkCards)
-          : `<div class="muted">None yet. Tap <b>Suggest a perk</b> to get one picked for this character.</div>`}
-        ${c.notes ? `<h4>Notes</h4><div style="white-space:pre-wrap;font-size:14px;line-height:1.45">${esc(c.notes)}</div>` : ""}
-        <div class="bar" style="margin-top:16px"><button class="btn primary" id="ro-lvl">&#11014; Level up</button>
-          <button class="btn" id="ro-sug">&#9733; Suggest a perk</button></div>
-        <div class="bar"><button class="btn" id="ro-edit">&#9998; Edit</button><button class="btn danger" id="ro-del">&#128465; Delete</button></div>
+          + `<div class="muted" style="font-size:12px;margin-top:6px">${T("Points spent / S.P.E.C.I.A.L. value:")}</div>` + pointsGrid(c.special, c.perkCards)
+          : `<div class="muted">${T("None yet. Tap <b>Suggest a perk</b> to get one picked for this character.")}</div>`}
+        ${c.notes ? `<h4>${T("Notes")}</h4><div style="white-space:pre-wrap;font-size:14px;line-height:1.45">${esc(c.notes)}</div>` : ""}
+        <div class="bar" style="margin-top:16px"><button class="btn primary" id="ro-lvl">&#11014; ${T("Level up")}</button>
+          <button class="btn" id="ro-sug">&#9733; ${T("Suggest a perk")}</button></div>
+        <div class="bar"><button class="btn" id="ro-edit">&#9998; ${T("Edit")}</button><button class="btn danger" id="ro-del">&#128465; ${T("Delete")}</button></div>
       </div>`;
     setAvatar($("ro-av"), c);
     $("ro-back").onclick = closeProfile;
     $("ro-edit").onclick = () => { fillForm(c); showPage("create"); };
     $("ro-lvl").onclick = () => {
-      if ((c.level || 1) >= 50) { toast("Already at the maximum level (50)"); return; }
+      if ((c.level || 1) >= 50) { toast(T("Already at the maximum level (50)")); return; }
       fillForm(c, true); showPage("create");
     };
     $("ro-sug").onclick = () => { showPage("perks"); $("pk-char").value = c.id; updateCharInfo(); $("pk-out").innerHTML = ""; $("pk-gen").click(); };
@@ -534,15 +533,15 @@ function renderRoster() {
   }
   prof.innerHTML = "";
   if (!ROSTER.length) {
-    list.innerHTML = `<div class="empty">No saved characters yet.<br><br>Create one in <b>Create Character</b>, or tap <b>Add to saved</b> after generating a random one.</div>`;
+    list.innerHTML = `<div class="empty">${T("No saved characters yet.<br><br>Create one in <b>Create Character</b>, or tap <b>Add to saved</b> after generating a random one.")}</div>`;
     return;
   }
   const sorted = ROSTER.slice().sort((a, b) => a.name.localeCompare(b.name));
-  list.innerHTML = `<p class="hint">${sorted.length} character${sorted.length > 1 ? "s" : ""}. Tap one to see the profile.</p><div class="list">` +
+  list.innerHTML = `<p class="hint">${TP(sorted.length, "{n} character. Tap one to see the profile.", "{n} characters. Tap one to see the profile.")}</p><div class="list">` +
     sorted.map(c => `<div class="entry" data-id="${esc(c.id)}"><div class="avatar" data-av="${esc(c.id)}"></div><div style="flex:1;min-width:0">
-      <b>${esc(c.name)}</b><small>${esc(c.origin || "Unknown origin")} &middot; Lvl ${c.level || 1}${(c.perkCards || []).length ? ` &middot; ${c.perkCards.length} perk card${c.perkCards.length > 1 ? "s" : ""}` : ""}</small><br>
-      <small>${G.SPECIAL.map(a => `${a} ${c.special[a]}`).join(" &middot; ")}</small></div>
-      <button class="btn danger" data-del="${esc(c.id)}" title="Delete" style="flex:none;padding:8px 11px">&#128465;</button></div>`).join("") + "</div>";
+      <b>${esc(c.name)}</b><small>${esc(c.origin || T("Unknown origin"))} &middot; ${T("Lvl")} ${c.level || 1}${(c.perkCards || []).length ? ` &middot; ${TP(c.perkCards.length, "{n} perk card", "{n} perk cards")}` : ""}</small><br>
+      <small>${G.SPECIAL.map(a => `${T(a)} ${c.special[a]}`).join(" &middot; ")}</small></div>
+      <button class="btn danger" data-del="${esc(c.id)}" title="${T("Delete")}" style="flex:none;padding:8px 11px">&#128465;</button></div>`).join("") + "</div>";
   list.querySelectorAll("[data-av]").forEach(el => setAvatar(el, ROSTER.find(x => x.id === el.dataset.av)));
   list.querySelectorAll(".entry").forEach(el => (el.onclick = e => {
     if (e.target.closest("[data-del]")) return;
@@ -552,12 +551,12 @@ function renderRoster() {
 }
 
 async function deleteChar(c) {
-  if (!c || !(await confirmBox(`Delete ${c.name}? This can't be undone.`))) return;
+  if (!c || !(await confirmBox(T("Delete {name}? This can't be undone.", { name: c.name })))) return;
   ROSTER = ROSTER.filter(x => x.id !== c.id);
   await storeRoster();
   if (editingId === c.id) resetForm();
   openProfileId = null; renderRoster();
-  toast(`${c.name} deleted`);
+  toast(T("{name} deleted", { name: c.name }));
 }
 
 // ------------------------------------------------------------------ home: rearrange the tiles
@@ -637,7 +636,7 @@ const Tiles = (() => {
   // a drop must not also count as a tap on the tile
   grid.addEventListener("click", e => { if (justDragged) { e.stopPropagation(); e.preventDefault(); } }, true);
   grid.addEventListener("contextmenu", e => e.preventDefault());
-  $("tiles-reset").onclick = () => { apply(DEFAULT); Platform.saveJSON("home_order", null); toast("Tiles back in their original order"); };
+  $("tiles-reset").onclick = () => { apply(DEFAULT); Platform.saveJSON("home_order", null); toast(T("Tiles back in their original order")); };
 
   async function restore() {
     const saved = await Platform.loadJSON("home_order", null);

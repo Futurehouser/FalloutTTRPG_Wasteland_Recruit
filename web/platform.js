@@ -45,15 +45,15 @@ const Platform = (() => {
     await ready;
     if (isAndroid()) {
       const r = AndroidBridge.saveImage(dataUrl, name);
-      return r.startsWith("ERROR") ? r : "Saved to Pictures/Fallout Characters";
+      return r.startsWith("ERROR") ? r : T("Saved to Pictures/Fallout Characters");
     }
     if (isDesktop()) {
       const r = await window.pywebview.api.save_image(dataUrl, name);
-      return r.startsWith("ERROR") ? r : "Saved: " + r;
+      return r.startsWith("ERROR") ? r : T("Saved: {file}", { file: r });
     }
     const a = document.createElement("a");
     a.href = dataUrl; a.download = name; a.click();
-    return "Downloaded " + name;
+    return T("Downloaded {file}", { file: name });
   }
 
   // Download + install a new version. Returns "STARTED", "NEED_PERMISSION" or "ERROR: ...".
@@ -71,7 +71,7 @@ const Platform = (() => {
 
   const canShare = () => isAndroid();
   function shareImage(dataUrl, name, title) {
-    if (!isAndroid()) return "Sharing works in the Android app.";
+    if (!isAndroid()) return T("Sharing works in the Android app.");
     const r = AndroidBridge.shareImage(dataUrl, name, title);
     return r.startsWith("ERROR") ? r : "";
   }

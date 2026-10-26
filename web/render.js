@@ -78,7 +78,7 @@ function makeDrawer(ctx) {
   };
   d.relabel = (x0, y0, x1, y1, label) => {
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(x0 * S, y0 * S, (x1 - x0) * S, (y1 - y0) * S);
-    d.text((x0 + x1) / 2, (y0 + y1) / 2, label, UIB, 6.5, "mm", "#fff");
+    d.text((x0 + x1) / 2, (y0 + y1) / 2, T(label), UIB, 6.5, "mm", "#fff", x1 - x0 - 4);
   };
   return d;
 }
@@ -95,14 +95,28 @@ async function renderCharacter(c) {
 
   // header
   t(260, 70, c.name, HANDB, 15, "mm", INK, 176);
-  t(260, 86, `“${c.epithet}” • ${c.archetype}`, HAND, 7.5, "mm", RED, 176);
+  t(260, 86, `“${c.epithet}” • ${T(c.archetype)}`, HAND, 7.5, "mm", RED, 176);
   t(452, 43, "0", HAND, 8.5);
   t(452, 61, "100", HAND, 8.5);
-  t(452, 84, `${c.origin} • ${c.pack}`, HAND, 8, "lm", INK, 150);
+  t(452, 84, `${T(c.origin)} • ${T(c.pack)}`, HAND, 8, "lm", INK, 150);
   t(583, 66, "1", HANDB, 22, "mm");
 
   G.SPECIAL.forEach(a => t(SPECIAL_POS[a][0], SPECIAL_POS[a][1], c.special[a], HANDB, 24, "mm"));
   t(596, 229, c.luck_points, HANDB, 13, "mm");
+
+  // the printed sheet is in English: write the skill names in the app's language over it
+  if (LANG !== "en") G.SKILLS.forEach(([s, a], i) => {
+    const y = SKILL_Y0 + i * SKILL_DY, bg = ctx.getImageData(146 * S, (y - 6) * S, 1, 1).data;
+    ctx.fillStyle = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
+    ctx.fillRect(37 * S, (y - 7) * S, 109 * S, 14 * S);
+    const name = T(s), attr = ` [${T(a)}]`, f = { fam: "sans-serif", w: "normal" };
+    let size = 8.5;
+    setFont(ctx, f, size);
+    while (size > 5 && ctx.measureText(name + attr).width > 105 * S) setFont(ctx, f, (size -= 0.5));
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#333"; ctx.fillText(name, 41 * S, y * S);
+    ctx.fillStyle = "rgb(214,150,105)"; ctx.fillText(attr, 41 * S + ctx.measureText(name).width, y * S);
+  });
 
   G.SKILL_NAMES.forEach((s, i) => {
     const y = SKILL_Y0 + i * SKILL_DY;
@@ -113,7 +127,7 @@ async function renderCharacter(c) {
   t(338, 273, c.melee_bonus ? `+${c.melee_bonus}` : "0", HANDB, 10, "mm");
   t(471, 273, c.defense, HANDB, 11, "mm");
   t(602, 273, c.initiative, HANDB, 11, "mm");
-  t(327, 328, c.poison_immune ? "Imm" : c.poison_dr, HANDB, c.poison_immune ? 8.5 : 10, "mm", INK, 34);
+  t(327, 328, c.poison_immune ? T("Imm") : c.poison_dr, HANDB, c.poison_immune ? 8.5 : 10, "mm", INK, 34);
   t(574, 323, c.hp, HANDB, 10, "mm");
   t(574, 339, c.hp, HANDB, 10, "mm");
 
@@ -122,15 +136,15 @@ async function renderCharacter(c) {
     const [px, y, rx] = LOC_BOX[loc], dr = c.dr[loc];
     t(px, y, dr.p, HANDB, 9, "mm");
     t(px, y + 18, dr.e, HANDB, 9, "mm");
-    t(rx, y, c.rad_immune ? "Imm" : dr.r, HANDB, c.rad_immune ? 7.5 : 9, "mm");
+    t(rx, y, c.rad_immune ? T("Imm") : dr.r, HANDB, c.rad_immune ? 7.5 : 9, "mm");
   }
 
   const hasIronFist = c.perks.some(p => p[0] === "Iron Fist");
   c.weapons.slice(0, 5).forEach((w, i) => {
     const wd = G.WEAPONS[w], y = WEAPON_Y[i];
     const tn = c.special[G.SKILL_ATTR[wd.skill]] + c.skills[wd.skill];
-    t(39, y, w, UI, 7.5, "lm", INK, 86);
-    t(150, y, wd.skill, UI, 6.5, "mm", INK, 42);
+    t(39, y, T(w), UI, 7.5, "lm", INK, 86);
+    t(150, y, T(wd.skill), UI, 6.5, "mm", INK, 42);
     t(188, y, tn, HANDB, 10, "mm");
     if (c.tags.includes(wd.skill)) d.check(216, y);
     let dmg = wd.dmg;
@@ -139,11 +153,11 @@ async function renderCharacter(c) {
       if (b) dmg = `${dmg}+${b}`;
     }
     t(271, y, dmg, HANDB, 9.5, "lm", INK, 19);
-    d.wrap(293, y - 11, 52, 22, wd.eff, UI, 6.5, INK, 1.15, true);
-    t(367, y, wd.type, UI, 7, "mm", INK, 38);
+    d.wrap(293, y - 11, 52, 22, TL(wd.eff), UI, 6.5, INK, 1.15, true);
+    t(367, y, T(wd.type), UI, 7, "mm", INK, 38);
     t(405, y, wd.rate, UI, 8, "mm");
     t(438, y, wd.range, UI, 8, "mm");
-    d.wrap(458, y - 11, 71, 22, wd.qual, UI, 6.5, INK, 1.15, true);
+    d.wrap(458, y - 11, 71, 22, TL(wd.qual), UI, 6.5, INK, 1.15, true);
     let ammo = wd.ammo;
     if (w === "Molotov Cocktail") ammo = "Molotov";
     else if (["Baseball Grenade", "Throwing Knives", "Tomahawks"].includes(w)) ammo = w;
@@ -156,13 +170,14 @@ async function renderCharacter(c) {
   Object.keys(c.ammo).sort().forEach((cal, i) => {
     const y = 143 + i * 15;
     if (y > 290) return;
-    t(700, y, cal, UI, 8, "lm", INK, 122);
+    t(700, y, T(cal), UI, 8, "lm", INK, 122);
     t(852, y, c.ammo[cal], HAND, 9, "mm");
   });
 
-  const gear = c.worn.map(i => [i + " (worn)", G.APPAREL[i].wt]);
-  if (c.plating) gear.push([c.plating + " (installed)", "-"]);
-  gear.push(...c.gear);
+  const gear = c.worn.map(i => [T("{item} (worn)", { item: T(i) }), G.APPAREL[i].wt]);
+  if (c.plating) gear.push([T("{item} (installed)", { item: T(c.plating) }), "-"]);
+  const trinket = / \(trinket\)$/;
+  gear.push(...c.gear.map(([nm, wt]) => [trinket.test(nm) ? T("{item} (trinket)", { item: T(nm.replace(trinket, "")) }) : T(nm), wt]));
   const merged = [];
   gear.forEach(([nm, wt]) => {
     const m = merged.find(x => x[0] === nm);
@@ -178,8 +193,8 @@ async function renderCharacter(c) {
   t(862, 795, c.carry_max, HANDB, 10, "mm");
 
   const rows = traitRows(c).map(([n, e]) => [n, "-", e]);
-  c.perks.forEach(([p, r]) => rows.push([p, r, G.PERKS[p][3]]));
-  rows.push(["Quirk", "-", c.gimmick_short]);
+  c.perks.forEach(([p, r]) => rows.push([T(p), r, T(G.PERKS[p][3])]));
+  rows.push([T("Quirk"), "-", c.gimmick_short]);
   rows.slice(0, PERK_ROWS.length).forEach(([nm, rank, eff], i) => {
     const y = PERK_ROWS[i];
     d.wrap(895, y + 3, 91, PERK_ROW_H - 8, nm, UIB, 7.5);
@@ -191,15 +206,16 @@ async function renderCharacter(c) {
   const y0 = SH / S;
   ctx.fillStyle = "#ece9e0"; ctx.fillRect(0, SH, W, BAND);
   ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, SH, W, 22 * S);
-  t(36, y0 + 11, "WASTELAND DOSSIER", UIB, 10, "lm", "#f0be28");
-  t(W / S - 36, y0 + 11, `Archetype: ${c.archetype}   |   Origin: ${c.origin}   |   Pack: ${c.pack}`, UI, 8, "rm", "#e6e6e6");
+  const list = a => a.map(x => T(x)).join(", ");
+  t(36, y0 + 11, T("WASTELAND DOSSIER"), UIB, 10, "lm", "#f0be28");
+  t(W / S - 36, y0 + 11, T("Archetype: {a}   |   Origin: {o}   |   Pack: {p}", { a: T(c.archetype), o: T(c.origin), p: T(c.pack) }), UI, 8, "rm", "#e6e6e6");
   d.wrap(36, y0 + 30, 600, 115, c.gimmick_long, HAND, 9, INK, 1.35);
-  const notes = [`Tag skills: ${c.tags.join(", ")}.`, `Skill points spent: ${c.skill_points} (9 + INT).`];
-  if (c.extra_tags.length) notes.push(`Origin/trait bonus tag(s): ${c.extra_tags.join(", ")}.`);
+  const notes = [T("Tag skills: {list}.", { list: list(c.tags) }), T("Skill points spent: {n} (9 + INT).", { n: c.skill_points })];
+  if (c.extra_tags.length) notes.push(T("Origin/trait bonus tag(s): {list}.", { list: list(c.extra_tags) }));
   notes.push(...c.notes);
-  if (c.race === "robot") notes.push("Robot hit locations are relabelled on the sheet. Carry weight is fixed by the chassis.");
-  if (c.rad_immune) notes.push("Radiation DR shows 'Imm' because this origin is immune to radiation damage.");
-  notes.push("Combat-dice ammo amounts were already rolled. Gear marked '-' has no listed weight.");
+  if (c.race === "robot") notes.push(T("Robot hit locations are relabelled on the sheet. Carry weight is fixed by the chassis."));
+  if (c.rad_immune) notes.push(T("Radiation DR shows 'Imm' because this origin is immune to radiation damage."));
+  notes.push(T("Combat-dice ammo amounts were already rolled. Gear marked '-' has no listed weight."));
   d.wrap(680, y0 + 30, 590, 115, notes.join("  •  "), UI, 7.5, "#3c3c3c", 1.4);
   return cv;
 }

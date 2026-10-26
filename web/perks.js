@@ -51,7 +51,7 @@ async function loadPerks() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     const j = await r.json();
     const perks = parsePerks(j.parse.text);
-    if (!perks.length) throw new Error("the wiki page layout has changed");
+    if (!perks.length) throw new Error(T("the wiki page layout has changed"));
     PERKS = perks;
     Platform.saveJSON("perks_cache", { t: Date.now(), perks });
     return { perks, source: "online" };
@@ -61,7 +61,7 @@ async function loadPerks() {
       PERKS = c.perks;
       return { perks: PERKS, source: "cache" };
     }
-    throw new Error("Couldn't reach fallout.wiki (" + e.message + "). Check the internet connection.");
+    throw new Error(T("Couldn't reach fallout.wiki ({e}). Check the internet connection.", { e: e.message }));
   }
 }
 
@@ -109,7 +109,7 @@ const SKILL_WORDS = {
   "Pilot": W("power armor|fusion cores?"),
 };
 
-function isGhoul(ch) { return /ghoul/i.test(ch.origin || ""); }
+function isGhoul(ch) { return /ghoul|necr[oó]fago/i.test(ch.origin || ""); }
 
 // returns sorted candidate list [{perk, rank, kind: "new"|"upgrade", score, reasons[]}]
 function perkCandidates(ch, perks) {
@@ -127,17 +127,17 @@ function perkCandidates(ch, perks) {
     const extra = rankCost(p.ranks[rank - 1], rank - 1) - (have ? cardCost(have) : 0);
     const free = (ch.special[k] || 0) - (used[k] || 0);
     if (extra > free) return;
-    const reasons = [`${p.special} has ${free} free point${free === 1 ? "" : "s"} (of ${ch.special[k]})`];
+    const reasons = [TP(free, "{sp} has {n} free point (of {max})", "{sp} has {n} free points (of {max})", { sp: T(p.special), max: ch.special[k] })];
     let score = 1 + free * 0.5 + (ch.special[k] || 0) * 0.3;
     const text = p.ranks.map(r => r.desc).join(" ");
     Object.entries(SKILL_WORDS).forEach(([skill, re]) => {
       const r = (ch.skills || {})[skill] || 0, tag = (ch.tags || []).includes(skill);
       if ((r || tag) && re.test(text)) {
         score += r * 1.5 + (tag ? 3 : 0);
-        reasons.push(`fits ${skill} ${r}${tag ? " (tag)" : ""}`);
+        reasons.push(T(tag ? "fits {skill} {r} (tag)" : "fits {skill} {r}", { skill: T(skill), r }));
       }
     });
-    if (have) { score += 2.5; reasons.push(`upgrades your rank ${have.rank} card`); }
+    if (have) { score += 2.5; reasons.push(T("upgrades your rank {n} card", { n: have.rank })); }
     out.push({ perk: p, rank, kind: have ? "upgrade" : "new", score, reasons });
   });
   return out.sort((a, b) => b.score - a.score);

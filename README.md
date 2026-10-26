@@ -9,6 +9,8 @@
 
 **Wasteland Recruit** is a free, fan-made companion app for the **Fallout 2d20 tabletop roleplaying game**. It takes care of the slow parts of running a session (rolling up characters, building scavenging spots, looking up loot, running fights and tracking your party) so you can spend more time playing. It works on **Windows** (a single portable `.exe`, nothing to install) and **Android** (`.apk`), keeps everything on your device, and offers to update itself when a new version is released.
 
+The app is available in **Español** (the default) and **English**: switch with the flag buttons on the Home screen or at the bottom of the side menu.
+
 ## What it does
 
 Pick a tool on the Home screen, or open the side menu (☰), to switch between the eight tools. You can rearrange the Home tiles by holding and dragging them (click and drag with a mouse).

@@ -82,10 +82,10 @@ const OBSTACLE_KINDS = { mech: 0, elec: 1, collapse: 2 };
 function makeObstacle(level, kind, name) {
   const diff = Math.min(4, Math.max(1, Math.round(level / 3) + randint(0, 1)));
   const list = [
-    { name: "Locked door / padlock", test: `PER + Lockpick, difficulty ${diff}`, alt: "A key or a strong crowbar (STR + Athletics, difficulty " + (diff + 1) + ", noisy)" },
-    { name: "Terminal-controlled security door", test: `INT + Science, difficulty ${diff}`, alt: "A password found elsewhere opens it instantly" },
-    { name: "Collapsed section", test: `STR or AGI + Athletics, difficulty ${diff}`, alt: `Scout another way in with PER + Survival, difficulty ${Math.max(1, diff - 1)}` },
-  ].map(o => Object.assign(o, { time: `${diff * 10} minutes (2 AP halves it)` }));
+    { name: "Locked door / padlock", test: T("PER + Lockpick, difficulty {d}", { d: diff }), alt: T("A key or a strong crowbar (STR + Athletics, difficulty {d}, noisy)", { d: diff + 1 }) },
+    { name: "Terminal-controlled security door", test: T("INT + Science, difficulty {d}", { d: diff }), alt: T("A password found elsewhere opens it instantly") },
+    { name: "Collapsed section", test: T("STR or AGI + Athletics, difficulty {d}", { d: diff }), alt: T("Scout another way in with PER + Survival, difficulty {d}", { d: Math.max(1, diff - 1) }) },
+  ].map(o => Object.assign(o, { time: T("{n} minutes (2 AP halves it)", { n: diff * 10 }) }));
   const o = kind in OBSTACLE_KINDS ? list[OBSTACLE_KINDS[kind]] : choice(list);
   if (name) o.name = name;
   return o;
@@ -124,7 +124,7 @@ function itemRanges(loc, scale, degree, raiders) {
   const theme = loc.theme.slice();
   if (!theme.includes("Junk")) theme.push("Junk");
   theme.forEach(c => items.push({ cat: c, min: Math.min(themeMin, maxBase), max: maxBase }));
-  sample(loc.extra, randint(1, 2)).forEach(c =>
+  sample(loc.extra.filter(c => !theme.includes(c)), randint(1, 2)).forEach(c =>
     items.push({ cat: c, min: 0, max: Math.max(1, Math.ceil(maxBase / 2)) }));
   if (raiders) items.forEach(i => {
     if (/Weapons|Ammunition|Chems/.test(i.cat)) i.max += 1;

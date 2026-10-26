@@ -241,7 +241,7 @@ function equip(c) {
   // tag skill items
   for (const s of c.tags) {
     if (s === "Athletics") { addGear(c, "Casual clothing", 2); addGear(c, "Buffout", "<1"); }
-    else if (s === "Barter") { const b = randint(1, 20) + randint(1, 20); c.caps += b; c.notes.push(`Barter tag: +${b} caps (2d20).`); }
+    else if (s === "Barter") { const b = randint(1, 20) + randint(1, 20); c.caps += b; c.notes.push(T("Barter tag: +{n} caps (2d20).", { n: b })); }
     else if (s === "Big Guns") addAmmo(c, "Flamer Fuel", 4, 2);
     else if (s === "Energy Weapons") addAmmo(c, "Fusion Cell", 6, 3);
     else if (s === "Explosives") {
@@ -263,7 +263,7 @@ function equip(c) {
     else if (s === "Small Guns") {
       const cals = c.weapons.filter(w => G.WEAPONS[w].skill === "Small Guns").map(w => G.WEAPONS[w].ammo);
       if (cals.length) addAmmo(c, choice(cals), 6, 3);
-      else c.notes.push("Small Guns tag: 6+3 CD ammo once you own a gun.");
+      else c.notes.push(T("Small Guns tag: 6+3 CD ammo once you own a gun."));
     }
     else if (s === "Sneak") addGear(c, "Calmex", "<1");
     else if (s === "Speech") { addGear(c, "Formal hat", "<1"); addGear(c, "Formal clothing", 2); }
@@ -346,24 +346,27 @@ function gimmick(c) {
   const jitter = {}; G.SPECIAL.forEach(a => (jitter[a] = rnd()));
   const top = G.SPECIAL.slice().sort((a, b) => s[b] - s[a] || jitter[a] - jitter[b])[0];
   const low = G.SPECIAL.slice().sort((a, b) => s[a] - s[b] || jitter[a] - jitter[b])[0];
-  c.epithet = choice(G.EPITHETS[top]);
-  const high = choice(G.HIGH_LINES[top]);
-  const lowLine = (s[low] <= 4 || (s[low] <= 5 && s[top] - s[low] >= 4))
-    ? choice(G.LOW_LINES[low]) : "and is annoyingly decent at everything else";
+  // the quirk text is written in the app's language when the character is rolled
+  c.epithet = T(choice(G.EPITHETS[top]));
+  const high = T(choice(G.HIGH_LINES[top]));
+  const lowLine = T((s[low] <= 4 || (s[low] <= 5 && s[top] - s[low] >= 4))
+    ? choice(G.LOW_LINES[low]) : "and is annoyingly decent at everything else");
   const perk = c.perks.length ? c.perks[0][0] : null;
-  const perkLine = perk ? (G.PERK_LINES[perk] || `Swears by their ${perk} instincts.`) : "";
-  c.gimmick_short = `"${c.epithet}": ${high}, ${lowLine}. ${perkLine}`;
-  const tr = c.trinket ? ` Never parts with ${c.trinket[0].toLowerCase() + c.trinket.slice(1)}.` : "";
-  c.gimmick_long = `${c.name}, known as "${c.epithet}", ${high}, ${lowLine}. ${perkLine} ${choice(G.ORIGIN_LINES[c.origin])}${tr}`;
+  const perkLine = perk ? (G.PERK_LINES[perk] ? T(G.PERK_LINES[perk]) : T("Swears by their {perk} instincts.", { perk: T(perk) })) : "";
+  c.gimmick_short = T('"{ep}": {high}, {low}. {perk}', { ep: c.epithet, high, low: lowLine, perk: perkLine });
+  const trinket = c.trinket && T(c.trinket);
+  const tr = trinket ? " " + T("Never parts with {t}.", { t: trinket[0].toLowerCase() + trinket.slice(1) }) : "";
+  c.gimmick_long = T('{name}, known as "{ep}", {high}, {low}. {perk}', { name: c.name, ep: c.epithet, high, low: lowLine, perk: perkLine }) +
+    " " + T(choice(G.ORIGIN_LINES[c.origin])) + tr;
 }
 
 function traitRows(c) {
   const rows = [];
-  if (G.ORIGIN_TRAITS[c.origin]) rows.push(G.ORIGIN_TRAITS[c.origin]);
-  c.survivor_traits.forEach(t => rows.push([`Trait: ${t}`, G.SURVIVOR_TRAITS[t]]));
+  if (G.ORIGIN_TRAITS[c.origin]) rows.push(G.ORIGIN_TRAITS[c.origin].map(x => T(x)));
+  c.survivor_traits.forEach(t => rows.push([T("Trait: {t}", { t: T(t) }), T(G.SURVIVOR_TRAITS[t])]));
   if (c.race === "robot") {
-    if (c.no_pincer) rows.push(["No Pincer", "No unarmed attacks; can't manipulate objects, Lockpick, Repair or Throw."]);
-    rows.push(["Arms: " + c.arms.join(", "), "Optics 1-2, Body 3-8, Arm1 9-11, Arm2 12-14, Arm3 15-17, Thruster 18-20."]);
+    if (c.no_pincer) rows.push([T("No Pincer"), T("No unarmed attacks; can't manipulate objects, Lockpick, Repair or Throw.")]);
+    rows.push([T("Arms: {list}", { list: c.arms.map(a => T(a)).join(", ") }), T("Optics 1-2, Body 3-8, Arm1 9-11, Arm2 12-14, Arm3 15-17, Thruster 18-20.")]);
   }
   return rows;
 }

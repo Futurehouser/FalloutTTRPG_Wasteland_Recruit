@@ -32,15 +32,15 @@ const Updater = (() => {
   function close() { if (!busy) $u("upd-modal").classList.remove("show"); }
 
   // called by the native side while downloading / installing
-  window.onUpdateProgress = pct => setStatus(`Downloading… ${Math.round(pct)}%`, pct);
+  window.onUpdateProgress = pct => setStatus(T("Downloading… {n}%", { n: Math.round(pct) }), pct);
   window.onUpdateStatus = (msg, finished) => {
-    setStatus(msg, null);
+    setStatus(I18N.native(msg), null);
     if (finished) { busy = false; $u("upd-go").disabled = false; $u("upd-later").disabled = false; }
   };
 
   function ask(rel, version, asset) {
-    $u("upd-title").textContent = `Version ${version} is available`;
-    $u("upd-text").textContent = `You have version ${APP_VERSION}. Download and install the update now?`;
+    $u("upd-title").textContent = T("Version {v} is available", { v: version });
+    $u("upd-text").textContent = T("You have version {v}. Download and install the update now?", { v: APP_VERSION });
     const notes = (rel.body || "").trim();
     $u("upd-notes").textContent = notes.length > 600 ? notes.slice(0, 600) + "…" : notes;
     $u("upd-notes").hidden = !notes;
@@ -53,16 +53,16 @@ const Updater = (() => {
     $u("upd-go").onclick = async () => {
       busy = true;
       $u("upd-go").disabled = $u("upd-later").disabled = $u("upd-skip").disabled = true;
-      setStatus("Starting download…", 0);
+      setStatus(T("Starting download…"), 0);
       const r = await Platform.installUpdate(asset.browser_download_url, version, asset.digest || "");
       if (r === "NEED_PERMISSION") {
         busy = false;
         $u("upd-go").disabled = $u("upd-later").disabled = false;
-        setStatus("Android needs your OK first: turn on “Allow from this source” for Wasteland Recruit, come back, and tap Update now again.", null);
+        setStatus(T("Android needs your OK first: turn on “Allow from this source” for Wasteland Recruit, come back, and tap Update now again."), null);
       } else if (r && r.startsWith("ERROR")) {
         busy = false;
         $u("upd-go").disabled = $u("upd-later").disabled = $u("upd-skip").disabled = false;
-        setStatus("Update failed: " + r.replace(/^ERROR:?\s*/, ""), null);
+        setStatus(T("Update failed: {1}", { 1: r.replace(/^ERROR:?\s*/, "") }), null);
       }
       // otherwise the native side reports progress and the result itself
     };
@@ -71,16 +71,16 @@ const Updater = (() => {
   // manual = the user pressed "Check for updates" (then always say something)
   async function check(manual) {
     const say = msg => manual && toast(msg);
-    if (!supported()) return say("Updates work in the Windows and Android apps.");
+    if (!supported()) return say(T("Updates work in the Windows and Android apps."));
     let rel;
     try { rel = await latestRelease(); }
-    catch (e) { return say("Couldn't reach GitHub to check for updates."); }
-    if (!rel) return say("No releases have been published yet.");
+    catch (e) { return say(T("Couldn't reach GitHub to check for updates.")); }
+    if (!rel) return say(T("No releases have been published yet."));
     const version = String(rel.tag_name || "").replace(/^v/i, "");
-    if (compare(version, APP_VERSION) <= 0) return say(`You're up to date (version ${APP_VERSION}).`);
+    if (compare(version, APP_VERSION) <= 0) return say(T("You're up to date (version {v}).", { v: APP_VERSION }));
     if (!manual && (await Platform.load("skip_version")) === version) return;
     const asset = (rel.assets || []).find(a => a.name.toLowerCase().endsWith(wantedExt()));
-    if (!asset) return say(`Version ${version} is still being built. Try again in a few minutes.`);
+    if (!asset) return say(T("Version {v} is still being built. Try again in a few minutes.", { v: version }));
     ask(rel, version, asset);
   }
 
