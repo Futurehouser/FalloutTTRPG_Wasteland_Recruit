@@ -204,6 +204,47 @@ h4.sec { margin: 16px 0 4px; font-size: 13px; letter-spacing: 1px; text-transfor
 .lang-side + .foot { margin-top: 0; }
 .lang-side .lang-pick { margin-top: 0; display: flex; }
 .lang-side .lang-pick button { flex: 1; justify-content: center; }
+/* hack a terminal: a green phosphor RobCo screen */
+.hk-bar { margin-bottom: 12px; }
+.hk-term { position: relative; padding: 14px; border-radius: 22px; background: #2a2c26; border: 1px solid #45473f;
+           box-shadow: inset 0 0 0 6px #1c1d19, 0 10px 30px #0008; }
+.hk-screen { position: relative; overflow: hidden; border-radius: 16px; padding: 16px 18px; min-height: 420px;
+             background: radial-gradient(ellipse at center, #0b2312 0%, #051509 60%, #020803 100%);
+             color: #3dff86; font-family: "Fixedsys", "Consolas", "Lucida Console", "Courier New", monospace;
+             font-size: clamp(11px, 2.9vw, 16px); line-height: 1.32; text-shadow: 0 0 5px #3dff86aa, 0 0 1px #3dff86;
+             -webkit-user-select: none; user-select: none; animation: hk-flicker 4s infinite; }
+.hk-screen::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: 16px;
+                    background: repeating-linear-gradient(to bottom, #0000 0 2px, #00000026 2px 3px);
+                    box-shadow: inset 0 0 40px #0009; }
+@keyframes hk-flicker { 0%, 100% { opacity: 1; } 48% { opacity: .97; } 50% { opacity: .92; } 52% { opacity: .98; } }
+.hk-head { letter-spacing: .5px; }
+.hk-warn { min-height: 1.32em; margin-top: .6em; }
+.hk-warn:not(:empty) { animation: hk-blink 1s steps(1) infinite; }
+.hk-tries { margin-bottom: .8em; }
+.hk-blocks { letter-spacing: 2px; }
+.hk-body { display: flex; gap: 2.2ch; align-items: stretch; }
+.hk-dump { display: flex; gap: 2.2ch; flex: none; }
+.hk-line { white-space: pre; }
+.hk-line .addr { opacity: .85; }
+.hk-dump .c { cursor: pointer; }
+.hk-dump .c.on { background: #3dff86; color: #031006; text-shadow: none; }
+.hk-log { flex: 1; min-width: 14ch; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; word-break: break-all; }
+.hk-input .cursor { animation: hk-blink 1s steps(1) infinite; }
+@keyframes hk-blink { 50% { opacity: 0; } }
+.hk-end { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center;
+          gap: 14px; padding: 20px; text-align: center; background: #020803ee; }
+.hk-end[hidden] { display: none; }
+.hk-end .hk-big { font-size: 1.9em; letter-spacing: 1px; text-transform: uppercase; }
+.hk-btn { font: inherit; color: #3dff86; background: none; border: 2px solid #3dff86; padding: 8px 16px; cursor: pointer;
+          text-shadow: inherit; box-shadow: 0 0 10px #3dff8655; }
+.hk-btn:hover, .hk-btn:focus-visible { background: #3dff86; color: #031006; text-shadow: none; outline: none; }
+@media (max-width: 640px) {
+  .hk-term { padding: 8px; border-radius: 16px; }
+  .hk-screen { padding: 12px 10px; }
+  .hk-body { flex-direction: column; gap: .8em; }
+  .hk-dump { gap: 1.4ch; }
+  .hk-log { min-height: 6.6em; max-height: 6.6em; }
+}
 #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #000d; color: var(--green); padding: 10px 16px;
          border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 90%; text-align: center; z-index: 50; }
 #toast.show { opacity: 1; }

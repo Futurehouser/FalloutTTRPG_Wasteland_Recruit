@@ -28,6 +28,7 @@
     <button data-page="roster"><span class="n">6</span>Saved Characters</button>
     <button data-page="combat"><span class="n">7</span>Combat Assistant</button>
     <button data-page="encounter"><span class="n">8</span>Encounter Randomizer</button>
+    <button data-page="hack"><span class="n">9</span>Hack a Terminal</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
   </nav>
   <div class="foot">Version <span id="app-version"></span><br>Fan-made tool for the Fallout 2d20 tabletop game.</div>
@@ -50,6 +51,7 @@
       <button class="tile" data-go="roster"><span class="ic">&#128101;</span><b>Saved Characters</b><small>Your party: view, edit, level up</small></button>
       <button class="tile" data-go="combat"><span class="ic">&#9876;</span><b>Combat Assistant</b><small>Run a fight step by step</small></button>
       <button class="tile" data-go="encounter"><span class="ic">&#127956;</span><b>Encounter Randomizer</b><small>What happens when you rest or travel</small></button>
+      <button class="tile" data-go="hack"><span class="ic">&#128187;</span><b>Hack a Terminal</b><small>Crack a RobCo password in 3 tries</small></button>
     </div>
     <p class="hint tiles-hint">Hold and drag a tile to move it (click and drag with a mouse).
       <button class="linkbtn" id="tiles-reset">Reset order</button></p>
@@ -200,6 +202,22 @@
     <div id="en-out"></div>
   </section>
 
+  <!-- 9. hack a terminal -->
+  <section class="page" id="page-hack" data-title="Hack a Terminal">
+    <h2>Hack a Terminal</h2>
+    <p class="hint">Find the password hidden in the terminal's memory. You have 3 attempts: a wrong word costs one and shows its Likeness,
+      the number of letters in the right position. Bracket pairs like ( ) or [ ] on one line remove a dud or restore your attempts.
+      On a phone, tap a word once to select it and again to enter it.</p>
+    <div class="row hk-bar">
+      <div><label class="f">Difficulty</label><select id="hk-level"><option value="novice">Novice (5 letters)</option>
+        <option value="advanced" selected>Advanced (6 letters)</option><option value="expert">Expert (7 letters)</option>
+        <option value="master">Master (8 letters)</option></select></div>
+      <div style="align-self:end"><button class="btn" id="hk-new" style="width:100%">New terminal</button></div>
+      <div style="align-self:end"><button class="btn" id="hk-sound" style="width:100%"></button></div>
+    </div>
+    <div class="hk-term"><div class="hk-screen" id="hk-screen"></div></div>
+  </section>
+
   <!-- 7. combat assistant -->
   <section class="page" id="page-combat" data-title="Combat Assistant">
     <h2>Combat Assistant</h2>
@@ -246,5 +264,6 @@
 <script charset="utf-8" src="enemies.js"></script>
 <script charset="utf-8" src="combat.js"></script>
 <script charset="utf-8" src="encounter.js"></script>
+<script charset="utf-8" src="hack.js"></script>
 </body>
 </html>

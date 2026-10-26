@@ -1156,3 +1156,32 @@ Object.assign(ES, {
   "Fusion cell, circuitry and military-grade parts (INT + Repair, difficulty 2)": "Célula de fusión, circuitos y piezas de grado militar (INT + Reparar, dificultad 2)",
   "Rare circuitry and a fusion core (INT + Repair, difficulty 3)": "Circuitos raros y un núcleo de fusión (INT + Reparar, dificultad 3)",
 });
+
+// ---- hack a terminal
+Object.assign(ES, {
+  "Hack a Terminal": "Hackear una terminal",
+  "Crack a RobCo password in 3 tries": "Descifra una contraseña de RobCo en 3 intentos",
+  "Find the password hidden in the terminal's memory. You have 3 attempts: a wrong word costs one and shows its Likeness, the number of letters in the right position. Bracket pairs like ( ) or [ ] on one line remove a dud or restore your attempts. On a phone, tap a word once to select it and again to enter it.":
+    "Encuentra la contraseña escondida en la memoria de la terminal. Tienes 3 intentos: una palabra equivocada gasta uno y muestra su Coincidencia, el número de letras en la posición correcta. Las parejas de símbolos como ( ) o [ ] en una misma línea eliminan una palabra falsa o restablecen tus intentos. En el móvil, toca una palabra una vez para elegirla y otra vez para introducirla.",
+  "Novice (5 letters)": "Novato (5 letras)", "Advanced (6 letters)": "Avanzado (6 letras)", "Expert (7 letters)": "Experto (7 letras)", "Master (8 letters)": "Maestro (8 letras)",
+  "New terminal": "Nueva terminal",
+  "🔊 Sound on": "🔊 Sonido activado", "🔇 Sound off": "🔇 Sonido desactivado",
+  "{n} ATTEMPT(S) LEFT:": "{n} INTENTO(S) RESTANTE(S):",
+  "ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL": "PROTOCOLO TERMLINK DE ROBCO INDUSTRIES (TM)",
+  "ENTER PASSWORD NOW": "INTRODUZCA LA CONTRASEÑA",
+  "!!! WARNING: LOCKOUT IMMINENT !!!": "!!! AVISO: BLOQUEO INMINENTE !!!",
+  "Error": "Error",
+  "Allowance replenished.": "Intentos restablecidos.",
+  "Dud removed.": "Palabra falsa eliminada.",
+  "Exact match!": "¡Coincidencia exacta!",
+  "Please wait while system is accessed.": "Espere mientras se accede al sistema.",
+  "Entry denied.": "Acceso denegado.",
+  "Likeness={n}": "Coincidencia={n}",
+  "Lockout in progress.": "Bloqueo en curso.",
+  "You hacked the terminal": "Has hackeado la terminal",
+  "Hack another terminal": "Hackear otra terminal",
+  "Password: {w}": "Contraseña: {w}",
+  "You failed": "Has fallado",
+  "Try again": "Intentar de nuevo",
+  "TERMINAL LOCKED. The password was {w}.": "TERMINAL BLOQUEADA. La contraseña era {w}.",
+});

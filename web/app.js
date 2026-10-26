@@ -34,6 +34,7 @@ function showPage(id) {
   if (id === "perks") fillCharSelect();
   if (id === "create") fillPerkList();
   if (id === "combat" && typeof Combat !== "undefined") Combat.show();
+  if (id === "hack" && typeof Hack !== "undefined") Hack.show();
 }
 $("burger").onclick = () => document.body.classList.toggle("menu-open");
 $("scrim").onclick = () => document.body.classList.remove("menu-open");
