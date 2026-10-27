@@ -18,6 +18,7 @@ import threading
 import time
 import urllib.parse
 import urllib.request
+import webbrowser
 
 import webview
 
@@ -146,6 +147,13 @@ class Api:
             return "OK"
         except OSError as e:
             return f"ERROR: {e}"
+
+    def open_url(self, url):
+        """Open a web link (the radio stations) in the default browser."""
+        if not re.match(r"^https://", str(url)):
+            return "ERROR: only https links"
+        webbrowser.open(url)
+        return "OK"
 
     def save_image(self, data_url, name):
         try:

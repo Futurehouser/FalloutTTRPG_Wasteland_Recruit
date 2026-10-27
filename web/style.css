@@ -245,6 +245,34 @@ h4.sec { margin: 16px 0 4px; font-size: 13px; letter-spacing: 1px; text-transfor
   .hk-dump { gap: 1.4ch; }
   .hk-log { min-height: 6.6em; max-height: 6.6em; }
 }
+/* fallout radio: a Pip-Boy RADIO tab */
+.pip { position: relative; overflow: hidden; border-radius: 18px; padding: 14px 18px 12px; color: #3dff86;
+       background: radial-gradient(ellipse at center, #0b2312 0%, #051509 65%, #020803 100%);
+       border: 10px solid #23251f; box-shadow: inset 0 0 0 2px #3a3d34, 0 10px 30px #0008;
+       font-family: "Fixedsys", "Consolas", "Lucida Console", "Courier New", monospace; text-shadow: 0 0 5px #3dff86aa; }
+.pip::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+              background: repeating-linear-gradient(to bottom, #0000 0 2px, #00000026 2px 3px); box-shadow: inset 0 0 40px #0009; }
+.pip-tabs { display: flex; justify-content: space-around; gap: 6px; padding-bottom: 6px; border-bottom: 2px solid #3dff86;
+            font-size: clamp(13px, 3.4vw, 19px); letter-spacing: 1px; }
+.pip-tabs span { padding: 2px 8px; opacity: .55; }
+.pip-tabs span.on { opacity: 1; border: 2px solid #3dff86; border-bottom: none; margin-bottom: -8px; padding-bottom: 6px; background: #051509; }
+.pip-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 18px; align-items: stretch; padding: 18px 0 10px; min-height: 240px; }
+.rd-list { display: flex; flex-direction: column; gap: 4px; }
+.rd-st { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 7px 8px; border: none; background: none;
+         color: #3dff86; font: inherit; font-size: clamp(14px, 3.6vw, 19px); text-shadow: inherit; cursor: pointer; }
+.rd-st:hover, .rd-st:focus-visible { background: #3dff8633; outline: none; }
+.rd-st.on { background: #3dff86; color: #031006; text-shadow: none; }
+.rd-dot { width: 1ch; flex: none; }
+.rd-scope { position: relative; min-height: 200px; }
+.rd-scope canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pip-foot { border-top: 2px solid #3dff86; padding-top: 8px; font-size: clamp(12px, 3vw, 15px); min-height: 1.4em; }
+.pip-foot .rd-game { opacity: .7; }
+@media (max-width: 560px) {
+  .pip { padding: 10px 10px; border-width: 6px; }
+  .pip-tabs span { padding: 2px 3px; }
+  .pip-body { grid-template-columns: 1fr; gap: 12px; }
+  .rd-scope { min-height: 150px; }
+}
 #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #000d; color: var(--green); padding: 10px 16px;
          border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 90%; text-align: center; z-index: 50; }
 #toast.show { opacity: 1; }

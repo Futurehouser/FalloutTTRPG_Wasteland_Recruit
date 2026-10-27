@@ -29,6 +29,7 @@
     <button data-page="combat"><span class="n">7</span>Combat Assistant</button>
     <button data-page="encounter"><span class="n">8</span>Encounter Randomizer</button>
     <button data-page="hack"><span class="n">9</span>Hack a Terminal</button>
+    <button data-page="radio"><span class="n">10</span>Fallout Radio</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
   </nav>
   <div class="foot">Version <span id="app-version"></span><br>Fan-made tool for the Fallout 2d20 tabletop game.</div>
@@ -52,6 +53,7 @@
       <button class="tile" data-go="combat"><span class="ic">&#9876;</span><b>Combat Assistant</b><small>Run a fight step by step</small></button>
       <button class="tile" data-go="encounter"><span class="ic">&#127956;</span><b>Encounter Randomizer</b><small>What happens when you rest or travel</small></button>
       <button class="tile" data-go="hack"><span class="ic">&#128187;</span><b>Hack a Terminal</b><small>Crack a RobCo password in 3 tries</small></button>
+      <button class="tile" data-go="radio"><span class="ic">&#128251;</span><b>Fallout Radio</b><small>Tune in to the Wasteland's stations</small></button>
     </div>
     <p class="hint tiles-hint">Hold and drag a tile to move it (click and drag with a mouse).
       <button class="linkbtn" id="tiles-reset">Reset order</button></p>
@@ -218,6 +220,17 @@
     <div class="hk-term"><div class="hk-screen" id="hk-screen"></div></div>
   </section>
 
+  <!-- 10. fallout radio -->
+  <section class="page" id="page-radio" data-title="Fallout Radio">
+    <h2>Fallout Radio</h2>
+    <p class="hint">Pick a station to play its music on YouTube (it opens in the YouTube app or your browser).</p>
+    <div class="pip">
+      <div class="pip-tabs"><span>STAT</span><span>INV</span><span>DATA</span><span>MAP</span><span class="on">RADIO</span></div>
+      <div class="pip-body"><div class="rd-list" id="rd-list"></div><div class="rd-scope"><canvas id="rd-scope"></canvas></div></div>
+      <div class="pip-foot" id="rd-now"></div>
+    </div>
+  </section>
+
   <!-- 7. combat assistant -->
   <section class="page" id="page-combat" data-title="Combat Assistant">
     <h2>Combat Assistant</h2>
@@ -265,5 +278,6 @@
 <script charset="utf-8" src="combat.js"></script>
 <script charset="utf-8" src="encounter.js"></script>
 <script charset="utf-8" src="hack.js"></script>
+<script charset="utf-8" src="radio.js"></script>
 </body>
 </html>

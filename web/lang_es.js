@@ -1185,3 +1185,13 @@ Object.assign(ES, {
   "Try again": "Intentar de nuevo",
   "TERMINAL LOCKED. The password was {w}.": "TERMINAL BLOQUEADA. La contraseña era {w}.",
 });
+
+// ---- fallout radio
+Object.assign(ES, {
+  "Fallout Radio": "Radio Fallout",
+  "Tune in to the Wasteland's stations": "Sintoniza las emisoras del Yermo",
+  "Pick a station to play its music on YouTube (it opens in the YouTube app or your browser).": "Elige una emisora para escuchar su música en YouTube (se abre en la app de YouTube o en tu navegador).",
+  "STAT": "ESTADO", "INV": "INV", "DATA": "DATOS", "MAP": "MAPA", "RADIO": "RADIO",
+  "Now playing on YouTube:": "Sonando en YouTube:",
+  "Select a station": "Selecciona una emisora",
+});

@@ -76,5 +76,16 @@ const Platform = (() => {
     return r.startsWith("ERROR") ? r : "";
   }
 
-  return { ready, load, save, loadJSON, saveJSON, saveImage, canShare, shareImage, installUpdate, isAndroid, isDesktop };
+  // open a web link outside the app: the Windows app hands it to the default browser, Android opens it
+  // in YouTube / the browser (the app sends every non-local link there), a plain browser uses a new tab
+  async function openUrl(url) {
+    if (isDesktop() && window.pywebview.api.open_url) {
+      try { if ((await window.pywebview.api.open_url(url)) === "OK") return; } catch (e) { /* fall back below */ }
+    }
+    if (isAndroid()) { location.href = url; return; }
+    const w = window.open(url, "_blank"); // "noopener" would make this return null even when it worked
+    if (w) w.opener = null; else location.href = url;
+  }
+
+  return { ready, load, save, loadJSON, saveJSON, saveImage, canShare, shareImage, installUpdate, openUrl, isAndroid, isDesktop };
 })();

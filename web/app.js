@@ -35,6 +35,7 @@ function showPage(id) {
   if (id === "create") fillPerkList();
   if (id === "combat" && typeof Combat !== "undefined") Combat.show();
   if (id === "hack" && typeof Hack !== "undefined") Hack.show();
+  if (id === "radio" && typeof Radio !== "undefined") Radio.show();
 }
 $("burger").onclick = () => document.body.classList.toggle("menu-open");
 $("scrim").onclick = () => document.body.classList.remove("menu-open");
