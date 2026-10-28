@@ -1,5 +1,6 @@
 // Fallout Radio: a Pip-Boy style RADIO tab. Picking a station opens its music on YouTube; the
 // oscilloscope on the right keeps drawing a wandering wave like the Pip-Boy's signal display.
+// Tapping the scope changes the wave's shape; every 10 taps the screen swaps to New Vegas amber and back.
 const Radio = (() => {
   const $r = id => document.getElementById(id);
   const STATIONS = [
@@ -7,7 +8,19 @@ const Radio = (() => {
     { name: "Radio New Vegas", game: "Fallout: New Vegas", url: "https://www.youtube.com/watch?v=vn1i8xuef8g" },
     { name: "Diamond City Radio", game: "Fallout 4", url: "https://www.youtube.com/watch?v=Yy9La6YXNqI" },
   ];
-  let current = -1, raf = null, waves = [], target = [], t = 0;
+  let current = -1, raf = null, waves = [], target = [], t = 0, taps = 0, shape = "sine", noise = 0.008;
+  let amber = (() => { try { return localStorage.getItem("wr_radio_amber") === "1"; } catch (e) { return false; } })();
+
+  // wave shapes the scope can switch between, each fed a phase in turns
+  const SHAPES = {
+    sine: p => Math.sin(2 * Math.PI * p),
+    square: p => Math.tanh(5 * Math.sin(2 * Math.PI * p)),
+    triangle: p => (2 / Math.PI) * Math.asin(Math.sin(2 * Math.PI * p)),
+    saw: p => 2 * (p - Math.floor(p)) - 1,
+    pulse: p => { const f = p - Math.floor(p); return f < 0.12 ? Math.sin(f / 0.12 * Math.PI) * 1.6 : 0; },
+    am: p => Math.sin(2 * Math.PI * p) * Math.sin(2 * Math.PI * p * 0.11),
+    static: p => Math.sin(2 * Math.PI * p) * 0.4,
+  };
 
   // a click like the Pip-Boy's dial
   let audio = null;
@@ -39,7 +52,7 @@ const Radio = (() => {
     const g = cv.getContext("2d");
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, w, h);
-    const green = "#3dff86";
+    const green = amber ? "#ffb642" : "#3dff86";
     // frame with tick marks, like the Pip-Boy graph
     g.strokeStyle = green; g.globalAlpha = 0.85; g.lineWidth = 1.5;
     g.beginPath(); g.moveTo(1, 1); g.lineTo(1, h - 1); g.lineTo(w - 1, h - 1); g.stroke();
@@ -58,8 +71,8 @@ const Radio = (() => {
     for (let x = 0; x <= w; x += 2) {
       const u = x / w;
       let y = 0;
-      waves.forEach(wv => (y += wv.amp * Math.sin(2 * Math.PI * (wv.freq * u + wv.speed * t * 0.25))));
-      y += (rnd() - 0.5) * 0.008;
+      waves.forEach(wv => (y += wv.amp * SHAPES[shape](wv.freq * u + wv.speed * t * 0.25)));
+      y += (rnd() - 0.5) * noise;
       const py = h / 2 - y * h * 0.9;
       x ? g.lineTo(x, py) : g.moveTo(x, py);
     }
@@ -86,7 +99,30 @@ const Radio = (() => {
     Platform.openUrl(STATIONS[i].url);
   }
 
+  function setColor(flick) {
+    const pip = document.querySelector("#page-radio .pip");
+    if (!pip) return;
+    pip.classList.toggle("amber", amber);
+    if (flick) { pip.classList.remove("flick"); void pip.offsetWidth; pip.classList.add("flick"); }
+  }
+
+  // a tap on the scope picks a different wave shape at random; every 10th tap swaps green and amber
+  function tap() {
+    click();
+    shape = sample(Object.keys(SHAPES).filter(k => k !== shape), 1)[0];
+    noise = shape === "static" ? 0.12 + rnd() * 0.1 : rnd() < 0.3 ? 0.03 : 0.008;
+    retune(current >= 0 || rnd() < 0.5);
+    if (++taps % 10 === 0) {
+      amber = !amber;
+      try { localStorage.setItem("wr_radio_amber", amber ? "1" : "0"); } catch (e) { /* not saved */ }
+      setColor(true);
+    }
+  }
+
   function show() {
+    setColor(false);
+    const sc = document.querySelector("#page-radio .rd-scope");
+    if (sc && !sc.onclick) sc.onclick = tap;
     if (!waves.length) retune(false);
     render();
     if (!raf) raf = requestAnimationFrame(draw);
