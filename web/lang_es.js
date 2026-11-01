@@ -1195,3 +1195,42 @@ Object.assign(ES, {
   "Now playing on YouTube:": "Sonando en YouTube:",
   "Select a station": "Selecciona una emisora",
 });
+
+// ---- my team, character weapons
+Object.assign(ES, {
+  "My Team": "Mi Equipo",
+  "The characters your players are using": "Los personajes de tus jugadores",
+  "Add the saved characters your players are using. The Combat Assistant can load the whole team in one go, and every member gets a little wastelander walking along the bottom of this page and the Home screen.":
+    "Añade los personajes guardados que usan tus jugadores. El Asistente de combate puede cargar todo el equipo de una vez, y cada miembro tiene un pequeño habitante del Yermo paseando por la parte inferior de esta página y de la pantalla de inicio.",
+  "Saved character": "Personaje guardado",
+  "+ Add to team": "+ Añadir al equipo",
+  "A team can have up to {n} characters": "Un equipo puede tener hasta {n} personajes",
+  "{name} joined the team": "{name} se ha unido al equipo",
+  "{name} left the team": "{name} ha dejado el equipo",
+  "Everyone is already on the team": "Todos están ya en el equipo",
+  "No saved characters yet": "Aún no hay personajes guardados",
+  "Nobody on the team yet.<br><br>Pick a saved character above and tap <b>Add to team</b>. Each one gets a little wastelander walking along the bottom of the screen.":
+    "Aún no hay nadie en el equipo.<br><br>Elige un personaje guardado arriba y pulsa <b>Añadir al equipo</b>. Cada uno tendrá un pequeño habitante del Yermo paseando por la parte inferior de la pantalla.",
+  "{n} character on the team.": "{n} personaje en el equipo.",
+  "{n} characters on the team.": "{n} personajes en el equipo.",
+  "Played by…": "Jugado por…",
+  "Open profile": "Abrir perfil",
+  "Remove from the team": "Quitar del equipo",
+  "No weapons set. Add them in the character's profile.": "Sin armas. Añádelas en el perfil del personaje.",
+  "Weapons": "Armas",
+  "+ Add weapon": "+ Añadir arma",
+  "Remove weapon": "Quitar arma",
+  "Throwables": "Arrojadizas",
+  "{name} already has that weapon": "{name} ya tiene esa arma",
+  "No weapons yet. Pick one below and tap <b>+ Add weapon</b>.": "Aún no tiene armas. Elige una abajo y pulsa <b>+ Añadir arma</b>.",
+  "The Combat Assistant arms this character with these weapons, and they can switch between them on their turn.":
+    "El Asistente de combate equipa a este personaje con estas armas, y puede cambiar entre ellas en su turno.",
+  "Use My Team": "Usar Mi Equipo",
+  "Fills the party with your {n} team member, with their weapons.": "Llena el grupo con tu {n} miembro del equipo, con sus armas.",
+  "Fills the party with your {n} team members, with their weapons.": "Llena el grupo con tus {n} miembros del equipo, con sus armas.",
+  "Add characters in My Team first.": "Primero añade personajes en Mi Equipo.",
+  "{name}'s weapons": "Armas de {name}",
+  "All weapons": "Todas las armas",
+  "Also carries: {list}. They can switch weapons on their turn.": "También lleva: {list}. Puede cambiar de arma en su turno.",
+  "{name} switches to {w}.": "{name} cambia a {w}.",
+});

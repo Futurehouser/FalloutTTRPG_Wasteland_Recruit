@@ -19,11 +19,13 @@ const Combat = (() => {
   let S = null;               // the whole combat state (saved after every change)
   let setup = null;           // setup form state
   let CUSTOM = [];            // user-made enemies
+  let USE_TEAM = false;       // load My Team into the party automatically
 
   // ------------------------------------------------------------------ persistence
   const save = () => Platform.saveJSON("combat_state", S);
   async function init() {
     CUSTOM = await Platform.loadJSON("custom_enemies", []);
+    USE_TEAM = !!(await Platform.loadJSON("combat_use_team", false));
     S = await Platform.loadJSON("combat_state", null);
     if (S && S.phase === "setup") S = null;
     if (S && S.player && !S.players) { // fight saved by a single-player version
@@ -106,11 +108,19 @@ const Combat = (() => {
              weapon: "", w: { skill: "Small Guns", tn: 10, crit: 1, cd: 3, type: "p", eff: [], pierce: 1, rate: 2, range: "C", ammo: 20 },
              meleeBonus: 0 };
   }
-  function newSetup() { setup = { ap: 0, groups: [], members: [newMember(0)] }; }
+  const teamOn = () => USE_TEAM && Team.chars().length > 0;
+  function teamMembers() {
+    return Team.chars().slice(0, MAX_PARTY).map((c, i) => { const m = newMember(i); fromCharacter(m, c); return m; });
+  }
+  function newSetup() { setup = { ap: 0, groups: [], members: teamOn() ? teamMembers() : [newMember(0)] }; }
+  // the weapons set in the character's profile that the combat assistant knows
+  const charWeapons = c => ((c && c.weapons) || []).filter(w => WEAPONS_FOR_COMBAT[w.name]);
   function fromCharacter(m, c) {
     const s = c.special, hp = c.maxHp || s.END + s.LCK;
     Object.assign(m, { charId: c.id, name: c.name, hp, maxHp: hp, def: s.AGI >= 9 ? 2 : 1, init: s.PER + s.AGI,
       meleeBonus: s.STR >= 11 ? 3 : s.STR >= 9 ? 2 : s.STR >= 7 ? 1 : 0 });
+    const ws = charWeapons(c);
+    if (ws.length) { m.weapon = ws[0].name; fromWeapon(m, ws[0].name); m.w.ammo = ws[0].ammo || 0; }
     updateTN(m);
   }
   function updateTN(m) {
@@ -148,7 +158,8 @@ const Combat = (() => {
   }
 
   function memberCard(m, i, chars) {
-    const w = m.w;
+    const w = m.w, own = charWeapons(ROSTER.find(x => x.id === m.charId));
+    const spare = own.filter(x => x.name !== m.weapon);
     return `<div class="card member"><div class="member-head"><h4 style="margin:0">${T("Party member {n}", { n: i + 1 })}</h4>
         ${setup.members.length > 1 ? `<button class="btn danger" data-rmm="${i}" title="${T("Remove from the party")}">&#10005;</button>` : ""}</div>
       <div class="row"><div><label class="f">${T("Saved character (fills in the stats)")}</label><select data-mchar="${i}">
@@ -163,7 +174,9 @@ const Combat = (() => {
         ${["p", "e", "r", "po"].map(k => `<div><label class="f">${T(TYPE_NAME[k] + " DR")}</label><input type="text" id="cs-dr-${k}-${i}" value="${drTxt(m.dr[k])}"></div>`).join("")}</div>
       <h4 style="margin:14px 0 6px">${T("Weapon")}</h4>
       <div class="row"><div><label class="f">${T("Weapon")}</label><select data-mweapon="${i}" id="cs-weapon-${i}"><option value="">${T("Custom weapon")}</option>
-        ${Object.keys(WEAPONS_FOR_COMBAT).map(n => `<option value="${esc(n)}" ${n === m.weapon ? "selected" : ""}>${esc(T(n))}</option>`).join("")}</select></div>
+        ${own.length ? `<optgroup label="${esc(T("{name}'s weapons", { name: m.name }))}">${own.map(x => `<option value="${esc(x.name)}" ${x.name === m.weapon ? "selected" : ""}>${esc(T(x.name))}</option>`).join("")}</optgroup>
+          <optgroup label="${esc(T("All weapons"))}">` : ""}
+        ${Object.keys(WEAPONS_FOR_COMBAT).filter(n => !own.some(x => x.name === n)).map(n => `<option value="${esc(n)}" ${n === m.weapon ? "selected" : ""}>${esc(T(n))}</option>`).join("")}${own.length ? "</optgroup>" : ""}</select></div>
         <div><label class="f">${T("Skill")}</label><select data-mskill="${i}" id="cs-skill-${i}">${COMBAT_SKILLS.map(k => `<option value="${k}" ${k === w.skill ? "selected" : ""}>${T(k)}</option>`).join("")}</select></div></div>
       <div class="row" style="margin-top:8px">
         <div><label class="f">${T("Target number")}</label><input type="number" id="cs-tn-${i}" value="${w.tn}"></div>
@@ -177,6 +190,7 @@ const Combat = (() => {
         <div><label class="f">${T("Piercing rating")}</label><input type="number" id="cs-pierce-${i}" min="1" value="${w.pierce}"></div></div>
       <label class="f" style="margin-top:8px">${T("Damage effects")}</label>
       <div id="cs-effs-${i}" class="effs">${EFFECT_NAMES.map(e => `<label><input type="checkbox" value="${e}" ${w.eff.includes(e) ? "checked" : ""}> ${T(e)}</label>`).join("")}</div>
+      ${spare.length ? `<p class="hint" style="margin:8px 0 0">&#128299; ${T("Also carries: {list}. They can switch weapons on their turn.", { list: spare.map(x => esc(T(x.name))).join(", ") })}</p>` : ""}
       <p class="hint" style="margin:8px 0 0">${isMelee(w.skill) ? T("Melee: the melee damage bonus (+{n} CD) is added automatically.", { n: m.meleeBonus }) : T("Ranged: extra ammo can be spent each turn, up to the fire rate.")}</p></div>`;
   }
 
@@ -197,6 +211,10 @@ const Combat = (() => {
 
     root().innerHTML = `
     <h4 class="sec" style="margin-top:4px">${T("1. The party ({n})", { n: s.members.length })}</h4>
+    <label class="cs-team ${Team.chars().length ? "" : "off"}"><input type="checkbox" id="cs-team" ${teamOn() ? "checked" : ""} ${Team.chars().length ? "" : "disabled"}>
+      <span><b>${T("Use My Team")}</b><small>${Team.chars().length
+        ? TP(Team.chars().length, "Fills the party with your {n} team member, with their weapons.", "Fills the party with your {n} team members, with their weapons.")
+        : T("Add characters in My Team first.")}</small></span></label>
     <p class="hint" style="margin:0 0 4px">${T("Add every player character. Each one gets their own turn and their own weapon. DR is from armor (use the torso values, or type Imm if immune).")}</p>
     ${s.members.map((m, i) => memberCard(m, i, chars)).join("")}
     <div class="bar"><button class="btn" id="cs-addm" ${s.members.length >= MAX_PARTY ? "disabled" : ""}>${T("+ Add party member")}</button>
@@ -245,6 +263,13 @@ const Combat = (() => {
   }
 
   function wireSetup() {
+    $("cs-team").onchange = () => {
+      readSetupForm();
+      USE_TEAM = $("cs-team").checked;
+      Platform.saveJSON("combat_use_team", USE_TEAM);
+      setup.members = teamOn() ? teamMembers() : [newMember(0)];
+      renderSetup();
+    };
     root().querySelectorAll("[data-mchar]").forEach(sel => (sel.onchange = () => {
       readSetupForm();
       const m = setup.members[+sel.dataset.mchar], c = ROSTER.find(x => x.id === sel.value);
@@ -252,7 +277,11 @@ const Combat = (() => {
       renderSetup();
     }));
     root().querySelectorAll("[data-mweapon]").forEach(sel => (sel.onchange = () => {
-      readSetupForm(); fromWeapon(setup.members[+sel.dataset.mweapon], sel.value); renderSetup();
+      readSetupForm();
+      const m = setup.members[+sel.dataset.mweapon], own = charWeapons(ROSTER.find(x => x.id === m.charId)).find(x => x.name === sel.value);
+      fromWeapon(m, sel.value);
+      if (own) m.w.ammo = own.ammo || 0;
+      renderSetup();
     }));
     root().querySelectorAll("[data-mskill]").forEach(sel => (sel.onchange = () => {
       readSetupForm(); updateTN(setup.members[+sel.dataset.mskill]); renderSetup();
@@ -317,12 +346,21 @@ const Combat = (() => {
         uid: "e" + enemies.length, name: g.count > 1 ? `${T(t.name)} ${i}` : T(t.name), maxHp: t.hp,
         status: "active", stunned: false, persist: null, letRipUsed: false }));
     });
+    const fightWeapon = (name, mw) => {
+      const w = Object.assign({ name: T(name || "Custom weapon") }, JSON.parse(JSON.stringify(mw)));
+      w.eff = w.eff.map(e => (e === "Piercing" ? `Piercing ${mw.pierce}` : e));
+      return w;
+    };
     const players = setup.members.map((m, i) => {
-      const w = Object.assign({ name: T(m.weapon || "Custom weapon") }, JSON.parse(JSON.stringify(m.w)));
-      w.eff = w.eff.map(e => (e === "Piercing" ? `Piercing ${m.w.pierce}` : e));
+      const w = fightWeapon(m.weapon, m.w);
+      // the other weapons in the character's profile, ready to switch to
+      const others = charWeapons(ROSTER.find(x => x.id === m.charId)).filter(x => x.name !== m.weapon).map(x => {
+        const t = newMember(0); t.charId = m.charId; fromWeapon(t, x.name); t.w.ammo = x.ammo || 0;
+        return fightWeapon(x.name, t.w);
+      });
       return { uid: "P" + i, charId: m.charId, name: m.name, hp: m.hp, maxHp: m.maxHp, def: m.def, init: m.init,
         dr: Object.assign({}, m.dr), meleeBonus: m.meleeBonus, ammo: m.w.ammo, stunned: false, persist: null,
-        status: m.hp > 0 ? "up" : "down", w };
+        status: m.hp > 0 ? "up" : "down", w, weapons: [w].concat(others), wi: 0 };
     });
     S = { phase: "fight", round: 1, ap: setup.ap, log: [], enemies, players };
     // initiative: highest first, party members win ties
@@ -484,7 +522,10 @@ const Combat = (() => {
     const ranged = !isMelee(w.skill);
     if (t.step === "aim") {
       const opts = alive().map(e => `<option value="${e.uid}" ${t.target === e.uid ? "selected" : ""}>${esc(e.name)} (${T("Def")} ${e.def}, ${T("HP")} ${e.hp})</option>`).join("");
-      return `<h3>${T("{name}'s turn: attack with {w}", { name: esc(p.name), w: esc(T(w.name)) })}</h3>
+      const arsenal = p.weapons && p.weapons.length > 1
+        ? `<div class="row" style="margin-bottom:8px"><div><label class="f">${T("Weapon")}</label><select id="t-weapon">${p.weapons.map((x, i) =>
+            `<option value="${i}" ${i === (p.wi || 0) ? "selected" : ""}>${esc(T(x.name))}${isMelee(x.skill) ? "" : ` (${T("Ammo")} ${i === (p.wi || 0) ? p.ammo : x.ammo})`}</option>`).join("")}</select></div></div>` : "";
+      return `<h3>${T("{name}'s turn: attack with {w}", { name: esc(p.name), w: esc(T(w.name)) })}</h3>${arsenal}
         <p class="hint">${T("TN {tn}, critical on d20 ≤ {crit}. Step 1: choose the target and situation.", { tn: w.tn, crit: w.crit })}</p>
         <div class="row"><div><label class="f">${T("Target")}</label><select id="t-target">${opts}</select></div>
           ${ranged ? `<div><label class="f">${T("Distance to target")}</label><select id="t-range">${RANGES.map(r => `<option value="${r}">${T(RANGE_NAME[r])}</option>`).join("")}</select></div>` : ""}
@@ -558,6 +599,13 @@ const Combat = (() => {
     const p = isP(t.actor) ? actor() : null, w = p && p.w;
     on("t-end", endTurn);
     // ---------------- party member
+    if ($("t-weapon")) $("t-weapon").onchange = () => {
+      const i = num($("t-weapon").value);
+      p.weapons[p.wi || 0] = Object.assign(p.w, { ammo: p.ammo }); // keep what's left in the old one
+      p.wi = i; p.w = p.weapons[i]; p.ammo = p.w.ammo || 0;
+      log(T("{name} switches to {w}.", { name: p.name, w: T(p.w.name) }));
+      render();
+    };
     on("t-next", () => {
       const e = enemy($("t-target").value), buy = num($("t-buy").value);
       if (BUY_COST[buy] > S.ap) { toast(T("Not enough AP in the pool ({n})", { n: S.ap })); return; }
@@ -786,6 +834,8 @@ const Combat = (() => {
   async function show() {
     if (!ready) ready = init();
     await ready;
+    // the team changed since the setup was made: load it again
+    if (!S && setup && teamOn() && setup.members.map(m => m.charId).join() !== Team.chars().slice(0, MAX_PARTY).map(c => c.id).join()) setup.members = teamMembers();
     if (S) render(); else renderSetup();
   }
   // pre-fill the setup with enemies (from the Encounter Randomizer); "busy" if a fight is running

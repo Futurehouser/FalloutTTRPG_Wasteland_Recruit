@@ -36,6 +36,8 @@ function showPage(id) {
   if (id === "combat" && typeof Combat !== "undefined") Combat.show();
   if (id === "hack" && typeof Hack !== "undefined") Hack.show();
   if (id === "radio" && typeof Radio !== "undefined") Radio.show();
+  if (id === "team" && typeof Team !== "undefined") Team.render();
+  if (typeof Walkers !== "undefined") Walkers.update(); // the team's sprites walk on Home and My Team only
 }
 $("burger").onclick = () => document.body.classList.toggle("menu-open");
 $("scrim").onclick = () => document.body.classList.remove("menu-open");
@@ -85,6 +87,7 @@ $("cg-keep").onclick = async () => {
     name: c.name, origin: T(c.origin), race: c.race, level: 1, special: Object.assign({}, c.special),
     maxHp: c.hp, carryWeight: c.carry_max,
     skills: Object.assign({}, c.skills), tags: c.tags.slice(), photo: null,
+    weapons: [...new Set(c.weapons)].filter(n => WEAPONS_FOR_COMBAT[n]).map(n => ({ name: n, ammo: startAmmo(n, c.ammo) })),
     notes: c.gimmick_long + "\n\n" + T("Archetype: {a}. Equipment pack: {p}. Perks: {perks}.", { a: T(c.archetype), p: T(c.pack), perks: perks || T("none") }) +
            (c.survivor_traits.length ? " " + T("Traits: {t}.", { t: c.survivor_traits.map(x => T(x)).join(", ") }) : ""),
   });
@@ -517,12 +520,26 @@ function renderRoster() {
           <small style="white-space:normal">${esc((pc.ranks[pc.rank - 1] || {}).desc || "")}</small></div></div>`).join("")
           + `<div class="muted" style="font-size:12px;margin-top:6px">${T("Points spent / S.P.E.C.I.A.L. value:")}</div>` + pointsGrid(c.special, c.perkCards)
           : `<div class="muted">${T("None yet. Tap <b>Suggest a perk</b> to get one picked for this character.")}</div>`}
+        <h4>${T("Weapons")}</h4><div id="ro-weapons"></div>
+        <div class="row" style="margin-top:8px"><div style="flex:3 1 200px"><select id="ro-wpick">${Object.keys(WEAPONS_FOR_COMBAT)
+          .map(n => `<option value="${esc(n)}">${esc(T(n))}</option>`).join("")}</select></div>
+          <div style="flex:1 1 110px"><button class="btn" id="ro-wadd" style="width:100%">${T("+ Add weapon")}</button></div></div>
+        <div class="muted" style="font-size:12px;margin-top:6px">${T("The Combat Assistant arms this character with these weapons, and they can switch between them on their turn.")}</div>
         ${c.notes ? `<h4>${T("Notes")}</h4><div style="white-space:pre-wrap;font-size:14px;line-height:1.45">${esc(c.notes)}</div>` : ""}
         <div class="bar" style="margin-top:16px"><button class="btn primary" id="ro-lvl">&#11014; ${T("Level up")}</button>
           <button class="btn" id="ro-sug">&#9733; ${T("Suggest a perk")}</button></div>
         <div class="bar"><button class="btn" id="ro-edit">&#9998; ${T("Edit")}</button><button class="btn danger" id="ro-del">&#128465; ${T("Delete")}</button></div>
       </div>`;
     setAvatar($("ro-av"), c);
+    renderWeapons(c);
+    $("ro-wadd").onclick = async () => {
+      const n = $("ro-wpick").value;
+      if (!WEAPONS_FOR_COMBAT[n]) return;
+      c.weapons = (c.weapons || []).filter(w => WEAPONS_FOR_COMBAT[w.name]);
+      if (c.weapons.some(w => w.name === n)) { toast(T("{name} already has that weapon", { name: c.name })); return; }
+      c.weapons.push({ name: n, ammo: startAmmo(n) });
+      await storeRoster(); renderWeapons(c);
+    };
     $("ro-back").onclick = closeProfile;
     $("ro-edit").onclick = () => { fillForm(c); showPage("create"); };
     $("ro-lvl").onclick = () => {
@@ -552,10 +569,41 @@ function renderRoster() {
   list.querySelectorAll("[data-del]").forEach(b => (b.onclick = () => deleteChar(ROSTER.find(x => x.id === b.dataset.del))));
 }
 
+// ammo a weapon starts with: what a random character rolled for its caliber, or a handful
+const isMeleeSkill = sk => sk === "Melee Weapons" || sk === "Unarmed";
+function startAmmo(name, rolled) {
+  const w = WEAPONS_FOR_COMBAT[name];
+  if (!w || isMeleeSkill(w.skill)) return 0;
+  if (rolled) return rolled[w.ammo] || rolled[name] || (/Molotov/.test(name) ? rolled.Molotov : 0) || 0;
+  return w.skill === "Throwing" || w.skill === "Explosives" ? 3 : 20;
+}
+function renderWeapons(c) {
+  const box = $("ro-weapons");
+  const RANGE = { C: "Close", M: "Medium", L: "Long", X: "Extreme" };
+  const ws = (c.weapons || []).filter(w => WEAPONS_FOR_COMBAT[w.name]);
+  box.innerHTML = ws.length ? ws.map((w, i) => {
+    const d = WEAPONS_FOR_COMBAT[w.name], melee = isMeleeSkill(d.skill);
+    return `<div class="pcard wpn"><div class="t"><b>${esc(T(w.name))}</b>
+      <small>${T(d.skill)} &middot; ${d.dmg} ${T("CD")} ${T(d.type === "Energy" ? "Energy" : "Physical")}${d.eff && d.eff !== "-" ? " &middot; " + esc(TL(d.eff)) : ""}${melee ? "" : ` &middot; ${T("Fire rate")} ${typeof d.rate === "number" ? d.rate : 0} &middot; ${T(RANGE[d.range] || "Close")}`}</small></div>
+      ${melee ? "" : `<label class="wpn-ammo"><small>${T(d.skill === "Throwing" || d.skill === "Explosives" ? "Throwables" : "Ammo")}</small><input type="number" min="0" max="9999" data-wammo="${i}" value="${w.ammo || 0}"></label>`}
+      <button class="btn danger" data-wrm="${i}" title="${T("Remove weapon")}">&#10005;</button></div>`;
+  }).join("") : `<div class="muted">${T("No weapons yet. Pick one below and tap <b>+ Add weapon</b>.")}</div>`;
+  box.querySelectorAll("[data-wrm]").forEach(b => (b.onclick = async () => {
+    c.weapons = ws.filter((_, i) => i !== +b.dataset.wrm);
+    await storeRoster(); renderWeapons(c);
+  }));
+  box.querySelectorAll("[data-wammo]").forEach(inp => (inp.onchange = async () => {
+    ws[+inp.dataset.wammo].ammo = clamp(inp.value, 0, 9999, 0);
+    c.weapons = ws;
+    await storeRoster();
+  }));
+}
+
 async function deleteChar(c) {
   if (!c || !(await confirmBox(T("Delete {name}? This can't be undone.", { name: c.name })))) return;
   ROSTER = ROSTER.filter(x => x.id !== c.id);
   await storeRoster();
+  Team.prune(); // their sprite leaves with them
   if (editingId === c.id) resetForm();
   openProfileId = null; renderRoster();
   toast(T("{name} deleted", { name: c.name }));
@@ -652,6 +700,7 @@ const Tiles = (() => {
   const start = location.hash.slice(1);
   showPage($("page-" + start) ? start : "home");
   await Promise.all([loadRoster(), loadLootOverrides(), Tiles.restore()]);
+  await Team.load();
   buildLootEditor();
   setTimeout(() => Updater.check(false), 1500); // ask about new versions on startup
 })();

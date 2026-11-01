@@ -301,3 +301,30 @@ h4.sec { margin: 16px 0 4px; font-size: 13px; letter-spacing: 1px; text-transfor
 .levelup b { color: var(--amber); }
 .why { font-size: 13px; color: var(--green); margin: 6px 0; }
 @media (max-width: 520px) { .pts { grid-template-columns: repeat(4, 1fr); } }
+
+/* my team */
+.tm-head { display: flex; gap: 12px; align-items: center; }
+.tm-head .avatar { flex: none; }
+.tm-who { flex: 1; min-width: 0; }
+.tm-who b { display: block; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tm-who small { color: var(--muted); }
+.tm-player { margin-top: 6px; padding: 6px 9px !important; font-size: 13px; }
+.tm-btns { display: flex; flex-direction: column; gap: 6px; flex: none; }
+.tm-btns .btn { padding: 7px 11px; }
+.tm-special { margin-top: 10px; }
+.tm-derived { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 13px; color: var(--muted); }
+.tm-derived b { color: var(--ink); }
+.tm-weapons { margin-top: 8px; font-size: 13px; }
+.tm-weapons .chip { cursor: default; }
+.pcard.wpn { align-items: center; }
+.wpn-ammo { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: none; }
+.wpn-ammo small { font-size: 11px; color: var(--muted); }
+.wpn-ammo input { width: 70px; padding: 6px; text-align: center; }
+.cs-team { display: flex; gap: 10px; align-items: center; padding: 10px 12px; margin: 0 0 10px; border: 1px solid var(--amber-d);
+           border-radius: 12px; background: var(--panel); cursor: pointer; }
+.cs-team input { width: 22px; height: 22px; flex: none; accent-color: var(--amber); }
+.cs-team small { display: block; color: var(--muted); font-size: 12px; }
+.cs-team.off { opacity: .6; border-color: var(--line); cursor: default; }
+#walkers { position: fixed; left: 0; right: 0; bottom: env(safe-area-inset-bottom); width: 100%; height: 128px; pointer-events: none; z-index: 4; }
+body.walkers-on .page.active { padding-bottom: 140px; }
+@media (max-width: 559px) { #walkers { height: 88px; } body.walkers-on .page.active { padding-bottom: 100px; } }

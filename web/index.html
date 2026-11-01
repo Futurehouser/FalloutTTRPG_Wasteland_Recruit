@@ -30,6 +30,7 @@
     <button data-page="encounter"><span class="n">8</span>Encounter Randomizer</button>
     <button data-page="hack"><span class="n">9</span>Hack a Terminal</button>
     <button data-page="radio"><span class="n">10</span>Fallout Radio</button>
+    <button data-page="team"><span class="n">11</span>My Team</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
   </nav>
   <div class="foot">Version <span id="app-version"></span><br>Fan-made tool for the Fallout 2d20 tabletop game.</div>
@@ -54,6 +55,7 @@
       <button class="tile" data-go="encounter"><span class="ic">&#127956;</span><b>Encounter Randomizer</b><small>What happens when you rest or travel</small></button>
       <button class="tile" data-go="hack"><span class="ic">&#128187;</span><b>Hack a Terminal</b><small>Crack a RobCo password in 3 tries</small></button>
       <button class="tile" data-go="radio"><span class="ic">&#128251;</span><b>Fallout Radio</b><small>Tune in to the Wasteland's stations</small></button>
+      <button class="tile" data-go="team"><span class="ic">&#129309;</span><b>My Team</b><small>The characters your players are using</small></button>
     </div>
     <p class="hint tiles-hint">Hold and drag a tile to move it (click and drag with a mouse).
       <button class="linkbtn" id="tiles-reset">Reset order</button></p>
@@ -231,6 +233,18 @@
     </div>
   </section>
 
+  <!-- 11. my team -->
+  <section class="page" id="page-team" data-title="My Team">
+    <h2>My Team</h2>
+    <p class="hint">Add the saved characters your players are using. The Combat Assistant can load the whole team in one go,
+      and every member gets a little wastelander walking along the bottom of this page and the Home screen.</p>
+    <div class="row">
+      <div style="flex:3 1 200px"><label class="f">Saved character</label><select id="tm-pick"></select></div>
+      <div style="flex:1 1 120px;align-self:end"><button class="btn primary" id="tm-add" style="width:100%">+ Add to team</button></div>
+    </div>
+    <div id="tm-list" style="margin-top:12px"></div>
+  </section>
+
   <!-- 7. combat assistant -->
   <section class="page" id="page-combat" data-title="Combat Assistant">
     <h2>Combat Assistant</h2>
@@ -246,6 +260,7 @@
     <div id="ro-profile"></div>
   </section>
 </main>
+<canvas id="walkers" hidden aria-hidden="true"></canvas>
 
 <div class="modal" id="modal"><div class="box"><p id="modal-text"></p>
   <div class="bar"><button class="btn" id="modal-no">Cancel</button><button class="btn danger" id="modal-yes">Delete</button></div></div></div>
@@ -279,5 +294,6 @@
 <script charset="utf-8" src="encounter.js"></script>
 <script charset="utf-8" src="hack.js"></script>
 <script charset="utf-8" src="radio.js"></script>
+<script charset="utf-8" src="team.js"></script>
 </body>
 </html>
