@@ -152,7 +152,7 @@ const Walkers = (() => {
   let cv = null, raf = null, last = 0, team = [], fight = [], swallow = false;
   const scale = () => (window.innerWidth < 560 ? 2 : 3);
   const HEAD_TOP = { human: 16, ghoul: 16, mutant: 11, robot: 11 }; // first drawn row of each sprite
-  const JUMP = 0.35, FLASH = 0.4, FALL = 0.35, LIE = 1.0, FADE = 0.6, RESPAWN = 1.0, SPAWN = 0.45;
+  const JUMP = 0.35, FLASH = 0.4, FALL = 0.35, LIE = 1.0, FADE = 0.6, RESPAWN = 1.0, SPAWN = 0.45, EXPLODE = 1.4;
 
   function make(id, race, name, width) {
     return { id, race, name, x: 20 + Math.random() * Math.max(40, width - 80), dir: Math.random() < 0.5 ? -1 : 1,
@@ -187,7 +187,7 @@ const Walkers = (() => {
       } else {
         if (p.hp < k.hp) hit(k, k.hp - p.hp);
         if (down && (k.life === "alive" || k.life === "spawning")) die(k, false);
-        if (!down && (k.life === "gone" || k.life === "falling")) revive(k); // healed back up
+        if (!down && k.life !== "alive" && k.life !== "spawning") revive(k); // healed back up
       }
       k.hp = p.hp; k.name = p.name;
       return k;
@@ -197,10 +197,20 @@ const Walkers = (() => {
 
   // a short punch: a falling thump plus a burst of noise; robots also ring like struck metal
   let audio = null;
+  function ctx() {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume();
+    return audio;
+  }
+  function noise(a, secs) {
+    const len = Math.floor(a.sampleRate * secs), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const n = a.createBufferSource(); n.buffer = buf;
+    return n;
+  }
   function hitSound(race, big) {
     try {
-      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-      if (audio.state === "suspended") audio.resume();
+      ctx();
       const t0 = audio.currentTime, vol = big ? 0.5 : 0.35;
       const o = audio.createOscillator(), og = audio.createGain();
       o.type = "sine"; o.frequency.setValueAtTime(race === "mutant" ? 130 : 180, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + 0.14);
@@ -220,13 +230,72 @@ const Walkers = (() => {
     } catch (e) { /* no audio on this device */ }
   }
 
+  // going down: a dying groan that sinks in pitch, then the thud of the body hitting the floor
+  function fallSound(race) {
+    try {
+      const a = ctx(), t0 = a.currentTime, base = { ghoul: 190, mutant: 115 }[race] || 230;
+      const o = a.createOscillator(), f = a.createBiquadFilter(), og = a.createGain();
+      o.type = "sawtooth"; o.frequency.setValueAtTime(base, t0); o.frequency.exponentialRampToValueAtTime(base * 0.4, t0 + FALL + 0.1);
+      f.type = "lowpass"; f.frequency.value = race === "ghoul" ? 1500 : 850;
+      og.gain.setValueAtTime(0.0001, t0); og.gain.exponentialRampToValueAtTime(0.2, t0 + 0.04); og.gain.exponentialRampToValueAtTime(0.001, t0 + FALL + 0.15);
+      o.connect(f).connect(og).connect(a.destination); o.start(t0); o.stop(t0 + FALL + 0.2);
+      const t1 = t0 + FALL;
+      const b = a.createOscillator(), bg = a.createGain();
+      b.type = "sine"; b.frequency.setValueAtTime(115, t1); b.frequency.exponentialRampToValueAtTime(35, t1 + 0.25);
+      bg.gain.setValueAtTime(0.6, t1); bg.gain.exponentialRampToValueAtTime(0.001, t1 + 0.3);
+      b.connect(bg).connect(a.destination); b.start(t1); b.stop(t1 + 0.32);
+      const n = noise(a, 0.16), nf = a.createBiquadFilter(), ng = a.createGain();
+      nf.type = "lowpass"; nf.frequency.value = 500;
+      ng.gain.setValueAtTime(0.4, t1); ng.gain.exponentialRampToValueAtTime(0.001, t1 + 0.15);
+      n.connect(nf).connect(ng).connect(a.destination); n.start(t1);
+    } catch (e) { /* no audio on this device */ }
+  }
+
+  // a robot blowing up: a low boom, a roar of noise that darkens as it fades, and crackling debris
+  function boomSound() {
+    try {
+      const a = ctx(), t0 = a.currentTime;
+      const n = noise(a, 1.4), f = a.createBiquadFilter(), g = a.createGain();
+      f.type = "lowpass"; f.frequency.setValueAtTime(5000, t0); f.frequency.exponentialRampToValueAtTime(140, t0 + 1.2);
+      g.gain.setValueAtTime(0.6, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 1.35);
+      n.connect(f).connect(g).connect(a.destination); n.start(t0);
+      const o = a.createOscillator(), og = a.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(120, t0); o.frequency.exponentialRampToValueAtTime(28, t0 + 0.6);
+      og.gain.setValueAtTime(0.7, t0); og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.7);
+      o.connect(og).connect(a.destination); o.start(t0); o.stop(t0 + 0.72);
+      for (let i = 0; i < 7; i++) {
+        const tc = t0 + 0.12 + Math.random() * 0.7, c = noise(a, 0.03), cf = a.createBiquadFilter(), cg = a.createGain();
+        cf.type = "highpass"; cf.frequency.value = 2500;
+        cg.gain.setValueAtTime(0.22, tc); cg.gain.exponentialRampToValueAtTime(0.001, tc + 0.03);
+        c.connect(cf).connect(cg).connect(a.destination); c.start(tc);
+      }
+    } catch (e) { /* no audio on this device */ }
+  }
+
   function hit(k, amount) {
     if (k.life !== "alive") return;
     hitSound(k.race, amount >= 5);
     k.jump = JUMP; k.flash = FLASH;
     k.pops.push({ text: "-" + amount, t: 0 });
   }
-  function die(k, respawn) { k.life = "falling"; k.lt = 0; k.jump = 0; k.respawn = respawn; }
+  // Mr. Handy and the other robots blow up instead of falling over
+  function die(k, respawn) {
+    k.lt = 0; k.jump = 0; k.respawn = respawn;
+    if (k.race === "robot") { k.life = "exploding"; k.boom = makeBoom(); boomSound(); }
+    else { k.life = "falling"; fallSound(k.race); }
+  }
+  // the blast, in sprite pixels from the feet: fireballs that turn to smoke, and bits of metal that fly and land
+  function makeBoom() {
+    const rnd = (a, b) => a + Math.random() * (b - a), cy = -(Sprites.FH - HEAD_TOP.robot) / 2;
+    const fire = Array.from({ length: 22 }, (_, i) => {
+      const a = Math.random() * Math.PI * 2, v = rnd(4, 24);
+      return { x: 0, y: cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.8 - rnd(2, 8), r: rnd(3, 6), delay: i < 8 ? 0 : rnd(0, 0.3) };
+    });
+    const metal = ["#9aa4ac", "#6e7880", "#c8cfd4", "#d9a43a"];
+    const bits = Array.from({ length: 10 }, () => ({ x: rnd(-3, 3), y: cy + rnd(-5, 5), vx: rnd(-30, 30), vy: rnd(-48, -18),
+      a: 0, spin: rnd(-14, 14), w: Math.random() < 0.5 ? 2 : 1, h: Math.random() < 0.5 ? 2 : 1, c: metal[Math.floor(Math.random() * metal.length)] }));
+    return { cy, fire, bits };
+  }
   function revive(k) { k.life = "spawning"; k.lt = 0; k.hits = 0; k.x = 20 + Math.random() * Math.max(40, (cv ? cv.clientWidth : 300) - 80); }
 
   const onTeamPage = () => currentPage === "home" || currentPage === "team";
@@ -282,7 +351,9 @@ const Walkers = (() => {
     k.pops.forEach(p => (p.t += dt)); k.pops = k.pops.filter(p => p.t < 0.9);
     if (k.life !== "alive") {
       k.lt += dt;
+      if (k.life === "exploding") stepBoom(k.boom, dt, k.lt);
       if (k.life === "falling" && k.lt > FALL + LIE + FADE) { k.life = "gone"; k.lt = 0; }
+      else if (k.life === "exploding" && k.lt > EXPLODE) { k.life = "gone"; k.lt = 0; k.boom = null; }
       else if (k.life === "gone" && k.respawn && k.lt > RESPAWN) revive(k);
       else if (k.life === "spawning" && k.lt > SPAWN) { k.life = "alive"; k.lt = 0; }
       return;
@@ -305,8 +376,49 @@ const Walkers = (() => {
     if (k.ft >= 1 / fps) { k.ft = 0; k.frame = (k.frame + 1) % 4; }
   }
 
+  function stepBoom(b, dt, lt) {
+    const drag = Math.exp(-3 * dt);
+    b.fire.forEach(p => {
+      if (lt < p.delay) return;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= drag; p.vy = p.vy * drag - 6 * dt; // smoke drifts up
+    });
+    b.bits.forEach(p => {
+      if (p.rest) return;
+      p.vy += 90 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.spin * dt;
+      if (p.y >= 0) { // hit the floor: one small bounce, then lie there
+        p.y = 0;
+        if (Math.abs(p.vy) < 12) { p.rest = true; p.spin = 0; } else { p.vy *= -0.3; p.vx *= 0.5; p.spin *= 0.5; }
+      }
+    });
+  }
+  const FIRE = [[0.12, "#fff6d0"], [0.3, "#ffd23a"], [0.5, "#ff8a1e"], [0.68, "#d0381a"], [1, "#3a3530"]];
+  function drawBoom(g, k, s, h) {
+    const b = k.boom, lt = k.lt, fx = k.x, fy = h - 4, P = v => Math.round(v) * s; // snap to the sprite's pixel grid
+    // scorch mark on the floor
+    g.globalAlpha = Math.max(0, 1 - lt / EXPLODE) * 0.7; g.fillStyle = "#1a1410";
+    g.beginPath(); g.ellipse(fx, h - 6, 14 * s, 3, 0, 0, Math.PI * 2); g.fill();
+    // the first white flash
+    if (lt < 0.1) { g.globalAlpha = 1 - lt / 0.1; g.fillStyle = "#fffbe8"; const r = 12 * s; g.fillRect(fx - r, fy + P(b.cy) - r / 2, r * 2, r); g.fillRect(fx - r / 2, fy + P(b.cy) - r, r, r * 2); }
+    b.fire.forEach(p => {
+      const age = (lt - p.delay) / 0.95;
+      if (age < 0 || age >= 1) return;
+      const r = Math.max(1, Math.round(p.r * (0.6 + age * 1.3))) * s, x = fx + P(p.x), y = fy + P(p.y);
+      g.fillStyle = FIRE.find(c => age < c[0])[1];
+      g.globalAlpha = age < 0.68 ? 1 : 1 - (age - 0.68) / 0.32;
+      g.fillRect(x - r, y - r / 2, r * 2, r); g.fillRect(x - r / 2, y - r, r, r * 2); // a chunky pixel blob
+    });
+    g.globalAlpha = Math.min(1, (EXPLODE - lt) / 0.4);
+    b.bits.forEach(p => {
+      g.save(); g.translate(fx + p.x * s, fy + p.y * s - (p.h * s) / 2); g.rotate(p.a);
+      g.fillStyle = p.c; g.fillRect((-p.w * s) / 2, (-p.h * s) / 2, p.w * s, p.h * s);
+      g.restore();
+    });
+    g.globalAlpha = 1;
+  }
+
   function draw(g, k, s, h) {
     if (k.life === "gone") return;
+    if (k.life === "exploding") { drawBoom(g, k, s, h); drawPops(g, k, h - 4 - (Sprites.FH - HEAD_TOP.robot) * s, 1); return; }
     const dw = Sprites.FW * s, dh = Sprites.FH * s, sheet = Sprites.sheet(k.race);
     let img = k.life === "alive" ? sheet[k.state][k.frame] : sheet.idle[0];
     if (k.flash && Math.floor(k.flash * 16) % 2 === 0) img = red(img);
@@ -335,7 +447,11 @@ const Walkers = (() => {
       g.fillStyle = "#000a"; g.fillRect(Math.round(k.x - tw / 2), ty - 1, tw, 15);
       g.fillStyle = "#f0be28"; g.fillText(label, k.x, ty + 10);
     }
-    // damage numbers float up
+    drawPops(g, k, headY, alpha);
+  }
+
+  // damage numbers float up
+  function drawPops(g, k, headY, alpha) {
     g.font = "900 15px Segoe UI, Roboto, sans-serif"; g.textAlign = "center";
     k.pops.forEach((p, i) => {
       g.globalAlpha = alpha * (1 - p.t / 0.9);
