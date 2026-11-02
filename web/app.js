@@ -696,7 +696,9 @@ const Tiles = (() => {
 })();
 
 // ------------------------------------------------------------------ start
-(async () => {
+// Runs once every script has loaded: My Team and the combat assistant live in files after this one,
+// and in the apps the saved data is ready at once, so starting earlier would reach them too soon.
+async function startApp() {
   const start = location.hash.slice(1);
   showPage($("page-" + start) ? start : "home");
   // one failing load must not keep the others (or My Team) waiting
@@ -705,4 +707,5 @@ const Tiles = (() => {
   if (currentPage === "combat") Combat.show(); // a fight opened before the sprites were ready
   buildLootEditor();
   setTimeout(() => Updater.check(false), 1500); // ask about new versions on startup
-})();
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startApp); else startApp();
