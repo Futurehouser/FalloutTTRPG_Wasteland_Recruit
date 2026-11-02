@@ -1,6 +1,6 @@
 // My Team: the characters your players are using right now. Each one gets a little pixel-art
 // wastelander (human, ghoul, super mutant or robot) that walks along the bottom of the Home and
-// My Team pages, stopping now and then to idle. The Combat Assistant can load the whole team.
+// My Team pages (and of the Combat Assistant during a fight), stopping now and then to idle. The Combat Assistant can load the whole team.
 
 // ------------------------------------------------------------------ sprites
 // Original pixel art drawn in code: one walk cycle and one idle loop of 4 frames per race,
@@ -144,38 +144,184 @@ const Sprites = (() => {
 })();
 
 // ------------------------------------------------------------------ the walking stage
+// Home and My Team show the team; the Combat Assistant shows whoever is in the running fight.
+// Tapping a sprite (Home / My Team only) hits it: it jumps and flashes red, and after as many hits
+// as the character's max HP it falls, vanishes and comes back a second later. In a fight the sprites
+// react to the damage the Combat Assistant applies, and a downed character stays gone.
 const Walkers = (() => {
-  let cv = null, raf = null, last = 0, list = [];
+  let cv = null, raf = null, last = 0, team = [], fight = [], swallow = false;
   const scale = () => (window.innerWidth < 560 ? 2 : 3);
   const HEAD_TOP = { human: 16, ghoul: 16, mutant: 11, robot: 11 }; // first drawn row of each sprite
+  const JUMP = 0.35, FLASH = 0.4, FALL = 0.35, LIE = 1.0, FADE = 0.6, RESPAWN = 1.0, SPAWN = 0.45;
+
+  function make(id, race, name, width) {
+    return { id, race, name, x: 20 + Math.random() * Math.max(40, width - 80), dir: Math.random() < 0.5 ? -1 : 1,
+             speed: 26 + Math.random() * 18, state: "walk", timer: 2 + Math.random() * 4, frame: 0, ft: 0,
+             life: "alive", lt: 0, respawn: true, hits: 0, jump: 0, flash: 0, pops: [] };
+  }
+  const maxHpOf = c => c.maxHp || c.special.END + c.special.LCK;
 
   function sync(chars) {
     const keep = {};
-    list.forEach(w => (keep[w.id] = w));
-    const width = window.innerWidth;
-    list = chars.map(c => {
-      const race = c.race || raceFromOrigin(c.origin);
-      const old = keep[c.id];
-      if (old) { old.race = race; old.name = c.name; return old; }
-      return { id: c.id, race, name: c.name, x: 20 + Math.random() * Math.max(40, width - 80), dir: Math.random() < 0.5 ? -1 : 1,
-               speed: 26 + Math.random() * 18, state: "walk", timer: 2 + Math.random() * 4, frame: 0, ft: 0 };
+    team.forEach(w => (keep[w.id] = w));
+    team = chars.map(c => {
+      const k = keep[c.id] || make(c.id, null, c.name, window.innerWidth);
+      return Object.assign(k, { race: c.race || raceFromOrigin(c.origin), name: c.name, maxHp: maxHpOf(c) });
     });
     update();
   }
 
-  function visible() { return list.length > 0 && (currentPage === "home" || currentPage === "team"); }
+  // the Combat Assistant reports its party after every change; null when no fight is running
+  function setFight(players, fightId) {
+    if (!players) { fight = []; update(); return; }
+    const keep = {};
+    fight.forEach(w => (keep[w.id] = w));
+    fight = players.map(p => {
+      const id = (fightId || "fight") + ":" + p.uid, c = ROSTER.find(x => x.id === p.charId);
+      let k = keep[id];
+      const down = p.status !== "up" || p.hp <= 0;
+      if (!k) {
+        k = make(id, c ? c.race || raceFromOrigin(c.origin) : "human", p.name, window.innerWidth);
+        k.respawn = false;
+        if (down) k.life = "gone";
+      } else {
+        if (p.hp < k.hp) hit(k, k.hp - p.hp);
+        if (down && (k.life === "alive" || k.life === "spawning")) die(k, false);
+        if (!down && (k.life === "gone" || k.life === "falling")) revive(k); // healed back up
+      }
+      k.hp = p.hp; k.name = p.name;
+      return k;
+    });
+    update();
+  }
+
+  function hit(k, amount) {
+    if (k.life !== "alive") return;
+    k.jump = JUMP; k.flash = FLASH;
+    k.pops.push({ text: "-" + amount, t: 0 });
+  }
+  function die(k, respawn) { k.life = "falling"; k.lt = 0; k.jump = 0; k.respawn = respawn; }
+  function revive(k) { k.life = "spawning"; k.lt = 0; k.hits = 0; k.x = 20 + Math.random() * Math.max(40, (cv ? cv.clientWidth : 300) - 80); }
+
+  const onTeamPage = () => currentPage === "home" || currentPage === "team";
+  const active = () => (onTeamPage() ? team : currentPage === "combat" ? fight : []);
 
   function update() {
     cv = cv || $("walkers");
     if (!cv) return;
-    const on = visible();
+    const on = active().length > 0;
     cv.hidden = !on;
     document.body.classList.toggle("walkers-on", on);
     if (on && !raf) { last = performance.now(); raf = requestAnimationFrame(tick); }
   }
 
+  // ---------------- tapping a sprite (Home / My Team)
+  function box(k) {
+    const s = scale(), r = cv.getBoundingClientRect(), dh = Sprites.FH * s;
+    const top = r.top + cv.clientHeight - dh - 4 + HEAD_TOP[k.race] * s;
+    return { l: r.left + k.x - 9 * s, r: r.left + k.x + 9 * s, t: top, b: r.top + cv.clientHeight - 2 };
+  }
+  window.addEventListener("pointerdown", e => {
+    if (!cv || cv.hidden || !onTeamPage()) return;
+    const k = team.slice().sort((a, b) => b.x - a.x).find(k => {
+      if (k.life !== "alive") return false;
+      const b = box(k);
+      return e.clientX >= b.l && e.clientX <= b.r && e.clientY >= b.t && e.clientY <= b.b;
+    });
+    if (!k) return;
+    e.stopPropagation(); // the tile or button under the sprite doesn't get it
+    swallow = true; setTimeout(() => (swallow = false), 500);
+    k.hits++;
+    hit(k, 1);
+    if (k.hits >= k.maxHp) die(k, true);
+  }, true);
+  window.addEventListener("click", e => { if (swallow) { swallow = false; e.stopPropagation(); e.preventDefault(); } }, true);
+
+  // a red copy of a frame, for the hit flash
+  const reds = new WeakMap();
+  function red(img) {
+    let r = reds.get(img);
+    if (!r) {
+      r = document.createElement("canvas"); r.width = img.width; r.height = img.height;
+      const g = r.getContext("2d");
+      g.drawImage(img, 0, 0);
+      g.globalCompositeOperation = "source-atop"; g.fillStyle = "rgba(255,40,30,.75)"; g.fillRect(0, 0, r.width, r.height);
+      reds.set(img, r);
+    }
+    return r;
+  }
+
+  function step(k, dt, w, half) {
+    k.jump = Math.max(0, k.jump - dt); k.flash = Math.max(0, k.flash - dt);
+    k.pops.forEach(p => (p.t += dt)); k.pops = k.pops.filter(p => p.t < 0.9);
+    if (k.life !== "alive") {
+      k.lt += dt;
+      if (k.life === "falling" && k.lt > FALL + LIE + FADE) { k.life = "gone"; k.lt = 0; }
+      else if (k.life === "gone" && k.respawn && k.lt > RESPAWN) revive(k);
+      else if (k.life === "spawning" && k.lt > SPAWN) { k.life = "alive"; k.lt = 0; }
+      return;
+    }
+    // walk, and now and then stop to idle; turn at the edges or on a whim
+    k.timer -= dt;
+    if (k.timer <= 0) {
+      if (k.state === "walk") { k.state = "idle"; k.timer = 1.5 + Math.random() * 3; }
+      else { k.state = "walk"; k.timer = 2.5 + Math.random() * 5; if (Math.random() < 0.4) k.dir = -k.dir; }
+      k.frame = 0;
+    }
+    if (k.state === "walk" && !k.jump) {
+      k.x += k.dir * k.speed * dt;
+      if (k.x < half) { k.x = half; k.dir = 1; }
+      if (k.x > w - half) { k.x = w - half; k.dir = -1; }
+    }
+    k.x = Math.min(Math.max(k.x, half), Math.max(half, w - half));
+    k.ft += dt;
+    const fps = k.state === "walk" ? 8 : 2.5;
+    if (k.ft >= 1 / fps) { k.ft = 0; k.frame = (k.frame + 1) % 4; }
+  }
+
+  function draw(g, k, s, h) {
+    if (k.life === "gone") return;
+    const dw = Sprites.FW * s, dh = Sprites.FH * s, sheet = Sprites.sheet(k.race);
+    let img = k.life === "alive" ? sheet[k.state][k.frame] : sheet.idle[0];
+    if (k.flash && Math.floor(k.flash * 16) % 2 === 0) img = red(img);
+    const lift = k.jump ? Math.sin((Math.PI * (JUMP - k.jump)) / JUMP) * 7 * s : 0;
+    let angle = 0, alpha = 1, drop = 0;
+    if (k.life === "falling") {
+      angle = k.dir * (Math.PI / 2) * Math.min(1, k.lt / FALL);
+      if (k.lt > FALL + LIE) { const f = (k.lt - FALL - LIE) / FADE; alpha = (Math.floor(k.lt * 14) % 2 ? 0.25 : 1) * (1 - f); }
+    }
+    if (k.life === "spawning") { const p = k.lt / SPAWN; alpha = p; drop = (1 - p) * 14 * s; }
+    g.globalAlpha = alpha;
+    g.fillStyle = "#0006";
+    g.beginPath(); g.ellipse(k.x, h - 6, dw * (angle ? 0.4 : 0.24) * (lift ? 0.75 : 1), 3, 0, 0, Math.PI * 2); g.fill();
+    g.save();
+    g.translate(k.x, h - 4 - lift - drop); // the feet
+    g.rotate(angle);
+    g.scale(k.dir < 0 ? -1 : 1, 1);
+    g.drawImage(img, -dw / 2, -dh, dw, dh);
+    g.restore();
+    const headY = h - 4 - dh + HEAD_TOP[k.race] * s - lift - drop;
+    if (k.life === "alive" || k.life === "spawning") {
+      g.font = "bold 11px Segoe UI, Roboto, sans-serif";
+      g.textAlign = "center";
+      const label = k.name.length > 16 ? k.name.slice(0, 15) + "…" : k.name;
+      const tw = g.measureText(label).width + 8, ty = headY - 18;
+      g.fillStyle = "#000a"; g.fillRect(Math.round(k.x - tw / 2), ty - 1, tw, 15);
+      g.fillStyle = "#f0be28"; g.fillText(label, k.x, ty + 10);
+    }
+    // damage numbers float up
+    g.font = "900 15px Segoe UI, Roboto, sans-serif"; g.textAlign = "center";
+    k.pops.forEach((p, i) => {
+      g.globalAlpha = alpha * (1 - p.t / 0.9);
+      g.fillStyle = "#000"; g.fillText(p.text, k.x + 13 + i * 4 + 1, headY - 20 - p.t * 30 + 1);
+      g.fillStyle = "#ff4a3a"; g.fillText(p.text, k.x + 13 + i * 4, headY - 20 - p.t * 30);
+    });
+    g.globalAlpha = 1;
+  }
+
   function tick(now) {
-    if (!visible()) { raf = null; update(); return; }
+    const list = active();
+    if (!list.length) { raf = null; update(); return; }
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
     const s = scale(), w = cv.clientWidth, h = cv.clientHeight, dpr = window.devicePixelRatio || 1;
     if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
@@ -184,44 +330,12 @@ const Walkers = (() => {
     g.clearRect(0, 0, w, h);
     g.imageSmoothingEnabled = false;
     const half = (Sprites.FW * s) / 2;
-    list.forEach(k => {
-      // walk, and now and then stop to idle; turn at the edges or on a whim
-      k.timer -= dt;
-      if (k.timer <= 0) {
-        if (k.state === "walk") { k.state = "idle"; k.timer = 1.5 + Math.random() * 3; }
-        else { k.state = "walk"; k.timer = 2.5 + Math.random() * 5; if (Math.random() < 0.4) k.dir = -k.dir; }
-        k.frame = 0;
-      }
-      if (k.state === "walk") {
-        k.x += k.dir * k.speed * dt;
-        if (k.x < half) { k.x = half; k.dir = 1; }
-        if (k.x > w - half) { k.x = w - half; k.dir = -1; }
-      }
-      k.x = Math.min(Math.max(k.x, half), Math.max(half, w - half));
-      k.ft += dt;
-      const fps = k.state === "walk" ? 8 : 2.5;
-      if (k.ft >= 1 / fps) { k.ft = 0; k.frame = (k.frame + 1) % 4; }
-    });
+    list.forEach(k => step(k, dt, w, half));
     // draw back to front so nobody's name tag hides under a neighbour
-    list.slice().sort((a, b) => a.x - b.x).forEach(k => {
-      const img = Sprites.sheet(k.race)[k.state][k.frame];
-      const dw = Sprites.FW * s, dh = Sprites.FH * s, x = Math.round(k.x - dw / 2), y = h - dh - 4;
-      g.fillStyle = "#0006";
-      g.beginPath(); g.ellipse(k.x, h - 6, dw * 0.24, 3, 0, 0, Math.PI * 2); g.fill();
-      g.save();
-      if (k.dir < 0) { g.translate(x + dw, y); g.scale(-1, 1); g.drawImage(img, 0, 0, dw, dh); }
-      else g.drawImage(img, x, y, dw, dh);
-      g.restore();
-      g.font = "bold 11px Segoe UI, Roboto, sans-serif";
-      g.textAlign = "center";
-      const label = k.name.length > 16 ? k.name.slice(0, 15) + "…" : k.name;
-      const tw = g.measureText(label).width + 8, ty = y + HEAD_TOP[k.race] * s - 18;
-      g.fillStyle = "#000a"; g.fillRect(Math.round(k.x - tw / 2), ty - 1, tw, 15);
-      g.fillStyle = "#f0be28"; g.fillText(label, k.x, ty + 10);
-    });
+    list.slice().sort((a, b) => a.x - b.x).forEach(k => draw(g, k, s, h));
     raf = requestAnimationFrame(tick);
   }
-  return { sync, update };
+  return { sync, setFight, update };
 })();
 
 // ------------------------------------------------------------------ the My Team page

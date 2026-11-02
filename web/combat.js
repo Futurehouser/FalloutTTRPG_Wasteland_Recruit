@@ -195,6 +195,7 @@ const Combat = (() => {
   }
 
   function renderSetup() {
+    if (typeof Walkers !== "undefined") Walkers.setFight(null);
     if (!setup) newSetup();
     const s = setup;
     const chars = ROSTER.slice().sort((a, b) => a.name.localeCompare(b.name));
@@ -362,7 +363,7 @@ const Combat = (() => {
         dr: Object.assign({}, m.dr), meleeBonus: m.meleeBonus, ammo: m.w.ammo, stunned: false, persist: null,
         status: m.hp > 0 ? "up" : "down", w, weapons: [w].concat(others), wi: 0 };
     });
-    S = { phase: "fight", round: 1, ap: setup.ap, log: [], enemies, players };
+    S = { id: "f" + Date.now(), phase: "fight", round: 1, ap: setup.ap, log: [], enemies, players };
     // initiative: highest first, party members win ties
     S.order = players.map(p => p.uid).concat(enemies.map(e => e.uid))
       .sort((a, b) => initOf(b) - initOf(a) || (isP(a) === isP(b) ? 0 : isP(a) ? -1 : 1));
@@ -461,6 +462,7 @@ const Combat = (() => {
 
   function render() {
     save();
+    if (typeof Walkers !== "undefined") Walkers.setFight(S && S.phase === "fight" ? S.players : null, S && S.id); // the fighters' sprites react to their HP
     if (!S) return renderSetup();
     if (S.phase === "victory") return renderVictory();
     if (S.phase === "defeat") return renderDefeat();

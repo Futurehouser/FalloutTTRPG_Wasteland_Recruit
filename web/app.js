@@ -37,7 +37,7 @@ function showPage(id) {
   if (id === "hack" && typeof Hack !== "undefined") Hack.show();
   if (id === "radio" && typeof Radio !== "undefined") Radio.show();
   if (id === "team" && typeof Team !== "undefined") Team.render();
-  if (typeof Walkers !== "undefined") Walkers.update(); // the team's sprites walk on Home and My Team only
+  if (typeof Walkers !== "undefined") Walkers.update(); // sprites walk on Home and My Team, and in a running fight
 }
 $("burger").onclick = () => document.body.classList.toggle("menu-open");
 $("scrim").onclick = () => document.body.classList.remove("menu-open");
@@ -701,6 +701,7 @@ const Tiles = (() => {
   showPage($("page-" + start) ? start : "home");
   await Promise.all([loadRoster(), loadLootOverrides(), Tiles.restore()]);
   await Team.load();
+  if (currentPage === "combat") Combat.show(); // a fight opened before the sprites were ready
   buildLootEditor();
   setTimeout(() => Updater.check(false), 1500); // ask about new versions on startup
 })();
