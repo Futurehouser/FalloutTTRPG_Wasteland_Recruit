@@ -6,10 +6,16 @@ const Platform = (() => {
 
   const ready = new Promise(resolve => {
     if (window.AndroidBridge) return resolve();
+    const hasApi = () => !!(window.pywebview && window.pywebview.api && window.pywebview.api.load);
+    if (hasApi()) return resolve();
     window.addEventListener("pywebviewready", () => resolve());
-    // plain browser: no event will come. The Windows app can be slow to start, so keep waiting while it's getting ready
-    setTimeout(() => { if (!window.pywebview) resolve(); }, 1500);
-    setTimeout(resolve, 15000);
+    // the Windows app's "ready" event can fire before this script runs, so also watch for its API itself.
+    // A plain browser has no pywebview at all: give up after 1.5 s (15 s if the Windows app is still starting)
+    const t0 = Date.now();
+    const poll = setInterval(() => {
+      const waited = Date.now() - t0;
+      if (hasApi() || waited > 15000 || (!window.pywebview && waited > 1500)) { clearInterval(poll); resolve(); }
+    }, 50);
   });
 
   async function load(key) {

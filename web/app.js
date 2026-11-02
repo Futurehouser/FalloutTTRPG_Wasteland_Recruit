@@ -699,7 +699,8 @@ const Tiles = (() => {
 (async () => {
   const start = location.hash.slice(1);
   showPage($("page-" + start) ? start : "home");
-  await Promise.all([loadRoster(), loadLootOverrides(), Tiles.restore()]);
+  // one failing load must not keep the others (or My Team) waiting
+  await Promise.all([loadRoster(), loadLootOverrides(), Tiles.restore()].map(p => p.catch(e => console.error(e))));
   await Team.load();
   if (currentPage === "combat") Combat.show(); // a fight opened before the sprites were ready
   buildLootEditor();

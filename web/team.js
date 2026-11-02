@@ -373,10 +373,12 @@ const Team = (() => {
 
   // called once the saved characters are loaded
   async function load() {
-    const saved = await Platform.loadJSON("team", null);
-    if (Array.isArray(saved) && saved.some(t => t && ROSTER.some(c => c.id === t.id))) TEAM = saved.filter(t => t && t.id);
-    else TEAM = ROSTER.filter(c => c.team).sort((a, b) => a.team - b.team).map(c => ({ id: c.id, player: c.player || "" })); // the backup in the profiles
-    loaded = true;
+    try {
+      const saved = await Platform.loadJSON("team", null);
+      if (Array.isArray(saved) && saved.some(t => t && ROSTER.some(c => c.id === t.id))) TEAM = saved.filter(t => t && t.id);
+      else TEAM = ROSTER.filter(c => c.team).sort((a, b) => a.team - b.team).map(c => ({ id: c.id, player: c.player || "" })); // the backup in the profiles
+    } catch (e) { console.error(e); }
+    loaded = true; // never leave the page stuck on "Loading…"
     Walkers.sync(chars());
     render(); // the page may already be open
   }
