@@ -195,8 +195,34 @@ const Walkers = (() => {
     update();
   }
 
+  // a short punch: a falling thump plus a burst of noise; robots also ring like struck metal
+  let audio = null;
+  function hitSound(race, big) {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === "suspended") audio.resume();
+      const t0 = audio.currentTime, vol = big ? 0.5 : 0.35;
+      const o = audio.createOscillator(), og = audio.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(race === "mutant" ? 130 : 180, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + 0.14);
+      og.gain.setValueAtTime(vol, t0); og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.18);
+      o.connect(og).connect(audio.destination); o.start(t0); o.stop(t0 + 0.2);
+      const len = Math.floor(audio.sampleRate * 0.08), buf = audio.createBuffer(1, len, audio.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      const n = audio.createBufferSource(), f = audio.createBiquadFilter(), ng = audio.createGain();
+      n.buffer = buf; f.type = "lowpass"; f.frequency.value = race === "robot" ? 3500 : 1600; ng.gain.value = vol * 0.8;
+      n.connect(f).connect(ng).connect(audio.destination); n.start(t0);
+      if (race === "robot") {
+        const m = audio.createOscillator(), mg = audio.createGain();
+        m.type = "triangle"; m.frequency.setValueAtTime(1250, t0);
+        mg.gain.setValueAtTime(0.12, t0); mg.gain.exponentialRampToValueAtTime(0.001, t0 + 0.35);
+        m.connect(mg).connect(audio.destination); m.start(t0); m.stop(t0 + 0.36);
+      }
+    } catch (e) { /* no audio on this device */ }
+  }
+
   function hit(k, amount) {
     if (k.life !== "alive") return;
+    hitSound(k.race, amount >= 5);
     k.jump = JUMP; k.flash = FLASH;
     k.pops.push({ text: "-" + amount, t: 0 });
   }
