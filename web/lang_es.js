@@ -1233,4 +1233,6 @@ Object.assign(ES, {
   "All weapons": "Todas las armas",
   "Also carries: {list}. They can switch weapons on their turn.": "También lleva: {list}. Puede cambiar de arma en su turno.",
   "{name} switches to {w}.": "{name} cambia a {w}.",
+  "Warning: could not save the team": "Aviso: no se pudo guardar el equipo",
+  "Loading…": "Cargando…",
 });

@@ -341,26 +341,43 @@ const Walkers = (() => {
 // ------------------------------------------------------------------ the My Team page
 const Team = (() => {
   const MAX = 8;
-  let TEAM = []; // [{ id, player }]
+  let TEAM = [];        // [{ id, player }]
+  let loaded = false;   // nothing is shown or saved before the saved team has been read
   const chars = () => TEAM.map(t => ROSTER.find(c => c.id === t.id)).filter(Boolean);
 
+  // called once the saved characters are loaded
   async function load() {
-    TEAM = await Platform.loadJSON("team", []);
-    if (!Array.isArray(TEAM)) TEAM = [];
-    prune(false);
+    const saved = await Platform.loadJSON("team", null);
+    if (Array.isArray(saved) && saved.some(t => t && ROSTER.some(c => c.id === t.id))) TEAM = saved.filter(t => t && t.id);
+    else TEAM = ROSTER.filter(c => c.team).sort((a, b) => a.team - b.team).map(c => ({ id: c.id, player: c.player || "" })); // the backup in the profiles
+    loaded = true;
     Walkers.sync(chars());
+    render(); // the page may already be open
   }
-  const store = () => Platform.saveJSON("team", TEAM);
+  // saved twice: in its own file, and as a mark on each member's profile in case that file can't be read
+  async function store() {
+    let marked = false;
+    ROSTER.forEach(c => {
+      const i = TEAM.findIndex(t => t.id === c.id), team = i + 1, player = i >= 0 ? TEAM[i].player || "" : "";
+      if ((c.team || 0) === team && (c.player || "") === player) return;
+      if (team) Object.assign(c, { team, player }); else { delete c.team; delete c.player; }
+      marked = true;
+    });
+    const ok = await Platform.saveJSON("team", TEAM);
+    if (marked) await storeRoster();
+    if (!ok) toast(T("Warning: could not save the team"));
+  }
   // drop characters that were deleted from Saved Characters
-  function prune(save = true) {
+  function prune() {
+    if (!loaded) return;
     const before = TEAM.length;
     TEAM = TEAM.filter(t => ROSTER.some(c => c.id === t.id));
-    if (save && TEAM.length !== before) store();
+    if (TEAM.length !== before) store();
   }
   function changed() { store(); Walkers.sync(chars()); render(); }
 
   function add(id) {
-    if (!id || TEAM.some(t => t.id === id)) return;
+    if (!loaded || !id || TEAM.some(t => t.id === id)) return;
     if (TEAM.length >= MAX) { toast(T("A team can have up to {n} characters", { n: MAX })); return; }
     TEAM.push({ id, player: "" });
     const c = ROSTER.find(x => x.id === id);
@@ -368,6 +385,7 @@ const Team = (() => {
     changed();
   }
   function remove(id) {
+    if (!loaded) return;
     const c = ROSTER.find(x => x.id === id);
     TEAM = TEAM.filter(t => t.id !== id);
     if (c) toast(T("{name} left the team", { name: c.name }));
@@ -381,7 +399,7 @@ const Team = (() => {
 
   function render() {
     if (currentPage !== "team") return;
-    prune();
+    if (!loaded) { $("tm-add").disabled = true; $("tm-list").innerHTML = `<div class="empty">${T("Loading…")}</div>`; return; }
     const sel = $("tm-pick"), free = ROSTER.filter(c => !TEAM.some(t => t.id === c.id)).sort((a, b) => a.name.localeCompare(b.name));
     sel.innerHTML = free.length
       ? free.map(c => `<option value="${esc(c.id)}">${esc(c.name)} (${T("level {n}", { n: c.level || 1 })})</option>`).join("")

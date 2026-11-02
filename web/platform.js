@@ -7,7 +7,9 @@ const Platform = (() => {
   const ready = new Promise(resolve => {
     if (window.AndroidBridge) return resolve();
     window.addEventListener("pywebviewready", () => resolve());
-    setTimeout(resolve, 1500); // plain browser: no event will come
+    // plain browser: no event will come. The Windows app can be slow to start, so keep waiting while it's getting ready
+    setTimeout(() => { if (!window.pywebview) resolve(); }, 1500);
+    setTimeout(resolve, 15000);
   });
 
   async function load(key) {
