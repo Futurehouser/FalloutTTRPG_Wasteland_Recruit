@@ -1,4 +1,4 @@
-// Navigation and the six tools.
+// Navigation and the tools.
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 const SPECIAL_FULL = { STR: "Strength", PER: "Perception", END: "Endurance", CHA: "Charisma", INT: "Intelligence", AGI: "Agility", LCK: "Luck" };
@@ -38,6 +38,7 @@ function showPage(id) {
   if (id === "radio" && typeof Radio !== "undefined") Radio.show();
   if (id === "team" && typeof Team !== "undefined") Team.render();
   if (id === "tutorials" && typeof Tutorials !== "undefined") Tutorials.show();
+  if (id === "elber" && typeof Elber !== "undefined") Elber.show();
   if (typeof Walkers !== "undefined") Walkers.update(); // sprites walk on Home and My Team, and in a running fight
 }
 $("burger").onclick = () => document.body.classList.toggle("menu-open");
@@ -706,6 +707,7 @@ async function startApp() {
   await Promise.all([loadRoster(), loadLootOverrides(), Tiles.restore()].map(p => p.catch(e => console.error(e))));
   await Team.load();
   if (currentPage === "combat") Combat.show(); // a fight opened before the sprites were ready
+  if (currentPage === "elber") Elber.show();   // opened before the saved characters were read
   buildLootEditor();
   setTimeout(() => Updater.check(false), 1500); // ask about new versions on startup
 }

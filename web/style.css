@@ -449,3 +449,33 @@ body.walkers-on .page.active { padding-bottom: 140px; }
   .tu-gains { grid-template-columns: 1fr 1fr; }
   .tu-two, .tu-acts.two { grid-template-columns: 1fr; }
 }
+
+/* talk to elber gotas 3000. The frame is cut into 3 strips that grow with the text: each canvas stretches
+   its slice, and the two black screens sit on top. --cx trims the outer metal on phones to give the text room.
+   All sizes are in the gif's own pixels (426 x 240). */
+#page-elber { --cx: 0; --w: calc(426 - 2 * var(--cx)); }
+.eg-as { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; max-width: 860px; margin: 0 auto 10px; }
+.eg-as label { color: var(--amber); font-weight: 700; }
+.eg-as select { flex: 1 1 180px; min-width: 0; }
+.eg-hp { font-weight: 800; color: var(--green); padding: 4px 10px; border: 1px solid var(--line); border-radius: 8px; background: #0b0d0c; white-space: nowrap; }
+.eg-hp.low { color: var(--red); }
+.eg-stage { max-width: 860px; margin: 0 auto; background: #000; overflow: hidden; border-radius: 6px; }
+.eg-strip { position: relative; overflow: hidden; }
+.eg-strip canvas { position: absolute; top: 0; height: 100%; display: block; max-width: none;
+  left: calc(var(--cx) / var(--w) * -100%); width: calc(426 / var(--w) * 100%); }
+.eg-top { padding-top: calc(115 / var(--w) * 100%); }
+.eg-say, .eg-opts { position: relative; font-family: Consolas, "Courier New", monospace; color: #3dff5e; line-height: 1.3; font-size: 15px;
+  margin-left: calc((var(--hx) - var(--cx)) / var(--w) * 100%); margin-right: calc((426 - var(--hx) - var(--hw) - var(--cx)) / var(--w) * 100%); }
+.eg-say { --hx: 108; --hw: 212; margin-top: 0; margin-bottom: calc(1 / var(--w) * 100%); padding: 6px 10px; white-space: pre-line; cursor: pointer;
+  min-height: calc(30 / var(--w) * 100vw); text-shadow: 0 0 3px #000, 0 0 6px #18a838; background-color: #000; background-size: 9px 9px;
+  background-image: linear-gradient(#ffffff2e 1px, transparent 1px), linear-gradient(90deg, #ffffff2e 1px, transparent 1px); }
+.eg-rest { visibility: hidden; }
+.eg-opts { --hx: 98; --hw: 228; margin-top: calc(19 / var(--w) * 100%); margin-bottom: calc(11 / var(--w) * 100%); padding: 6px 10px; background: #0b0f0c;
+  border-radius: 8px; box-shadow: inset 0 0 14px #000; display: flex; flex-direction: column; gap: 3px; }
+.eg-opt { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 4px; padding: 3px 4px 3px 16px; position: relative; cursor: pointer;
+  color: #3dff5e; font: inherit; line-height: 1.25; }
+.eg-opt::before { content: ""; position: absolute; left: 4px; top: .5em; width: 6px; height: 6px; border-radius: 50%; background: #3dff5e; }
+.eg-opt b { color: #d6ff5a; font-weight: 700; white-space: nowrap; }
+.eg-opt:hover, .eg-opt:focus-visible { background: #123a1c; outline: none; color: #a6ffb4; }
+@media (min-width: 720px) { .eg-say { min-height: 62px; } }
+@media (max-width: 559px) { #page-elber { --cx: 62; } .eg-say, .eg-opts { font-size: 13.5px; } .eg-say { padding: 5px 8px; } .eg-opts { padding: 5px 6px; } }

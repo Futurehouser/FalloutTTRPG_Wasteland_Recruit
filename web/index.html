@@ -32,6 +32,7 @@
     <button data-page="radio"><span class="n">10</span>Fallout Radio</button>
     <button data-page="team"><span class="n">11</span>My Team</button>
     <button data-page="tutorials"><span class="n">12</span>Tutorials</button>
+    <button data-page="elber"><span class="n">13</span>Talk to Elber Gotas 3000</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
   </nav>
   <div class="foot">Version <span id="app-version"></span><br>Fan-made tool for the Fallout 2d20 tabletop game.</div>
@@ -58,6 +59,7 @@
       <button class="tile" data-go="radio"><span class="ic">&#128251;</span><b>Fallout Radio</b><small>Tune in to the Wasteland's stations</small></button>
       <button class="tile" data-go="team"><span class="ic">&#129309;</span><b>My Team</b><small>The characters your players are using</small></button>
       <button class="tile" data-go="tutorials"><span class="ic">&#128218;</span><b>Tutorials</b><small>The rules, explained with pictures</small></button>
+      <button class="tile" data-go="elber"><span class="ic">&#129302;</span><b>Talk to Elber Gotas 3000</b><small>A conversation you may not survive</small></button>
     </div>
     <p class="hint tiles-hint">Hold and drag a tile to move it (click and drag with a mouse).
       <button class="linkbtn" id="tiles-reset">Reset order</button></p>
@@ -267,6 +269,19 @@
     <p class="hint" id="tu-hint">Pick a guide to see that part of the rules, explained step by step.</p>
     <div id="tu-body"></div>
   </section>
+  <!-- 13. talk to elber gotas 3000 -->
+  <section class="page" id="page-elber" data-title="Talk to Elber Gotas 3000">
+    <div class="eg-as">
+      <label for="eg-char">Talk to Elber Gotas 3000 as:</label>
+      <select id="eg-char"></select>
+      <span class="eg-hp" id="eg-hp" hidden></span>
+    </div>
+    <div class="eg-stage" id="eg-stage">
+      <div class="eg-strip eg-top"><canvas width="426" height="115" data-y="0" data-h="115"></canvas></div>
+      <div class="eg-strip eg-mid"><canvas width="426" height="31" data-y="115" data-h="31"></canvas><div class="eg-say" id="eg-say" aria-live="polite"></div></div>
+      <div class="eg-strip eg-low"><canvas width="426" height="94" data-y="146" data-h="94"></canvas><div class="eg-opts" id="eg-opts"></div></div>
+    </div>
+  </section>
 
 </main>
 <canvas id="walkers" hidden aria-hidden="true"></canvas>
@@ -305,5 +320,6 @@
 <script charset="utf-8" src="radio.js"></script>
 <script charset="utf-8" src="team.js"></script>
 <script charset="utf-8" src="tutorials.js"></script>
+<script charset="utf-8" src="elber.js"></script>
 </body>
 </html>

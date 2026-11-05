@@ -149,7 +149,7 @@ const Sprites = (() => {
 // as the character's max HP it falls, vanishes and comes back a second later. In a fight the sprites
 // react to the damage the Combat Assistant applies, and a downed character stays gone.
 const Walkers = (() => {
-  let cv = null, raf = null, last = 0, team = [], fight = [], swallow = false;
+  let cv = null, raf = null, last = 0, team = [], fight = [], talker = null, swallow = false;
   const scale = () => (window.innerWidth < 560 ? 2 : 3);
   const HEAD_TOP = { human: 16, ghoul: 16, mutant: 11, robot: 11 }; // first drawn row of each sprite
   const JUMP = 0.35, FLASH = 0.4, FALL = 0.35, LIE = 1.0, FADE = 0.6, RESPAWN = 1.0, SPAWN = 0.45, EXPLODE = 1.4;
@@ -194,6 +194,19 @@ const Walkers = (() => {
     });
     update();
   }
+
+  // the one sprite on the Talk to Elber page. It never comes back on its own, and onGone runs once it has vanished.
+  function setTalker(c, onGone) {
+    if (!c) talker = null;
+    else talker = Object.assign(make("elber:" + c.id, c.race || raceFromOrigin(c.origin), c.name, window.innerWidth), { respawn: false, onGone });
+    update();
+  }
+  function talkerHit(dies) {
+    if (!talker) return;
+    hit(talker, 1);
+    if (dies) die(talker, false);
+  }
+  function talkerRevive() { if (talker) revive(talker); }
 
   // a short punch: a falling thump plus a burst of noise; robots also ring like struck metal
   let audio = null;
@@ -299,7 +312,7 @@ const Walkers = (() => {
   function revive(k) { k.life = "spawning"; k.lt = 0; k.hits = 0; k.x = 20 + Math.random() * Math.max(40, (cv ? cv.clientWidth : 300) - 80); }
 
   const onTeamPage = () => currentPage === "home" || currentPage === "team";
-  const active = () => (onTeamPage() ? team : currentPage === "combat" ? fight : []);
+  const active = () => (onTeamPage() ? team : currentPage === "combat" ? fight : currentPage === "elber" && talker ? [talker] : []);
 
   function update() {
     cv = cv || $("walkers");
@@ -346,14 +359,16 @@ const Walkers = (() => {
     return r;
   }
 
+  function vanish(k) { k.life = "gone"; k.lt = 0; if (k.onGone) k.onGone(); }
+
   function step(k, dt, w, half) {
     k.jump = Math.max(0, k.jump - dt); k.flash = Math.max(0, k.flash - dt);
     k.pops.forEach(p => (p.t += dt)); k.pops = k.pops.filter(p => p.t < 0.9);
     if (k.life !== "alive") {
       k.lt += dt;
       if (k.life === "exploding") stepBoom(k.boom, dt, k.lt);
-      if (k.life === "falling" && k.lt > FALL + LIE + FADE) { k.life = "gone"; k.lt = 0; }
-      else if (k.life === "exploding" && k.lt > EXPLODE) { k.life = "gone"; k.lt = 0; k.boom = null; }
+      if (k.life === "falling" && k.lt > FALL + LIE + FADE) vanish(k);
+      else if (k.life === "exploding" && k.lt > EXPLODE) { vanish(k); k.boom = null; }
       else if (k.life === "gone" && k.respawn && k.lt > RESPAWN) revive(k);
       else if (k.life === "spawning" && k.lt > SPAWN) { k.life = "alive"; k.lt = 0; }
       return;
@@ -477,7 +492,7 @@ const Walkers = (() => {
     list.slice().sort((a, b) => a.x - b.x).forEach(k => draw(g, k, s, h));
     raf = requestAnimationFrame(tick);
   }
-  return { sync, setFight, update };
+  return { sync, setFight, update, setTalker, talkerHit, talkerRevive };
 })();
 
 // ------------------------------------------------------------------ the My Team page
