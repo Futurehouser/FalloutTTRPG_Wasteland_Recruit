@@ -31,6 +31,7 @@
     <button data-page="hack"><span class="n">9</span>Hack a Terminal</button>
     <button data-page="radio"><span class="n">10</span>Fallout Radio</button>
     <button data-page="team"><span class="n">11</span>My Team</button>
+    <button data-page="tutorials"><span class="n">12</span>Tutorials</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
   </nav>
   <div class="foot">Version <span id="app-version"></span><br>Fan-made tool for the Fallout 2d20 tabletop game.</div>
@@ -56,6 +57,7 @@
       <button class="tile" data-go="hack"><span class="ic">&#128187;</span><b>Hack a Terminal</b><small>Crack a RobCo password in 3 tries</small></button>
       <button class="tile" data-go="radio"><span class="ic">&#128251;</span><b>Fallout Radio</b><small>Tune in to the Wasteland's stations</small></button>
       <button class="tile" data-go="team"><span class="ic">&#129309;</span><b>My Team</b><small>The characters your players are using</small></button>
+      <button class="tile" data-go="tutorials"><span class="ic">&#128218;</span><b>Tutorials</b><small>The rules, explained with pictures</small></button>
     </div>
     <p class="hint tiles-hint">Hold and drag a tile to move it (click and drag with a mouse).
       <button class="linkbtn" id="tiles-reset">Reset order</button></p>
@@ -259,6 +261,13 @@
     <div id="ro-list"></div>
     <div id="ro-profile"></div>
   </section>
+  <!-- 12. tutorials -->
+  <section class="page" id="page-tutorials" data-title="Tutorials">
+    <h2>Tutorials</h2>
+    <p class="hint" id="tu-hint">Pick a guide to see that part of the rules, explained step by step.</p>
+    <div id="tu-body"></div>
+  </section>
+
 </main>
 <canvas id="walkers" hidden aria-hidden="true"></canvas>
 
@@ -295,5 +304,6 @@
 <script charset="utf-8" src="hack.js"></script>
 <script charset="utf-8" src="radio.js"></script>
 <script charset="utf-8" src="team.js"></script>
+<script charset="utf-8" src="tutorials.js"></script>
 </body>
 </html>

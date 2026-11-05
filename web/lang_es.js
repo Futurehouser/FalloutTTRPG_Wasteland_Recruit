@@ -1236,3 +1236,144 @@ Object.assign(ES, {
   "Warning: could not save the team": "Aviso: no se pudo guardar el equipo",
   "Loading…": "Cargando…",
 });
+
+// ---- tutorials
+Object.assign(ES, {
+  "Tutorials": "Tutoriales",
+  "The rules, explained with pictures": "Las reglas, explicadas de forma visual",
+  "Pick a guide to see that part of the rules, explained step by step.": "Elige una guía para ver esa parte de las reglas, explicada paso a paso.",
+  "All guides": "Todas las guías",
+  "Leveling Up": "Subir de nivel", "What you gain and how much XP you need": "Qué ganas y cuántos PX necesitas",
+  "Regain Health": "Recuperar salud", "Stimpaks, rest, and repairing Mister Handy": "Estimulantes, descanso y reparar a Mister Handy",
+  "Dying": "Agonizar", "0 HP, staying alive and being stabilized": "0 PV, seguir con vida y ser estabilizado",
+  "Combat Range": "Alcance en combate", "Zones, reach and weapon ranges": "Zonas, alcance cuerpo a cuerpo y alcance de las armas",
+  "Minor Actions": "Acciones menores", "The quick things you do on your turn": "Las cosas rápidas que haces en tu turno",
+  "Major Actions": "Acciones mayores", "The main thing you do on your turn": "Lo principal que haces en tu turno",
+
+  // shared
+  "XP": "PX", "Level {n}": "Nivel {n}", "Minor action": "Acción menor", "Major action": "Acción mayor", "Movement": "Movimiento",
+  "Free every turn": "Gratis cada turno", "Most per turn": "Máximo por turno",
+
+  // leveling up
+  "What you get every level": "Qué ganas en cada nivel",
+  "Your health maximum goes up by 1.": "Tu salud máxima sube 1 punto.",
+  "Skill rank": "Rango de habilidad", "Pick one skill and raise it by 1, up to rank 6.": "Elige una habilidad y súbela 1, hasta el rango 6.",
+  "Perk": "Ventaja", "Pick one new perk whose requirements you meet.": "Elige una ventaja nueva cuyos requisitos cumplas.",
+  "No points by default. The <b>Intense Training</b> perk adds 1 to any attribute.": "Ningún punto de por sí. La ventaja <b>Entrenamiento intensivo</b> suma 1 a cualquier atributo.",
+  "<b>Playing with Fallout 76 perk cards?</b> Then each level is <b>+1 to one S.P.E.C.I.A.L.</b> and <b>one new perk card</b>, as the Level up button in Saved Characters explains.":
+    "<b>¿Jugáis con las cartas de ventaja de Fallout 76?</b> Entonces cada nivel da <b>+1 a un S.P.E.C.I.A.L.</b> y <b>una carta de ventaja nueva</b>, como explica el botón Subir de nivel de Personajes guardados.",
+  "How much XP do I need?": "¿Cuántos PX necesito?",
+  "My current level": "Mi nivel actual", "My current XP (optional)": "Mis PX actuales (opcional)",
+  "XP is a running total: it never goes back to 0 when you level up. The GM may also skip XP and simply tell you when the party levels up.":
+    "Los PX se acumulan: no vuelven a 0 al subir de nivel. El DJ también puede prescindir de los PX y decidir cuándo sube de nivel el grupo.",
+  "You need <b>{n} XP</b> more to reach level {l}.": "Te faltan <b>{n} PX</b> para llegar al nivel {l}.",
+  "You have enough XP: <b>time to level up!</b>": "Ya tienes los PX suficientes: <b>¡toca subir de nivel!</b>",
+  "You are here": "Estás aquí", "Next level": "Siguiente nivel",
+  "Total XP for level {n}": "PX totales para el nivel {n}", "The number your XP has to reach.": "La cifra que deben alcanzar tus PX.",
+  "XP in this level": "PX de este nivel", "The gap between level {a} and {b}.": "La diferencia entre el nivel {a} y el {b}.",
+  "A level {n} character has gained <b>+{g} max HP</b>, <b>{g} skill ranks</b> and <b>{g} perks</b> since level 1.":
+    "Un personaje de nivel {n} ha ganado <b>+{g} PV máx.</b>, <b>{g} rangos de habilidad</b> y <b>{g} ventajas</b> desde el nivel 1.",
+
+  // regain health
+  "During combat": "Durante el combate", "or treats 1 injury": "o trata 1 herida", "Dying?": "¿Agonizando?", "Stabilized at once": "Se estabiliza al instante",
+  "Use <b>Take Chem</b> on yourself or a willing character within reach. You have to be holding it first.":
+    "Usa <b>Tomar droga</b> contigo o con un personaje dispuesto a tu alcance. Antes tienes que tenerlo en la mano.",
+  "First Aid": "Primeros auxilios",
+  "Difficulty = <b>the patient's injuries</b>, +1 if you treat yourself. If you pass, choose one:": "Dificultad = <b>las heridas del paciente</b>, +1 si te tratas a ti mismo. Si superas la prueba, elige una opción:",
+  "Heal HP equal to your <b>Medicine rank</b> (+1 HP per AP spent)": "Curar PV iguales a tu <b>rango de Medicina</b> (+1 PV por PA gastado)",
+  "Treat one injury": "Tratar una herida", "Stabilize a dying patient": "Estabilizar a un paciente agonizante",
+  "Add a stimpak to the First Aid: <b>+4 HP</b>, and each AP heals <b>2 HP</b>.": "Si añades un estimulante a los primeros auxilios: <b>+4 PV</b>, y cada PA cura <b>2 PV</b>.",
+  "Only a stable character can recover HP from First Aid. A treated injury stops penalizing but is not healed: if that spot takes damage, roll 1 DC, and on an Effect the wound reopens.":
+    "Solo un personaje estable puede recuperar PV con primeros auxilios. Una herida tratada deja de penalizar, pero no está curada: si esa zona recibe daño, tira 1 DC y, con un Efecto, la herida se reabre.",
+  "Outside combat": "Fuera de combate", "Sleep": "Dormir", "You recover <b>all</b> lost HP.": "Recuperas <b>todos</b> los PV perdidos.",
+  "Well Rested": "Bien descansado", "Safe and comfortable: <b>+2 max HP</b> until you next sleep.": "En un lugar seguro y cómodo: <b>+2 PV máx.</b> hasta que vuelvas a dormir.",
+  "Food and drink": "Comida y bebida",
+  "The HP listed on the item. Not during combat. Irradiated food: roll 1 DC, on an Effect take 1 Radiation.": "Los PV que indique el objeto. No en combate. Comida irradiada: tira 1 DC y, con un Efecto, sufres 1 de radiación.",
+  "Radiation": "Radiación", "Lowers your max HP and never heals by itself: you need <b>RadAway</b> or similar.": "Reduce tus PV máx. y no se cura sola: necesitas <b>Antirradiación</b> o algo similar.",
+  "Healing injuries while you sleep": "Curar heridas mientras duermes",
+  "Make an <b>END + Survival</b> test. Pass and you recover from 1 injury, plus 1 more for every 2 AP. The difficulty depends on your day:":
+    "Haz una prueba de <b>RES + Supervivencia</b>. Si la superas, te recuperas de 1 herida, y de 1 más por cada 2 PA. La dificultad depende de tu día:",
+  "Restful": "Reposo", "Light travel": "Viaje ligero", "Travel, no combat": "Viaje sin combate", "Travel and combat": "Viaje y combate",
+  "Each untreated injury adds +1 to the complication range. You can only sleep once every 24 hours. Someone giving medical attention can assist that test with their own INT + Medicine, for up to as many patients as their Medicine rank.":
+    "Cada herida sin tratar suma +1 al rango de complicación. Solo puedes dormir una vez cada 24 horas. Quien dé atención médica puede ayudar en esa prueba con su INT + Medicina, a tantos pacientes como su rango de Medicina.",
+  "Mister Handy and other robots": "Mister Handy y otros robots",
+  "Machines don't heal on their own: they have to be <b>repaired</b>. The same goes for power armor and vehicles.": "Las máquinas no se curan solas: hay que <b>repararlas</b>. Lo mismo vale para las servoarmaduras y los vehículos.",
+  "Stimpaks and chems": "Estimulantes y drogas", "Medical attention": "Atención médica",
+  "First Aid, major action": "Primeros auxilios, acción mayor",
+  "Difficulty = <b>2 + the machine's injuries</b>. If you pass, choose one:": "Dificultad = <b>2 + las heridas de la máquina</b>. Si superas la prueba, elige una opción:",
+  "Restore HP equal to your <b>Repair rank</b>": "Restaurar PV iguales a tu <b>rango de Reparar</b>", "Stabilize a dying machine": "Estabilizar a una máquina agonizante",
+  "Robot repair kit": "Kit de reparación de robots",
+  "Works just like a stimpak does for the living: the same <b>4 HP</b>, the same injury treatment, and it stabilizes a dying machine.":
+    "Funciona igual que un estimulante en los seres vivos: los mismos <b>4 PV</b>, el mismo tratamiento de heridas, y estabiliza a una máquina agonizante.",
+  "One hour of work": "Una hora de trabajo", "Restores HP equal to <b>2 × the repairer's Repair rank</b>.": "Restaura PV iguales a <b>2 × el rango de Reparar de quien repara</b>.",
+
+  // dying
+  "What happens at 0 HP": "Qué pasa a 0 PV",
+  "<b>You drop to 0 HP.</b> You take an injury where you were hit. If it was also a critical hit, that's 2 injuries.": "<b>Caes a 0 PV.</b> Sufres una herida donde te golpearon. Si además fue un golpe crítico, son 2 heridas.",
+  "<b>You fall prone and start dying.</b> You're unconscious, you can't act, and First Aid can't give you HP back yet.": "<b>Caes al suelo y empiezas a agonizar.</b> Estás inconsciente, no puedes actuar y los primeros auxilios aún no te devuelven PV.",
+  "<b>At the start of each of your turns</b> roll <b>END + Survival</b>. Difficulty = your injuries. Complications on 19-20.": "<b>Al empezar cada uno de tus turnos</b> tira <b>RES + Supervivencia</b>. Dificultad = tus heridas. Complicación con 19-20.",
+  "<b>Pass:</b> you hold on, but you're still dying. Next turn, roll again.": "<b>Superada:</b> resistes, pero sigues agonizando. El turno siguiente, vuelve a tirar.",
+  "<b>Fail:</b> your character dies.": "<b>Fallada:</b> tu personaje muere.",
+  "Any damage taken while dying adds <b>1 more injury</b>, so the next roll gets harder.": "Cualquier daño recibido mientras agonizas suma <b>1 herida más</b>, así que la siguiente tirada es más difícil.",
+  "How hard is it?": "¿Cómo de difícil es?", "Injuries on the dying character": "Heridas del personaje agonizante",
+  "Staying alive": "Seguir con vida", "END + Survival, their own roll": "RES + Supervivencia, su propia tirada",
+  "INT + Medicine, by an ally": "INT + Medicina, la tira un aliado", "Robot repair": "Reparar un robot", "INT + Repair, by an ally": "INT + Reparar, la tira un aliado",
+  "Difficulties for {n} injuries. Each extra injury makes all three 1 harder.": "Dificultades con {n} heridas. Cada herida extra sube 1 las tres.",
+  "How to save them": "Cómo salvarlo",
+  "<b>Stabilized at once.</b> No roll needed. It has to be within your reach and in your hand. Robots use a repair kit instead.": "<b>Se estabiliza al instante.</b> Sin tirada. Tienes que tenerlo en la mano y al paciente a tu alcance. Los robots usan un kit de reparación.",
+  "<b>INT + Medicine</b>. Difficulty = their injuries. For robots, <b>INT + Repair</b> at 2 + injuries.": "<b>INT + Medicina</b>. Dificultad = sus heridas. Para robots, <b>INT + Reparar</b> con dificultad 2 + heridas.",
+  "Once stabilized": "Una vez estabilizado",
+  "<b>Back to 1 HP</b>, no longer dying and no more rolls to survive. Still unconscious.": "<b>Vuelve a 1 PV</b>, deja de agonizar y no tira más para sobrevivir. Sigue inconsciente.",
+  "<b>Spend AP right after:</b> 1 AP per extra HP, and 1 AP wakes them up so they can act.": "<b>Gasta PA justo después:</b> 1 PA por cada PV extra, y 1 PA lo despierta para que pueda actuar.",
+  "If radiation has lowered their max HP to 0, they can't be stabilized until the radiation is healed.": "Si la radiación ha bajado sus PV máx. a 0, no se le puede estabilizar hasta curar la radiación.",
+  "What each injury does": "Qué hace cada herida",
+  "A hit for 5 or more damage after DR is a critical hit, which also causes an injury. It lasts until treated.": "Un golpe de 5 o más de daño tras la RD es un golpe crítico, que también causa una herida. Dura hasta que se trata.",
+  "You lose your normal actions next turn (AP can still buy them), and vision tests get +2 difficulty.": "Pierdes tus acciones normales el turno siguiente (aún puedes comprarlas con PA), y las pruebas de vista tienen +2 de dificultad.",
+  "You bleed: at the end of each of your turns you take 2 DC physical damage, ignoring DR.": "Sangras: al final de cada uno de tus turnos sufres 2 DC de daño físico, ignorando la RD.",
+  "Arm": "Brazo", "You drop what you're holding in that hand, and you can't use that arm for anything.": "Sueltas lo que tengas en esa mano y no puedes usar ese brazo para nada.",
+  "Leg": "Pierna", "You fall prone. No more Sprint, and Move becomes a major action.": "Caes al suelo. No puedes Correr, y Moverse pasa a ser una acción mayor.",
+
+  // combat range
+  "The map is split into zones": "El mapa se divide en zonas",
+  "A zone is a natural area, like a room or a stretch of street. Distance is simply <b>how many zones away</b> something is.": "Una zona es un área natural, como una habitación o un tramo de calle. La distancia es simplemente <b>a cuántas zonas</b> está algo.",
+  "Same zone": "Misma zona", "1 zone away": "A 1 zona", "2 zones away": "A 2 zonas", "3 or more zones": "A 3 zonas o más",
+  "Reach": "Al alcance", "Move: 1 zone": "Moverse: 1 zona", "Sprint: 2 zones": "Correr: 2 zonas",
+  "<b>Reach</b> is arm's length. It's where melee attacks work, and an enemy in reach adds <b>+2 difficulty</b> to any test that isn't a melee attack.":
+    "Estar <b>al alcance</b> es estar a un brazo de distancia. Es donde funcionan los ataques cuerpo a cuerpo, y un enemigo a tu alcance suma <b>+2 de dificultad</b> a cualquier prueba que no sea un ataque cuerpo a cuerpo.",
+  "Each weapon has an ideal range": "Cada arma tiene un alcance ideal",
+  "At its ideal range a weapon has no penalty. Every band away from it, <b>nearer or farther</b>, adds <b>+1 difficulty</b>. A sniper rifle is as awkward up close as a pistol is far away.":
+    "En su alcance ideal, un arma no tiene penalización. Cada banda de diferencia, <b>más cerca o más lejos</b>, suma <b>+1 de dificultad</b>. Un rifle de francotirador es tan incómodo de cerca como una pistola de lejos.",
+  "My weapon's range": "Alcance de mi arma", "Distance to the target": "Distancia al objetivo", "Weapon range": "Alcance del arma",
+  "extra difficulty": "de dificultad extra", "Ideal range: no penalty": "Alcance ideal: sin penalización",
+  "Add this to the target's Defense to get the difficulty of a ranged or thrown attack. Melee and unarmed attacks only reach targets within arm's length.":
+    "Súmalo a la Defensa del objetivo para saber la dificultad de un ataque a distancia o arrojadizo. Los ataques cuerpo a cuerpo y sin armas solo llegan a objetivos al alcance del brazo.",
+  "Being prone": "Estar tumbado", "Attackers at Medium or farther": "Atacantes a alcance Medio o más", "Harder for them to hit you.": "Les cuesta más darte.",
+  "Attackers at Close": "Atacantes a alcance Corto", "Easier for them to hit you, melee included.": "Les cuesta menos darte, también cuerpo a cuerpo.",
+  "You can drop prone at the end of a movement action, and re-roll cover dice while prone. You crawl: Move becomes a major action and you can't Sprint.":
+    "Puedes tumbarte al final de una acción de movimiento, y tumbado repites los dados de cobertura. Te arrastras: Moverse pasa a ser una acción mayor y no puedes Correr.",
+
+  // minor and major actions
+  "How many do I get?": "¿Cuántas tengo?", "Costs 1 AP": "Cuesta 1 PA", "Costs 2 AP, +1 difficulty": "Cuesta 2 PA, +1 de dificultad",
+  "Do your actions in any order, but only one movement action per turn.": "Haz tus acciones en el orden que quieras, pero solo una acción de movimiento por turno.",
+  "The minor actions": "Las acciones menores", "The major actions": "Las acciones mayores",
+  "Aim": "Apuntar", "Re-roll 1d20 on the first attack you make this turn.": "Repite 1d20 en el primer ataque que hagas este turno.",
+  "Draw Item": "Sacar objeto", "Take out something you carry, or pick up something within reach. You can put an item away at the same time.": "Saca algo que lleves encima o recoge algo a tu alcance. A la vez puedes guardar un objeto.",
+  "Interact": "Interactuar", "Do something simple with your gear or surroundings, like opening a door or pushing a button.": "Haz algo sencillo con tu equipo o tu entorno, como abrir una puerta o pulsar un botón.",
+  "Move": "Moverse", "Go up to 1 zone, to anywhere within Medium range. Or stand up if you're prone.": "Avanza hasta 1 zona, a cualquier punto dentro del alcance Medio. O levántate si estás tumbado.",
+  "Take Chem": "Tomar droga", "Use a chem you're holding on yourself or a willing character within reach. Not holding it? Draw it first.": "Usa una droga que tengas en la mano contigo o con un personaje dispuesto a tu alcance. ¿No la tienes en la mano? Sácala antes.",
+  "The extra major action costs 2 AP, and any test made with it is 1 harder.": "La acción mayor extra cuesta 2 PA, y cualquier prueba que hagas con ella tiene +1 de dificultad.",
+  "Attack": "Atacar", "Hit a target with a melee or ranged attack. The tests are listed below.": "Golpea a un objetivo con un ataque cuerpo a cuerpo o a distancia. Las pruebas están más abajo.",
+  "Assist": "Ayudar", "Help another character on their next test. If you haven't acted yet, you can give up your turn to help an ally mid-round.": "Ayuda a otro personaje en su siguiente prueba. Si aún no has actuado, puedes renunciar a tu turno para ayudar a un aliado durante la ronda.",
+  "Command an NPC": "Dar órdenes a un PNJ", "Choose a major action for an allied NPC. You assist automatically: CHA + Speech for people, CHA + Survival for animals, INT + Science for robots.":
+    "Elige una acción mayor para un PNJ aliado. Ayudas de forma automática: CAR + Oratoria para personas, CAR + Supervivencia para animales, INT + Ciencia para robots.",
+  "Defend": "Defenderse", "Difficulty = your current Defense. Pass for +1 Defense, and 2 AP buys another +1.": "Dificultad = tu Defensa actual. Si la superas, +1 a la Defensa, y con 2 PA otro +1.",
+  "Difficulty = the patient's injuries, +1 on yourself. Heal HP equal to your Medicine rank, treat an injury or stabilize someone.": "Dificultad = las heridas del paciente, +1 si eres tú. Cura PV iguales a tu rango de Medicina, trata una herida o estabiliza a alguien.",
+  "Rally": "Reagruparse", "Difficulty 0: keep every AP you generate. The GM may allow another test, like CHA + Speech to inspire your allies.": "Dificultad 0: guarda todos los PA que generes. El DJ puede permitir otra prueba, como CAR + Oratoria para inspirar a tus aliados.",
+  "Ready": "Preparar", "Say what you expect to happen and which major action you'll take. If it happens before your next turn, you act immediately, interrupting if needed.": "Di qué esperas que ocurra y qué acción mayor harás. Si ocurre antes de tu siguiente turno, actúas al momento, interrumpiendo si hace falta.",
+  "Sprint": "Correr", "Go up to 2 zones, to anywhere within Long range.": "Avanza hasta 2 zonas, a cualquier punto dentro del alcance Largo.",
+  "Test": "Prueba", "Any other skill test the GM agrees to.": "Cualquier otra prueba de habilidad que acepte el DJ.",
+  "Pass": "Pasar", "You choose to do nothing.": "Decides no hacer nada.",
+  "Which test does my attack use?": "¿Qué prueba usa mi ataque?",
+  "Melee weapon": "Arma cuerpo a cuerpo", "Small guns": "Armas ligeras", "Big guns": "Armas pesadas", "Energy weapons": "Armas de energía",
+  "Difficulty = the target's Defense. Ranged and thrown attacks add the range modifier, and aiming at a specific body part adds +1.": "Dificultad = la Defensa del objetivo. Los ataques a distancia y arrojadizos suman el modificador de alcance, y apuntar a una parte concreta del cuerpo suma +1.",
+});
