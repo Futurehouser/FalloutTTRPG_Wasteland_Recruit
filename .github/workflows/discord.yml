@@ -1,0 +1,60 @@
+# Posts the Spanish "what's new" of each release to the Discord server.
+#
+# Before publishing a release, commit these to docs/releases/ (names use the release tag):
+#   v4.16.0.md   the notes in Spanish (Discord markdown, keep it under 3800 characters)
+#   v4.16.0.png  a screenshot of the changes, optional: without it the post has text only
+# A release with no notes file is not posted, and the run shows a warning.
+#
+# To post a release again: Actions -> "Post release to Discord" -> Run workflow, or
+#   gh workflow run discord.yml -f tag=v4.16.0
+#
+# Needs the repository secret DISCORD_WEBHOOK_URL.
+name: Post release to Discord
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to post, e.g. v4.15.0"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Send to Discord
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Release tags must look like v4.1.0 (got $TAG)"; exit 1; }
+          [ -n "$WEBHOOK" ] || { echo "::error::Add the DISCORD_WEBHOOK_URL repository secret first"; exit 1; }
+          NOTES="docs/releases/$TAG.md"
+          IMAGE="docs/releases/$TAG.png"
+          if [ ! -f "$NOTES" ]; then
+            echo "::warning::$NOTES does not exist, so nothing was posted to Discord"
+            exit 0
+          fi
+          URL="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+          jq -n --arg tag "$TAG" --arg url "$URL" --rawfile notes "$NOTES" '{
+            allowed_mentions: {parse: []},
+            embeds: [{
+              title: ("Novedades de Wasteland Recruit " + $tag),
+              url: $url,
+              color: 16106776,
+              description: ($notes[0:3800] + "\n\n**[Descargar esta versión](" + $url + ")**")
+            }]
+          }' > payload.json
+          ARGS=()
+          if [ -f "$IMAGE" ]; then
+            jq '.embeds[0].image.url = "attachment://novedades.png"' payload.json > with_image.json
+            mv with_image.json payload.json
+            ARGS=(-F "files[0]=@$IMAGE;filename=novedades.png;type=image/png")
+          fi
+          curl -sS --fail-with-body -F "payload_json=<payload.json;type=application/json" "${ARGS[@]}" "$WEBHOOK"
