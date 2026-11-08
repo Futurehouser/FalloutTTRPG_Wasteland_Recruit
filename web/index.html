@@ -125,7 +125,7 @@
   <!-- 4. random perk -->
   <section class="page" id="page-perks" data-title="Random FO76 Perk">
     <h2>Random Fallout 76 Perk</h2>
-    <p class="hint">Picks a random perk card from the <a href="https://fallout.wiki/wiki/Fallout_76_Perks" target="_blank" rel="noopener">fallout.wiki Fallout 76 Perks</a> page. Needs internet the first time.</p>
+    <p class="hint">Search any perk card, or get a random one, from the <a href="https://fallout.wiki/wiki/Fallout_76_Perks" target="_blank" rel="noopener">fallout.wiki Fallout 76 Perks</a> page. Needs internet the first time.</p>
     <div><label class="f">Suggest for a saved character (optional)</label>
       <select id="pk-char"><option value="">Nobody: fully random perk</option></select></div>
     <div id="pk-charinfo" class="hint" style="margin:6px 0 10px"></div>
@@ -134,6 +134,11 @@
       <div><label class="f">S.P.E.C.I.A.L.</label><select id="pk-special"><option value="">Any</option>
         <option>Strength</option><option>Perception</option><option>Endurance</option><option>Charisma</option>
         <option>Intelligence</option><option>Agility</option><option>Luck</option></select></div>
+    </div>
+    <div class="pk-search">
+      <label class="f" for="pk-q">Search any perk</label>
+      <input type="search" id="pk-q" placeholder="Type a perk name, or a word from its effect" autocomplete="off" spellcheck="false">
+      <div id="pk-results"></div>
     </div>
     <div style="height:10px"></div>
     <button class="big" id="pk-gen">RANDOM PERK</button>
@@ -355,6 +360,7 @@
 <script charset="utf-8" src="render.js"></script>
 <script charset="utf-8" src="loot.js"></script>
 <script charset="utf-8" src="scavenge.js"></script>
+<script charset="utf-8" src="perks_es.js"></script>
 <script charset="utf-8" src="perks.js"></script>
 <script charset="utf-8" src="avatars.js"></script>
 <script charset="utf-8" src="app.js"></script>

@@ -2568,3 +2568,18 @@ Object.assign(ES, {
   "Science!": "¡Ciencia!",
   "Blacksmith": "Herrero",
 });
+
+// ---- fallout 76 perk search
+Object.assign(ES, {
+  "Search any perk card, or get a random one, from the": "Busca cualquier carta de ventaja, u obtén una al azar, en la página",
+  "Search any perk": "Buscar cualquier ventaja",
+  "Type a perk name, or a word from its effect": "Escribe el nombre de una ventaja o una palabra de su efecto",
+  "No perk matches \"{q}\".": "Ninguna ventaja coincide con «{q}».",
+  "{n} perk found": "{n} ventaja encontrada",
+  "{n} perks found": "{n} ventajas encontradas",
+  "{name} already has this card at its top rank.": "{name} ya tiene esta carta en su rango máximo.",
+  "It fits {name}:": "Le encaja a {name}:",
+  "It doesn't fit {name} right now (level, free S.P.E.C.I.A.L. points or Ghoul perk), but you can still add it.": "Ahora mismo no le encaja a {name} (nivel, puntos S.P.E.C.I.A.L. libres o ventaja de necrófago), pero puedes añadirla igualmente.",
+  "Rank up to {n} on {name}": "Subir a rango {n} en {name}",
+  "Picked from the search": "Elegida en la búsqueda",
+});

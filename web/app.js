@@ -252,7 +252,7 @@ function perkHtml(p, opts = {}) {
     <b>${T("Rank {n}", { n: esc(r.rank) })}</b>${opts.rank === i + 1 ? ` &larr; ${T("suggested")}` : ""}: ${esc(r.desc)}</div>`).join("");
   return `<div class="card perk">
     <img src="${esc(p.image)}" alt="${esc(p.name)}" referrerpolicy="no-referrer" onerror="if(this.src!=='${esc(p.thumb)}')this.src='${esc(p.thumb)}'">
-    <div class="txt"><h3>${esc(p.name)}</h3>
+    <div class="txt"><h3>${esc(perkName(p.name))}</h3>${perkName(p.name) !== p.name ? `<div class="muted pk-en">${esc(p.name)}</div>` : ""}
       <div class="badges"><span class="badge"><b>${esc(T(p.special))}</b></span><span class="badge">${T(p.group === "Ghoul" ? "Ghoul perk" : "Regular perk")}</span>
       <span class="badge">${T("Unlocks at level")} <b>${esc(p.level)}</b></span><span class="badge">${TP(p.ranks.length, "{n} rank", "{n} ranks")}</span></div>
       ${opts.extra || ""}${ranks}
@@ -297,7 +297,7 @@ $("pk-gen").onclick = async () => {
       const have = c.perkCards.find(x => x.name === pick.perk.name);
       if (have) have.rank = pick.rank; else c.perkCards.push(perkCardFrom(pick.perk, pick.rank));
       await addToRoster(c);
-      toast(T("{perk} rank {r} added to {name}", { perk: pick.perk.name, r: pick.rank, name: c.name }));
+      toast(T("{perk} rank {r} added to {name}", { perk: perkName(pick.perk.name), r: pick.rank, name: c.name }));
       $("pk-add").disabled = true; $("pk-add").textContent = T("Added ✓");
       const keep = pkSkip; fillCharSelect(); pkSkip = keep;
     };
@@ -307,6 +307,59 @@ $("pk-gen").onclick = async () => {
     $("pk-gen").disabled = false;
   }
 };
+
+// ---- search any perk by name (English or Spanish) or by a word from its ranks
+const pkFold = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+let pkTimer = null;
+async function perkSearch() {
+  const raw = $("pk-q").value.trim(), q = pkFold(raw), box = $("pk-results");
+  if (!q) { box.innerHTML = ""; return; }
+  let perks;
+  try { perks = (await loadPerks()).perks; } catch (e) { box.innerHTML = `<div class="muted pk-none">${esc(e.message)}</div>`; return; }
+  const g = $("pk-group").value, s = $("pk-special").value;
+  const words = q.split(/\s+/);
+  const found = perks.filter(p => (!g || p.group === g) && (!s || p.special.toLowerCase().startsWith(s.toLowerCase()))).map(p => {
+    const names = pkFold(p.name + " | " + perkName(p.name)), text = pkFold(p.ranks.map(r => r.desc).join(" "));
+    const score = pkFold(p.name).startsWith(q) || pkFold(perkName(p.name)).startsWith(q) ? 0 : words.every(w => names.includes(w)) ? 1
+      : words.every(w => (names + " " + text).includes(w)) ? 2 : 9;
+    return { p, score };
+  }).filter(x => x.score < 9).sort((a, b) => a.score - b.score || perkName(a.p.name).localeCompare(perkName(b.p.name), LANG));
+  if (!found.length) { box.innerHTML = `<div class="muted pk-none">${T("No perk matches \"{q}\".", { q: esc(raw) })}</div>`; return; }
+  box.innerHTML = `<div class="muted pk-count">${TP(found.length, "{n} perk found", "{n} perks found")}</div>` + found.slice(0, 40).map(({ p }) =>
+    `<button type="button" class="pcard pk-hit" data-name="${esc(p.name)}"><img src="${esc(p.thumb)}" alt="" referrerpolicy="no-referrer">
+      <span class="t"><b>${esc(perkName(p.name))}</b><small>${esc(T(p.special))} &middot; ${T(p.group === "Ghoul" ? "Ghoul perk" : "Regular perk")} &middot; ${T("unlocks at level {n}", { n: p.level })}</small></span></button>`).join("");
+  box.querySelectorAll(".pk-hit").forEach(b => (b.onclick = () => showFoundPerk(perks.find(p => p.name === b.dataset.name))));
+}
+// the chosen perk, with a button to add it to the selected character when there is one
+function showFoundPerk(p) {
+  const ch = pkChar();
+  let extra = "", rank = 1;
+  if (ch) {
+    const have = (ch.perkCards || []).find(c => c.name === p.name);
+    rank = have ? have.rank + 1 : 1;
+    const fit = perkCandidates(ch, [p])[0];
+    const why = rank > p.ranks.length ? T("{name} already has this card at its top rank.", { name: esc(ch.name) })
+      : fit ? `${T("It fits {name}:", { name: esc(ch.name) })} ${fit.reasons.map(esc).join("; ")}.`
+      : T("It doesn't fit {name} right now (level, free S.P.E.C.I.A.L. points or Ghoul perk), but you can still add it.", { name: esc(ch.name) });
+    extra = `<div class="why">${why}</div>` + (rank <= p.ranks.length ? `<div class="bar" style="margin:8px 0"><button class="btn primary" id="pk-add">&#10010; ${have
+      ? T("Rank up to {n} on {name}", { n: rank, name: esc(ch.name) }) : T("Add to {name}", { name: esc(ch.name) })}</button></div>` : "");
+  }
+  $("pk-out").innerHTML = perkHtml(p, { rank: ch ? Math.min(rank, p.ranks.length) : 0, extra, footer: T("Picked from the search") });
+  if ($("pk-add")) $("pk-add").onclick = async () => {
+    const c = pkChar();
+    if (!c) return;
+    c.perkCards = c.perkCards || [];
+    const have = c.perkCards.find(x => x.name === p.name);
+    if (have) have.rank = rank; else c.perkCards.push(perkCardFrom(p, 1));
+    await addToRoster(c);
+    toast(T("{perk} rank {r} added to {name}", { perk: perkName(p.name), r: rank, name: c.name }));
+    $("pk-add").disabled = true; $("pk-add").textContent = T("Added ✓");
+    fillCharSelect();
+  };
+  $("pk-out").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+$("pk-q").oninput = () => { clearTimeout(pkTimer); pkTimer = setTimeout(perkSearch, 150); };
+["pk-group", "pk-special", "pk-char"].forEach(id => $(id).addEventListener("change", () => { if ($("pk-q").value.trim()) perkSearch(); }));
 
 // ------------------------------------------------------------------ 5. create / edit character
 let ROSTER = [], editingId = null, crPhoto = null, crCards = [];
@@ -379,7 +432,7 @@ function renderCrCards() {
     box.innerHTML = `<div class="muted" style="font-size:13px">${T("No perk cards yet. Add them here, or from the Random FO76 Perk page.")}</div>`;
   } else {
     box.innerHTML = crCards.map((c, i) => `<div class="pcard"><img src="${esc(c.thumb || c.image)}" alt="" referrerpolicy="no-referrer">
-      <div class="t"><b>${esc(c.name)}</b><small>${esc(T(c.special))} &middot; ${T("unlocks at level {n}", { n: c.level })}</small></div>
+      <div class="t"><b>${esc(perkName(c.name))}</b><small>${esc(T(c.special))} &middot; ${T("unlocks at level {n}", { n: c.level })}</small></div>
       <select data-i="${i}" title="${T("Rank")}">${c.ranks.map((r, k) => `<option value="${k + 1}" ${k + 1 === c.rank ? "selected" : ""}>${T("Rank {n} (cost {c})", { n: k + 1, c: r.cost })}</option>`).join("")}</select>
       <button class="btn danger" data-rm="${i}" title="${T("Remove")}">&#10005;</button></div>`).join("");
   }
@@ -392,7 +445,7 @@ G.SPECIAL.forEach(a => $("cr-s-" + a).addEventListener("input", renderCrCards));
 async function fillPerkList() {
   try {
     const { perks } = await loadPerks();
-    $("cr-perklist").innerHTML = perks.map(p => `<option value="${esc(p.name)}">${esc(T(p.special))}${p.group === "Ghoul" ? ` (${T("Ghoul")})` : ""}</option>`).join("");
+    $("cr-perklist").innerHTML = perks.map(p => `<option value="${esc(perkName(p.name))}">${esc(T(p.special))}${p.group === "Ghoul" ? ` (${T("Ghoul")})` : ""}</option>`).join("");
     $("cr-cardnote").textContent = "";
   } catch (e) {
     $("cr-cardnote").textContent = T("The perk list downloads from fallout.wiki: connect to the internet once to add cards here.");
@@ -403,9 +456,9 @@ $("cr-cardadd").onclick = async () => {
   if (!name) return;
   let perks = [];
   try { perks = (await loadPerks()).perks; } catch (e) { toast(T("Perk list not available offline yet")); return; }
-  const p = perks.find(x => x.name.toLowerCase() === name);
+  const p = perks.find(x => x.name.toLowerCase() === name || perkName(x.name).toLowerCase() === name);
   if (!p) { toast(T("Pick a perk name from the list")); return; }
-  if (crCards.some(c => c.name === p.name)) { toast(T("{perk} is already on this character", { perk: p.name })); return; }
+  if (crCards.some(c => c.name === p.name)) { toast(T("{perk} is already on this character", { perk: perkName(p.name) })); return; }
   crCards.push(perkCardFrom(p, 1));
   $("cr-cardname").value = "";
   renderCrCards();
@@ -520,7 +573,7 @@ function renderRoster() {
           : `<div class="muted">${T("No skill ranks yet.")}</div>`}
         <h4>${T("Fallout 76 perk cards")}</h4>
         ${(c.perkCards || []).length ? (c.perkCards || []).map(pc => `<div class="pcard"><img src="${esc(pc.thumb || pc.image)}" alt="" referrerpolicy="no-referrer">
-          <div class="t"><b>${esc(pc.name)}</b> <span class="muted">${T("rank {n}", { n: pc.rank })} &middot; ${esc(T(pc.special))} &middot; ${T("cost {n}", { n: cardCost(pc) })}</span>
+          <div class="t"><b>${esc(perkName(pc.name))}</b> <span class="muted">${T("rank {n}", { n: pc.rank })} &middot; ${esc(T(pc.special))} &middot; ${T("cost {n}", { n: cardCost(pc) })}</span>
           <small style="white-space:normal">${esc((pc.ranks[pc.rank - 1] || {}).desc || "")}</small></div></div>`).join("")
           + `<div class="muted" style="font-size:12px;margin-top:6px">${T("Points spent / S.P.E.C.I.A.L. value:")}</div>` + pointsGrid(c.special, c.perkCards)
           : `<div class="muted">${T("None yet. Tap <b>Suggest a perk</b> to get one picked for this character.")}</div>`}

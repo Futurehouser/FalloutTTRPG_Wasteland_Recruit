@@ -566,3 +566,13 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .dr-past span { color: var(--muted); overflow-wrap: anywhere; min-width: 0; }
 @media (prefers-reduced-motion: reduce) { .dr-die.tumbling, .dr-die.landed { animation: none; } }
 #dr-test[hidden], #dr-history[hidden] { display: none; }
+
+/* search on the Fallout 76 perk page */
+.pk-search { margin-top: 10px; }
+.pk-search input { width: 100%; padding: 10px; border-radius: 9px; border: 1px solid var(--line); background: #0f1115; color: var(--ink); font-size: 16px; }
+.pk-search input:focus { outline: none; border-color: var(--amber); }
+#pk-results { max-height: 360px; overflow-y: auto; margin-top: 4px; }
+.pk-hit { width: 100%; text-align: left; cursor: pointer; color: inherit; font: inherit; }
+.pk-hit:hover, .pk-hit:focus-visible { border-color: var(--amber); outline: none; }
+.pk-count, .pk-none { font-size: 12px; margin: 6px 2px 0; }
+.pk-en { font-size: 13px; font-style: italic; margin: -2px 0 6px; }
