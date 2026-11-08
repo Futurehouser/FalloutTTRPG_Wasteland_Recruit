@@ -33,6 +33,7 @@
     <button data-page="team"><span class="n">11</span>My Team</button>
     <button data-page="tutorials"><span class="n">12</span>Tutorials</button>
     <button data-page="elber"><span class="n">13</span>Talk to Elber Gotas 3000</button>
+    <button data-page="tables"><span class="n">14</span>Table Search</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
   </nav>
   <div class="foot">Version <span id="app-version"></span><br>Fan-made tool for the Fallout 2d20 tabletop game.</div>
@@ -60,6 +61,7 @@
       <button class="tile" data-go="team"><span class="ic">&#129309;</span><b>My Team</b><small>The characters your players are using</small></button>
       <button class="tile" data-go="tutorials"><span class="ic">&#128218;</span><b>Tutorials</b><small>The rules, explained with pictures</small></button>
       <button class="tile" data-go="elber"><span class="ic">&#129302;</span><b>Talk to Elber Gotas 3000</b><small>A conversation you may not survive</small></button>
+      <button class="tile" data-go="tables"><span class="ic">&#128269;</span><b>Table Search</b><small>Weapons, armor and mods from the core rulebook</small></button>
     </div>
     <p class="hint tiles-hint">Hold and drag a tile to move it (click and drag with a mouse).
       <button class="linkbtn" id="tiles-reset">Reset order</button></p>
@@ -282,6 +284,18 @@
       <div class="eg-strip eg-low"><canvas width="426" height="94" data-y="146" data-h="94"></canvas><div class="eg-opts" id="eg-opts"></div></div>
     </div>
   </section>
+  <!-- 14. table search -->
+  <section class="page" id="page-tables" data-title="Table Search">
+    <h2>Table Search</h2>
+    <p class="hint">Look up any weapon, weapon mod, armor piece or armor mod from the core rulebook tables.</p>
+    <div class="ts-bar">
+      <input type="search" id="ts-q" placeholder="e.g. Combat Rifle, Long Scope, Metal Helmet" autocomplete="off" spellcheck="false" aria-label="Search the tables">
+      <button class="btn" type="button" id="ts-clear" aria-label="Clear">&#10005;</button>
+    </div>
+    <div class="ts-kinds" id="ts-kinds"></div>
+    <p class="hint" id="ts-count"></p>
+    <div id="ts-results"></div>
+  </section>
 
 </main>
 <canvas id="walkers" hidden aria-hidden="true"></canvas>
@@ -321,5 +335,7 @@
 <script charset="utf-8" src="team.js"></script>
 <script charset="utf-8" src="tutorials.js"></script>
 <script charset="utf-8" src="elber.js"></script>
+<script charset="utf-8" src="tables_data.js"></script>
+<script charset="utf-8" src="tables.js"></script>
 </body>
 </html>

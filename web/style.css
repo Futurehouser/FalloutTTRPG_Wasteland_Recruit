@@ -479,3 +479,30 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .eg-opt:hover, .eg-opt:focus-visible { background: #123a1c; outline: none; color: #a6ffb4; }
 @media (min-width: 720px) { .eg-say { min-height: 62px; } }
 @media (max-width: 559px) { #page-elber { --cx: 62; } .eg-say, .eg-opts { font-size: 13.5px; } .eg-say { padding: 5px 8px; } .eg-opts { padding: 5px 6px; } }
+
+/* table search */
+.ts-bar { display: flex; gap: 8px; position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 6px 0; }
+.ts-bar input { flex: 1; min-width: 0; width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: #0f1115; color: var(--ink); font-size: 16px; }
+.ts-bar input:focus { outline: none; border-color: var(--amber); }
+.ts-bar input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+.ts-bar .btn { flex: none; padding: 0 14px; }
+.ts-kinds { display: flex; flex-wrap: wrap; gap: 0; margin: 4px -3px 8px; }
+.ts-kinds .chip.on { border-color: var(--amber); background: var(--panel2); color: var(--amber); }
+.ts-card { padding: 12px 14px; }
+.ts-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.ts-head h3 { margin: 0; }
+.ts-en { color: var(--muted); font-size: 13px; font-style: italic; }
+.ts-tag { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin: 2px 0 8px; }
+.ts-w { border-left: 4px solid var(--red); } .ts-m { border-left: 4px solid var(--amber); }
+.ts-a { border-left: 4px solid var(--blue); } .ts-am { border-left: 4px solid var(--green); }
+.ts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+.ts-stat { background: #0f1115; border: 1px solid var(--line); border-radius: 9px; padding: 6px 9px; min-width: 0; }
+.ts-stat small { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.ts-stat b { display: block; font-size: 14px; overflow-wrap: anywhere; }
+.ts-dr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px; }
+.ts-dr div { text-align: center; background: var(--panel2); border-radius: 9px; padding: 6px 4px; }
+.ts-dr small { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; }
+.ts-dr b { font-size: 22px; color: var(--amber); }
+.ts-fx { margin: 0 0 8px; padding-left: 18px; line-height: 1.45; font-size: 14px; }
+.ts-links { display: flex; flex-wrap: wrap; margin: 0 -3px; }
+.ts-links .chip { font-size: 12px; padding: 5px 9px; }
