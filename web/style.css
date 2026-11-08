@@ -450,7 +450,7 @@ body.walkers-on .page.active { padding-bottom: 140px; }
   .tu-two, .tu-acts.two { grid-template-columns: 1fr; }
 }
 
-/* talking heads (Elber Gotas 3000, Jack Rose). The frame is cut into 3 strips that grow with the text: each canvas stretches
+/* talking heads (Elber Gotas 3000, Jack Rose, Clant Westwood). The frame is cut into 3 strips that grow with the text: each canvas stretches
    its slice, and the two black screens sit on top. --cx trims the outer metal on phones to give the text room.
    All sizes are in the gif's own pixels (426 x 240). */
 #page-elber { --cx: 0; --w: calc(426 - 2 * var(--cx)); }

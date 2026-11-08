@@ -1,5 +1,5 @@
 // Talking Heads: Fallout-style talking heads. Pick who to talk to (Elber Gotas 3000, a power armor that
-// used to be a Mister Handy, or Jack Rose, a raider) and a saved character to talk as. Answers can test a
+// used to be a Mister Handy, Jack Rose, a raider, or Clant Westwood, a ghoul merchant) and a saved character to talk as. Answers can test a
 // S.P.E.C.I.A.L. or a perk; failing one may cost the character's sprite HP. The talk never ends: the
 // options are drawn from shuffled piles that refill, and when the character dies the head has plenty
 // to say about that too.
@@ -693,6 +693,8 @@ const Elber = (() => {
       voice: () => tone("sawtooth", 170 + rnd(180), 110 + rnd(120), 0.045, 0.05) },
     jack: { name: "Jack Rose", sheet: "jack/frames.webp", data: JACK_DATA, failHit: 0.55, // he shouts: low, rough and loud
       voice: () => { tone("square", 95 + rnd(70), 70 + rnd(40), 0.06, 0.075); tone("sawtooth", 190 + rnd(90), 120, 0.05, 0.04); } },
+    clant: { name: "Clant Westwood", sheet: "clant/frames.webp", data: CLANT_DATA, failHit: 0.4, // a rasp like dry leaves underfoot
+      voice: () => { rasp(1400 + rnd(1600), 0.07, 0.11); tone("triangle", 120 + rnd(40), 95, 0.05, 0.03); } },
   };
   Object.values(HEADS).forEach(h => {
     const d = h.data;
@@ -755,6 +757,19 @@ const Elber = (() => {
       o.type = type; o.frequency.setValueAtTime(f1, t0); o.frequency.linearRampToValueAtTime(f2, t0 + secs);
       g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + secs);
       o.connect(g).connect(audio.destination); o.start(t0); o.stop(t0 + secs + 0.01);
+    } catch (e) { /* no audio on this device */ }
+  }
+  // a short crackle of filtered noise
+  function rasp(freq, secs, vol) {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === "suspended") audio.resume();
+      const n = Math.floor(audio.sampleRate * secs), buf = audio.createBuffer(1, n, audio.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (Math.random() < 0.3 ? 1 : 0.25); // uneven, like leaves
+      const src = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain(), t0 = audio.currentTime;
+      src.buffer = buf; f.type = "bandpass"; f.frequency.value = freq; f.Q.value = 1.2;
+      g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + secs);
+      src.connect(f).connect(g).connect(audio.destination); src.start(t0);
     } catch (e) { /* no audio on this device */ }
   }
   const selectBeep = () => { tone("square", 1040, 1040, 0.05, 0.1); tone("square", 1560, 1560, 0.07, 0.1, 0.06); };

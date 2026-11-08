@@ -11,7 +11,7 @@ const JACK_DATA = {
    "{name}, huh? You look like Clant after a molotov. Twice. Sit down, keep your skin on, and DON'T touch my stuff!"
   ],
   "mutant": [
-   "WHOA, big green! I got a laser gatling that says you're gonna be real polite, {name}. Real polite. You hear me?!",
+   "WHOA, big green! See this gauntlet? Deathclaw claws. Real ones. It says you're gonna be real polite, {name}. You hear me?!",
    "A super mutant! Finally, a target I can't miss! Relax, {name}, I'm kidding. Mostly. Keep those hands down."
   ],
   "robot": [
@@ -35,15 +35,29 @@ const JACK_DATA = {
    ]
   },
   {
-   "ask": "What's that huge gun on your back?",
+   "ask": "What's that thing on your arm?",
    "say": [
-    "THIS is Rosie, my laser gatling! Spins up, sings, and turns anything in front of her into a light show! Wanna see? Stand over THERE."
+    "THIS is the Claw! A deathclaw gauntlet! Real deathclaw claws! It opens cans, doors and PEOPLE! Wanna see? Hold out your hand."
    ],
    "next": [
     {
-     "ask": "Where did you get a laser gatling?",
+     "ask": "Didn't you use to carry a laser gatling?",
      "say": [
-      "Off a Brotherhood knight! He wasn't using it! Well, he WAS, but then he wasn't. Long story. Short ending."
+      "Rosie... I SOLD her. To Clant. For two hundred caps and a hot meal. Then he sold her for SIX hundred! Don't talk about Rosie! DON'T!"
+     ]
+    }
+   ]
+  },
+  {
+   "ask": "And that rusty gun on your belt?",
+   "say": [
+    "That's Old Rusty, my pipe gun! Made her myself out of a pipe, a spring and a BAD MOOD! Jams every third shot, so I shoot TWICE as much!"
+   ],
+   "next": [
+    {
+     "ask": "Does it ever blow up in your hand?",
+     "say": [
+      "Only twice! And both times I still hit the guy! With the PIECES! That counts!"
      ]
     }
    ]
@@ -87,7 +101,7 @@ const JACK_DATA = {
   {
    "ask": "And Elías Crow, the sniper?",
    "say": [
-    "Crow sits on a rock all day waiting for ONE shot. ONE! Rosie fires a thousand a minute! Who's the real shooter here, huh?!",
+    "Crow sits on a rock all day waiting for ONE shot. ONE! I walk up and RIP 'em open with the Claw! Who's the real fighter here, huh?!",
     "Crow never talks. Never laughs. Just stares. Last week I put a lizard in his boot. He didn't even blink. I'm scared of him and I hate it!"
    ]
   },
@@ -126,13 +140,13 @@ const JACK_DATA = {
   {
    "ask": "And Caesar's Legion?",
    "say": [
-    "A bunch of guys in skirts with MACHETES charging a man with a LASER GATLING. I don't even need to aim! I love those idiots!"
+    "A bunch of guys in skirts with MACHETES. I got a gauntlet made of DEATHCLAW. Guess who wins the knife fight? ME! I love those idiots!"
    ]
   },
   {
    "ask": "Have you met the Brotherhood of Steel?",
    "say": [
-    "They want Rosie back! Ha! They can come get her. One at a time, please, I only got so many molotovs. Actually I got LOTS. Come together!"
+    "Tin cans with rules! They say my pipe gun is an 'insult to technology'. It's an insult to THEM when it hits 'em! Which is sometimes!"
    ]
   },
   {
@@ -144,7 +158,7 @@ const JACK_DATA = {
   {
    "ask": "Have you been to the Strip?",
    "say": [
-    "They took Rosie at the door! Said NO WEAPONS. What am I supposed to do, ROB PEOPLE WITH MY HANDS?! ...Actually, I did. Kept the winnings, too."
+    "They took my gauntlet at the door! Said NO WEAPONS. What am I supposed to do, ROB PEOPLE WITH MY HANDS?! ...Actually, I did. Kept the winnings, too."
    ],
    "next": [
     {
@@ -224,13 +238,13 @@ const JACK_DATA = {
   {
    "ask": "Do you ever sleep?",
    "say": [
-    "With one eye open and one hand on Rosie! Last time I slept with both eyes shut, Clant sold my left boot. While I was WEARING it!"
+    "With one eye open and the Claw on! Last time I slept with both eyes shut, Clant sold my left boot. While I was WEARING it!"
    ]
   },
   {
    "ask": "Why do you shout all the time?",
    "say": [
-    "I'M NOT SHOUTING! THIS IS MY INSIDE VOICE! My OUTSIDE voice is Rosie, and you DON'T wanna hear that one!"
+    "I'M NOT SHOUTING! THIS IS MY INSIDE VOICE! My OUTSIDE voice is Old Rusty, and you DON'T wanna hear that one!"
    ]
   },
   {
@@ -250,7 +264,7 @@ const JACK_DATA = {
   {
    "ask": "Can I join your gang?",
    "say": [
-    "My gang is me and Rosie! Initiation is simple: hand over ALL your caps. Then you're in! Then you're out, 'cause you're broke!"
+    "My gang is me, the Claw and Old Rusty! Initiation is simple: hand over ALL your caps. Then you're in! Then you're out, 'cause you're broke!"
    ]
   },
   {
@@ -292,7 +306,7 @@ const JACK_DATA = {
     {
      "ask": "And if they fight back?",
      "say": [
-      "Then Rosie says hello! Then a molotov says goodbye! Then I say THANK YOU for the boots!"
+      "Then the Claw says hello! Then a molotov says goodbye! Then I say THANK YOU for the boots!"
      ]
     }
    ]
@@ -302,9 +316,9 @@ const JACK_DATA = {
   {
    "s": "STR",
    "n": 6,
-   "ask": "Hand me Rosie. I can carry her.",
-   "ok": "HUH! You lifted her and didn't drop her! Nobody holds Rosie but me... but okay. You can hold her for ten seconds. TEN!",
-   "bad": "You DROPPED ROSIE! On the GROUND! In the SAND! Nobody drops Rosie!"
+   "ask": "Let me try on that deathclaw gauntlet.",
+   "ok": "HUH! You can lift your arm with it on! Nobody wears the Claw but me... but okay. Ten seconds. TEN! Don't scratch your face!",
+   "bad": "Your arm hit the GROUND! With my Claw on it! In the SAND! Take it off! TAKE IT OFF!"
   },
   {
    "s": "STR",
@@ -387,7 +401,7 @@ const JACK_DATA = {
    "s": "CHA",
    "n": 6,
    "ask": "Easy, Jack. We're on the same side.",
-   "ok": "...Same side. Yeah. Okay. Rosie, stand down. Nice voice, pal. Real calming. Creepy, but calming.",
+   "ok": "...Same side. Yeah. Okay. Claw down. Nice voice, pal. Real calming. Creepy, but calming.",
    "bad": "I DON'T HAVE A SIDE! I HAVE A GUN! And it's pointing at YOUR side!"
   },
   {
@@ -402,7 +416,7 @@ const JACK_DATA = {
    "n": 8,
    "ask": "Give me back the caps you took. Please, as a friend.",
    "ok": "...As a FRIEND? Nobody ever called me... fine! Here! Take 'em! And get out of my face before I cry or shoot!",
-   "bad": "Friend?! HAHAHA! I don't have friends! I have a gatling and a grudge! Those caps are MINE now!"
+   "bad": "Friend?! HAHAHA! I don't have friends! I have a deathclaw gauntlet and a grudge! Those caps are MINE now!"
   },
   {
    "s": "CHA",
@@ -414,9 +428,9 @@ const JACK_DATA = {
   {
    "s": "INT",
    "n": 6,
-   "ask": "Rosie's overheating because her cooling vents are clogged.",
-   "ok": "Clogged?! ...There's a whole gecko in there! You fixed Rosie! You can touch her. Once. With ONE finger.",
-   "bad": "Rosie's not overheating, she's EXCITED! Don't talk about her like she's a machine!"
+   "ask": "Your pipe gun jams because the spring is on backwards.",
+   "ok": "Backwards?! ...It IS backwards! It fires every time now! You fixed Old Rusty! You can touch her. Once. With ONE finger.",
+   "bad": "She doesn't JAM, she PAUSES! For drama! Don't talk about her like she's junk!"
   },
   {
    "s": "INT",
@@ -464,7 +478,7 @@ const JACK_DATA = {
    "s": "AGI",
    "n": 5,
    "ask": "I can draw faster than you, Jack.",
-   "ok": "You... you DID! Okay, Rosie takes ten seconds to spin up. That's cheating! RE-DO!",
+   "ok": "You... you DID! Okay, Old Rusty jammed. That's cheating! It doesn't count! RE-DO!",
    "bad": "You dropped your gun! On your FOOT! I didn't even have to draw! HAHA!"
   },
   {
@@ -503,11 +517,11 @@ const JACK_DATA = {
    "bad": "It landed at your feet. At OUR feet! RUN!"
   },
   {
-   "p": "Size Matters",
+   "p": "Jury Rigging",
    "r": 1,
-   "ask": "Let me fire Rosie for a minute. I know big guns.",
-   "ok": "You held her steady! She's purring! Rosie likes you! ...I'm not jealous. Give her back. GIVE HER BACK.",
-   "bad": "You shot the SKY! And the Doc's tent! And almost ME! Give her back before you hurt her!"
+   "ask": "Give me Old Rusty. I'll patch her up with whatever's lying around.",
+   "ok": "Duct tape, a fork and a bottle cap, and she shoots STRAIGHT! She never shot straight! Not even when she was NEW!",
+   "bad": "Now there's a fork stuck in the barrel and she won't fire at ALL! Give her back before you hurt her!"
   },
   {
    "p": "Demolition Expert",
@@ -555,15 +569,15 @@ const JACK_DATA = {
    "p": "Iron Fist",
    "r": 1,
    "ask": "I'll knock that cactus down with one punch.",
-   "ok": "One punch! ONE! The cactus is DEAD! I'm never fighting you without Rosie!",
+   "ok": "One punch! ONE! The cactus is DEAD! I'm never fighting you without the Claw on!",
    "bad": "The cactus won! Your hand looks like a pincushion! HAHA! Doc! Bring the tweezers!"
   },
   {
-   "p": "Meltdown",
+   "p": "Slayer",
    "r": 1,
-   "ask": "Let me tune Rosie so her targets explode.",
-   "ok": "The gecko EXPLODED! And then the gecko next to it! Rosie, you BEAUTIFUL monster!",
-   "bad": "Now she just makes a sad noise. You BROKE her! Rosie, can you hear me?! ROSIE!"
+   "ask": "I can finish a fight in one blow, like your gauntlet.",
+   "ok": "One hit and the gecko's DONE! That's a Claw move! Who taught you a Claw move?!",
+   "bad": "You hit it, it laughed, I had to finish it! With the Claw! Like ALWAYS!"
   },
   {
    "p": "Bloody Mess",
@@ -583,7 +597,7 @@ const JACK_DATA = {
  "OWN_PERK": {
   "ask": "Want to see what I can really do?",
   "ok": [
-   "{perk}?! Okay, that's pretty good! Not Rosie good, but good! You can stay. For now!",
+   "{perk}?! Okay, that's pretty good! Not Claw good, but good! You can stay. For now!",
    "Ha! {perk}! I'm stealing that! Not the skill, I can't steal a skill. I'll steal your boots instead!"
   ]
  },
@@ -592,7 +606,8 @@ const JACK_DATA = {
   "Crow's staring at me again. I hate when he does that.",
   "Clant, if that's MY can of beans you're eating, you're DEAD! Deader!",
   "Doc says I gotta be nice to you. This IS nice!",
-  "Rosie's humming. She wants to shoot something. Don't be something.",
+  "The Claw's itching. It wants to scratch something. Don't be something.",
+  "I miss Rosie. Clant, you vulture, you sold her for SIX HUNDRED!",
   "ELBER! YOU'RE STANDING IN MY SUN, YOU OVERSIZED TOASTER!",
   "Somebody stole my molotov! ...Oh, it's in my other hand.",
   "Nice boots, by the way. What size? No reason.",
@@ -618,7 +633,11 @@ const JACK_DATA = {
   },
   {
    "d": 2,
-   "t": "Rosie spins up and grazes you with a laser burst. You lose 2 HP. \"She SLIPPED! She does that when she's angry!\""
+   "t": "He swipes at you with the deathclaw gauntlet. You lose 2 HP. \"It SLIPPED! It does that when I'm angry!\""
+  },
+  {
+   "d": 1,
+   "t": "Old Rusty goes off right next to your ear. You lose 1 HP. \"WARNING SHOT! ...I was aiming at you.\""
   },
   {
    "d": 1,
