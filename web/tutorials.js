@@ -1,5 +1,6 @@
 // Tutorials: illustrated guides to the rulebook, one screen each. The wording is this app's own summary
-// of the Fallout 2d20 rules (level table, Healing, Damage and Injury, Rounds and Turns, Zones and Distances).
+// of the Fallout 2d20 rules (level table, Healing, Damage and Injury, Rounds and Turns, Zones and Distances,
+// combat dice and damage effects).
 const Tutorials = (() => {
   const MAX_LEVEL = 50;
   const xpTotal = l => 50 * l * (l - 1); // 0, 100, 300, 600, 1000...
@@ -272,6 +273,64 @@ const Tutorials = (() => {
     </div>`;
   }
 
+  // ---------------- 7. combat dice
+  // the six faces of the d6 combat die: damage points and whether the face shows an Effect
+  const CD = [{ pts: 1, fx: false }, { pts: 2, fx: false }, { pts: 0, fx: false }, { pts: 0, fx: false }, { pts: 1, fx: true }, { pts: 1, fx: true }];
+  const MAX_DICE = 20;
+  const die = (f, cls = "") => {
+    const d = CD[f - 1];
+    return `<span class="tu-die ${d.fx ? "fx" : d.pts ? "" : "blank"} ${cls}" aria-label="${f}">${d.pts ? `<b>${d.pts}</b>` : ""}${d.fx ? `<i>&#10040;</i>` : ""}</span>`;
+  };
+  function diceHtml() {
+    const face = f => {
+      const d = CD[f - 1];
+      return `<div class="tu-face">${die(f)}<small>${T("Face {n}", { n: f })}</small>
+        <b>${TP(d.pts, "{n} point", "{n} points")}</b><span>${d.fx ? T("+ 1 Effect") : "&nbsp;"}</span></div>`;
+    };
+    const fx = (name, text) => `<div class="tu-act"><span class="ic">&#10040;</span><div><b>${T(name)}</b><p>${T(text)}</p></div></div>`;
+    return `<div class="card"><h3>${T("The six faces")}</h3>
+      <p>${T("Damage is rolled with <b>combat dice</b> (DC): six-sided dice with special faces. Add up the points of every die: that total is the damage. Faces 5 and 6 also show an <b>Effect</b> symbol.")}</p>
+      <div class="tu-faces">${[1, 2, 3, 4, 5, 6].map(face).join("")}</div>
+      <div class="tu-chips dice">
+        <span><b>0</b>${T("2 faces in 6")}</span><span><b>1</b>${T("3 faces in 6")}</span><span><b>2</b>${T("1 face in 6")}</span><span><b>&#10040;</b>${T("Effect: 1 roll in 3")}</span>
+      </div>
+      ${tip("&#128202;", T("On average each die is worth a little under <b>1 point</b> (5 points every 6 dice), and one die in three shows an Effect. So 6 DC averages about 5 damage and 2 Effects."))}
+    </div>
+    <div class="card"><h3>&#127922; ${T("Try a roll")}</h3>
+      <div class="row tu-row">${stepper("tu-cd", 4, T("Combat dice to roll"))}
+        <div class="tu-rollbtn"><button class="btn primary" type="button" id="tu-roll">&#127922; ${T("Roll")}</button></div></div>
+      <div id="tu-roll-out"></div>
+    </div>
+    <div class="card"><h3>&#10040; ${T("What Effects do")}</h3>
+      <p>${T("Effects only matter if the weapon has a <b>damage effect</b>. Each Effect you roll triggers them, and some get stronger with more Effects:")}</p>
+      <div class="tu-acts">
+        ${fx("Vicious", "+1 damage for each Effect.")}
+        ${fx("Piercing X", "Ignore X points of the target's damage resistance for each Effect.")}
+        ${fx("Radioactive", "The target also takes 1 Radiation damage for each Effect.")}
+        ${fx("Burst", "Each Effect hits one more target close to the first one. Every extra target costs one more shot of ammo.")}
+        ${fx("Spread", "Each Effect hits the target again in a random location, for half the damage rolled.")}
+        ${fx("Breaking", "Each Effect wears down the target's cover by 1 die. If the target has no cover, the hit location loses 1 point of that damage type's resistance.")}
+        ${fx("Persistent", "With at least one Effect, the target takes the weapon's damage again at the end of their next turns, for as many turns as Effects rolled. They can spend a major action on a test to stop it.")}
+        ${fx("Stun", "With at least one Effect, the target can't take their normal actions on their next turn.")}
+      </div>
+      ${tip("&#9762;", T("Effects also show up outside combat: eating irradiated food, for example, means rolling 1 DC and taking 1 Radiation damage on an Effect."))}
+    </div>`;
+  }
+  function diceRoll() {
+    const n = clampN($("tu-cd").value, 1, MAX_DICE);
+    $("tu-cd").value = n;
+    const faces = Array.from({ length: n }, () => 1 + Math.floor(Math.random() * 6));
+    const pts = faces.reduce((s, f) => s + CD[f - 1].pts, 0), fx = faces.filter(f => CD[f - 1].fx).length;
+    $("tu-roll-out").innerHTML = `<div class="tu-rolled">${faces.map((f, i) => die(f, "rolling").replace("<span", `<span style="animation-delay:${i * 40}ms"`)).join("")}</div>
+      <div class="tu-gains two">${gain(pts, TP(pts, "point of damage", "points of damage"), TP(n, "{n} die, average {a}", "{n} dice, average {a}", { a: fmt(Math.round(n * 50 / 6) / 10) }), "hp")}
+        ${gain(fx, TP(fx, "Effect", "Effects"), fx ? T("Triggers the weapon's damage effects.") : T("No damage effects this time."), "perk")}</div>`;
+  }
+  function diceWire(root) {
+    wireSteppers(root, 1, MAX_DICE, () => {});
+    $("tu-roll").onclick = diceRoll;
+    diceRoll();
+  }
+
   const GUIDES = [
     { id: "level", icon: "&#11014;", name: "Leveling Up", blurb: "What you gain and how much XP you need", html: levelHtml, wire: levelWire },
     { id: "heal", icon: "&#10084;", name: "Regain Health", blurb: "Stimpaks, rest, and repairing Mister Handy", html: healHtml },
@@ -279,6 +338,7 @@ const Tutorials = (() => {
     { id: "range", icon: "&#127919;", name: "Combat Range", blurb: "Zones, reach and weapon ranges", html: rangeHtml, wire: rangeWire },
     { id: "minor", icon: "&#128095;", name: "Minor Actions", blurb: "The quick things you do on your turn", html: minorHtml },
     { id: "major", icon: "&#9876;", name: "Major Actions", blurb: "The main thing you do on your turn", html: majorHtml },
+    { id: "dice", icon: "&#127922;", name: "Combat Dice", blurb: "How many points each face is worth, and Effects", html: diceHtml, wire: diceWire },
   ];
 
   function list() {
