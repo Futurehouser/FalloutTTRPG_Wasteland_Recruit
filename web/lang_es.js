@@ -2423,3 +2423,29 @@ Object.assign(ES, {
   "With at least one Effect, the target can't take their normal actions on their next turn.": "Con al menos un Efecto, el objetivo no puede hacer sus acciones normales en su siguiente turno.",
   "Effects also show up outside combat: eating irradiated food, for example, means rolling 1 DC and taking 1 Radiation damage on an Effect.": "Los Efectos también aparecen fuera del combate: al comer comida irradiada, por ejemplo, tiras 1 DC y recibes 1 de daño por radiación si sale un Efecto.",
 });
+
+// ---- dice roller
+Object.assign(ES, {
+  "Dice Roller": "Tirador de dados",
+  "Roll d20s, combat dice and d6s": "Tira d20, dados de combate y d6",
+  "Pick a die and how many, then roll.": "Elige un dado y cuántos, y tira.",
+  "How many dice": "Cuántos dados",
+  "Target number (0 = none)": "Número objetivo (0 = ninguno)",
+  "Tag skill rank (0 = not tagged)": "Rango de la habilidad marcada (0 = sin marcar)",
+  "Earlier rolls": "Tiradas anteriores",
+  "Skill tests": "Pruebas de habilidad",
+  "Combat die": "Dado de combate",
+  "Damage: points and Effects": "Daño: puntos y Efectos",
+  "A plain six-sided die": "Un dado normal de seis caras",
+  "Total": "Total",
+  "Highest {h}, lowest {l}": "Mayor {h}, menor {l}",
+  "success": "éxito",
+  "successes": "éxitos",
+  "{n} critical counts double": "{n} crítico cuenta doble",
+  "{n} criticals count double": "{n} críticos cuentan doble",
+  "Each die at or under {t} is a success": "Cada dado igual o menor que {t} es un éxito",
+  "complication": "complicación",
+  "complications": "complicaciones",
+  "A 20 brings trouble.": "Un 20 trae problemas.",
+  "No 20s rolled.": "No ha salido ningún 20.",
+});

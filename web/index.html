@@ -34,6 +34,7 @@
     <button data-page="tutorials"><span class="n">12</span>Tutorials</button>
     <button data-page="elber"><span class="n">13</span>Talk to Elber Gotas 3000</button>
     <button data-page="tables"><span class="n">14</span>Table Search</button>
+    <button data-page="dice"><span class="n">15</span>Dice Roller</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
   </nav>
   <div class="foot">Version <span id="app-version"></span><br>Fan-made tool for the Fallout 2d20 tabletop game.</div>
@@ -62,6 +63,7 @@
       <button class="tile" data-go="tutorials"><span class="ic">&#128218;</span><b>Tutorials</b><small>The rules, explained with pictures</small></button>
       <button class="tile" data-go="elber"><span class="ic">&#129302;</span><b>Talk to Elber Gotas 3000</b><small>A conversation you may not survive</small></button>
       <button class="tile" data-go="tables"><span class="ic">&#128269;</span><b>Table Search</b><small>Weapons, armor and mods from the core rulebook</small></button>
+      <button class="tile" data-go="dice"><span class="ic">&#127922;</span><b>Dice Roller</b><small>Roll d20s, combat dice and d6s</small></button>
     </div>
     <p class="hint tiles-hint">Hold and drag a tile to move it (click and drag with a mouse).
       <button class="linkbtn" id="tiles-reset">Reset order</button></p>
@@ -296,6 +298,35 @@
     <p class="hint" id="ts-count"></p>
     <div id="ts-results"></div>
   </section>
+  <!-- 15. dice roller -->
+  <section class="page" id="page-dice" data-title="Dice Roller">
+    <h2>Dice Roller</h2>
+    <p class="hint">Pick a die and how many, then roll.</p>
+    <div class="dr-types" id="dr-types"></div>
+    <div class="card">
+      <p class="hint" id="dr-hint"></p>
+      <div class="row tu-row">
+        <div class="tu-step"><label class="f" for="dr-n">How many dice</label><div>
+          <button class="btn" type="button" data-step="-1" data-for="dr-n" aria-label="-1">&minus;</button>
+          <input type="number" id="dr-n" value="2" min="1" max="20" inputmode="numeric">
+          <button class="btn" type="button" data-step="1" data-for="dr-n" aria-label="+1">+</button></div></div>
+      </div>
+      <div class="row tu-row" id="dr-test">
+        <div class="tu-step"><label class="f" for="dr-target">Target number (0 = none)</label><div>
+          <button class="btn" type="button" data-step="-1" data-for="dr-target" aria-label="-1">&minus;</button>
+          <input type="number" id="dr-target" value="0" min="0" max="40" inputmode="numeric">
+          <button class="btn" type="button" data-step="1" data-for="dr-target" aria-label="+1">+</button></div></div>
+        <div class="tu-step"><label class="f" for="dr-tag">Tag skill rank (0 = not tagged)</label><div>
+          <button class="btn" type="button" data-step="-1" data-for="dr-tag" aria-label="-1">&minus;</button>
+          <input type="number" id="dr-tag" value="0" min="0" max="6" inputmode="numeric">
+          <button class="btn" type="button" data-step="1" data-for="dr-tag" aria-label="+1">+</button></div></div>
+      </div>
+      <button class="big dr-go" type="button" id="dr-roll"><span aria-hidden="true">&#127922;</span> Roll</button>
+    </div>
+    <div class="dr-tray" id="dr-tray"></div>
+    <div class="tu-gains two" id="dr-sum"></div>
+    <div class="card" id="dr-history" hidden><h4>Earlier rolls</h4><ul class="dr-past" id="dr-past"></ul></div>
+  </section>
 
 </main>
 <canvas id="walkers" hidden aria-hidden="true"></canvas>
@@ -337,5 +368,6 @@
 <script charset="utf-8" src="elber.js"></script>
 <script charset="utf-8" src="tables_data.js"></script>
 <script charset="utf-8" src="tables.js"></script>
+<script charset="utf-8" src="dice.js"></script>
 </body>
 </html>

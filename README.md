@@ -13,7 +13,7 @@ The app is available in **Español** (the default) and **English**: switch with 
 
 ## What it does
 
-Pick a tool on the Home screen, or open the side menu (☰), to switch between the fourteen tools. You can rearrange the Home tiles by holding and dragging them (click and drag with a mouse).
+Pick a tool on the Home screen, or open the side menu (☰), to switch between the fifteen tools. You can rearrange the Home tiles by holding and dragging them (click and drag with a mouse).
 
 1. **Random Character**: one tap creates a complete level-1 character following the rulebook's character creation steps (origin, S.P.E.C.I.A.L., skills, perk, derived stats and equipment) and fills in the official character sheet. Each one gets a race-appropriate name and a personality quirk based on their stats. Save the sheet as an image, share it, or add the character to your saved list.
 2. **Scavenging Location**: generates a ready-to-run place to loot, with its search test, difficulty and time, loot categories with min-max rolls, and possible inhabitants, obstacles, hazards and hidden stashes.
@@ -29,3 +29,4 @@ Pick a tool on the Home screen, or open the side menu (☰), to switch between t
 12. **Tutorials**: illustrated guides to the rules: Leveling Up (what each level gives you, plus a calculator for the XP to the next level), Regain Health (including repairing Mister Handy and other robots), Dying, Combat Range (with a clickable range difficulty table), Minor Actions, Major Actions and Combat Dice (the points and Effects on each face, a dice roller, and what each damage effect does).
 13. **Talk to Elber Gotas 3000**: a Fallout-style conversation with an ex-Mister Handy in an AI power armor. Pick a saved character (its sprite stands at the bottom with its HP) and choose from at least 3 answers; many test a S.P.E.C.I.A.L. or a perk. Failing can cost 1 HP, and the talk never ends, not even when you die.
 14. **Table Search**: type part of a name (in English or Spanish) to look up the core rulebook stats of any weapon, weapon mod, apparel piece (clothing, armor, power armor, robot plating) or armor mod. Weapon cards list the mods they accept, and mod cards list the weapons they fit; tap one to look it up.
+15. **Dice Roller**: pick d20s, combat dice or plain d6s and how many (1 to 20), then roll them with a tumbling animation and a rattle. d20 rolls can count successes against a target number (with criticals for tagged skills) and flag complications; combat dice add up damage points and Effects. The last few rolls stay listed below.

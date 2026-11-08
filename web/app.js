@@ -40,6 +40,7 @@ function showPage(id) {
   if (id === "tutorials" && typeof Tutorials !== "undefined") Tutorials.show();
   if (id === "elber" && typeof Elber !== "undefined") Elber.show();
   if (id === "tables" && typeof Tables !== "undefined") Tables.show();
+  if (id === "dice" && typeof Dice !== "undefined") Dice.show();
   if (typeof Walkers !== "undefined") Walkers.update(); // sprites walk on Home and My Team, and in a running fight
 }
 $("burger").onclick = () => document.body.classList.toggle("menu-open");

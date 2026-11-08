@@ -527,3 +527,42 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .tu-die.rolling { animation: tu-tumble .35s ease-out both; }
 @keyframes tu-tumble { from { transform: rotate(-160deg) scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (max-width: 559px) { .tu-faces { grid-template-columns: repeat(3, 1fr); } .tu-chips.dice { grid-template-columns: 1fr 1fr; } }
+
+/* dice roller */
+.dr-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0 4px; }
+.dr-types button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px; cursor: pointer; min-width: 0;
+                   background: var(--panel); border: 2px solid var(--line); border-radius: 14px; }
+.dr-types button.on { border-color: var(--amber); background: var(--panel2); }
+.dr-types button > b { font-size: 14px; }
+.dr-types button.on > b { color: var(--amber); }
+.dr-go { margin-top: 12px; }
+.dr-go:disabled { opacity: .7; }
+.dr-tray { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 16px 0; min-height: 10px; }
+.dr-die { position: relative; display: inline-grid; place-items: center; width: 54px; height: 54px; flex: none; color: #1a1a1a; }
+.dr-die > b { font-size: 24px; font-weight: 900; line-height: 1; position: relative; z-index: 1; }
+.dr-d6, .dr-cd { border-radius: 11px; background: #ece4cc; box-shadow: inset 0 -5px 0 #b9ad8c, 0 3px 5px #0009; }
+.dr-cd.blank { background: #cfc7ae; }
+.dr-cd.fx { background: var(--amber); box-shadow: inset 0 -5px 0 var(--amber-d), 0 3px 5px #0009; }
+.dr-cd.fx > b { position: absolute; left: 7px; top: 4px; font-size: 17px; }
+.dr-cd > i { font-style: normal; font-size: 28px; line-height: 1; color: #7a1d12; margin: 7px 0 0 9px; }
+/* the d20 is a hexagon outline with a darker inner face */
+.dr-d20 { width: 60px; height: 64px; filter: drop-shadow(0 3px 3px #0009); }
+.dr-d20::before { content: ""; position: absolute; inset: 0; background: #4a8fd8;
+                  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.dr-d20::after { content: ""; position: absolute; inset: 9px 8px; background: #8ab8ec; clip-path: polygon(50% 0, 100% 78%, 0 78%); }
+.dr-d20 > b { margin-top: 6px; font-size: 21px; }
+.dr-d20.crit::before { background: #3f9d4c; } .dr-d20.crit::after { background: #9de39d; }
+.dr-d20.ok::before { background: #4f8f55; } .dr-d20.ok::after { background: var(--green); }
+.dr-d20.miss::before { background: #5a5f69; } .dr-d20.miss::after { background: #9a9ea6; }
+.dr-d20.bad::before { background: #9c2f27; } .dr-d20.bad::after { background: var(--red); }
+.dr-die.tumbling { animation: dr-tumble .32s linear infinite; }
+.dr-die.landed { animation: dr-land .35s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes dr-tumble { 0% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-14px) rotate(90deg); }
+  50% { transform: translateY(0) rotate(180deg); } 75% { transform: translateY(-8px) rotate(270deg); } 100% { transform: translateY(0) rotate(360deg); } }
+@keyframes dr-land { 0% { transform: scale(1.35) rotate(-20deg); } 100% { transform: none; } }
+.dr-past { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.dr-past li { display: flex; gap: 10px; padding: 7px 10px; font-size: 14px; background: var(--panel2); border-radius: 8px; min-width: 0; }
+.dr-past b { color: var(--amber); flex: none; min-width: 48px; }
+.dr-past span { color: var(--muted); overflow-wrap: anywhere; min-width: 0; }
+@media (prefers-reduced-motion: reduce) { .dr-die.tumbling, .dr-die.landed { animation: none; } }
+#dr-test[hidden], #dr-history[hidden] { display: none; }
