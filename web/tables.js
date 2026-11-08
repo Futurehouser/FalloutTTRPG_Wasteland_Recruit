@@ -1,5 +1,5 @@
 // Table Search: type part of a name and get the core rulebook's stats for weapons, weapon mods,
-// apparel (clothing, armor, power armor, robot plating) and apparel mods. The tables live in
+// apparel (clothing, armor, power armor, robot plating), apparel mods and consumables (food, drinks, chems). The tables live in
 // tables_data.js; names match in English or Spanish, with or without accents.
 const Tables = (() => {
   const LIMIT = 60; // cards drawn at once; typing more narrows the list
@@ -9,7 +9,9 @@ const Tables = (() => {
     { id: "m", label: "Weapon mods", list: "wmods" },
     { id: "a", label: "Armor and clothing", list: "apparel" },
     { id: "am", label: "Armor mods", list: "amods" },
+    { id: "c", label: "Food, drinks and chems", list: "cons" },
   ];
+  const DURATION = { instant: "Instant", brief: "Brief", lasting: "Lasting" };
   const TRAIT = {
     accurate: "Accurate", blast: "Blast", close_quarters: "Close Quarters", concealed: "Concealed", debilitating: "Debilitating",
     gatling: "Gatling", inaccurate: "Inaccurate", mine: "Mine", night_vision: "Night Vision", parry: "Parry", recon: "Recon",
@@ -74,7 +76,7 @@ const Tables = (() => {
     const words = whole.split(" ").filter(Boolean);
     const pool = index.filter(e => only === "all" || e.r.k === only);
     if (!words.length) return only === "all" ? [] : pool.map(e => e.r).sort((a, b) => T(a.n).localeCompare(T(b.n), LANG));
-    const order = { w: 0, m: 1, a: 2, am: 3 };
+    const order = { w: 0, m: 1, a: 2, am: 3, c: 4 };
     return pool.map(e => ({ r: e.r, s: score(e, words, whole) })).filter(x => x.s < 9)
       .sort((a, b) => a.s - b.s || order[a.r.k] - order[b.r.k] || fits(b.r) - fits(a.r) || T(a.r.n).localeCompare(T(b.r.n), LANG)).map(x => x.r);
   }
@@ -144,7 +146,23 @@ const Tables = (() => {
       stat("Perks needed", r.perks ? esc(perks(r.perks)) : T("None")) + common(r) + `</div>`;
   }
 
-  const card = r => `<div class="card ts-card ts-${r.k}" data-n="${esc(r.n)}">${{ w: weapon, m: weaponMod, a: apparel, am: apparelMod }[r.k](r)}</div>`;
+  function consumable(r) {
+    const fx = [];
+    if (r.hp) fx.push(T("Heals {n} HP", { n: r.hp }));
+    if (r.rads) fx.push(T("Heals {n} Radiation damage", { n: r.rads }));
+    if (r.eff) fx.push(T(r.eff));
+    let html = head(r, `${T("Consumable")} · ${esc(T(r.g))}${r.cooked ? ` · ${T("Cooked recipe")}` : ""}${r.butch ? ` · ${T("From butchering")}` : ""}`);
+    html += `<ul class="ts-fx">${(fx.length ? fx : [T("No effect of its own")]).map(f => `<li>${esc(f)}</li>`).join("")}</ul><div class="ts-grid">`;
+    if (r.g === "Food" || r.g === "Drink") html += stat("Irradiated", r.irr ? (r.irr > 1 ? T("Yes, roll {n} DC", { n: r.irr }) : T("Yes")) : T("No"));
+    if (r.g === "Drink") html += stat("Alcoholic", r.alc ? T("Yes") : T("No"));
+    if (r.g === "Chem") {
+      html += stat("Addictive", r.add ? T("Yes ({n})", { n: r.add }) : T("No"));
+      if (r.dur) html += stat("Duration", esc(T(DURATION[r.dur] || r.dur)));
+    }
+    return html + stat("Weight", r.wt === 0 ? "<1" : lbs(r.wt)) + stat("Cost", esc(r.c)) + stat("Rarity", esc(r.r)) + `</div>`;
+  }
+
+  const card = r => `<div class="card ts-card ts-${r.k}" data-n="${esc(r.n)}">${{ w: weapon, m: weaponMod, a: apparel, am: apparelMod, c: consumable }[r.k](r)}</div>`;
 
   function render() {
     const q = $("ts-q").value;

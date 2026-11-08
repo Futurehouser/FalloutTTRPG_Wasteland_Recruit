@@ -494,7 +494,7 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .ts-en { color: var(--muted); font-size: 13px; font-style: italic; }
 .ts-tag { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin: 2px 0 8px; }
 .ts-w { border-left: 4px solid var(--red); } .ts-m { border-left: 4px solid var(--amber); }
-.ts-a { border-left: 4px solid var(--blue); } .ts-am { border-left: 4px solid var(--green); }
+.ts-a { border-left: 4px solid var(--blue); } .ts-am { border-left: 4px solid var(--green); } .ts-c { border-left: 4px solid #b07ad8; }
 .ts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
 .ts-stat { background: #0f1115; border: 1px solid var(--line); border-radius: 9px; padding: 6px 9px; min-width: 0; }
 .ts-stat small { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
