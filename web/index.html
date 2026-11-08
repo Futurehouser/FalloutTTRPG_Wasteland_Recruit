@@ -32,7 +32,7 @@
     <button data-page="radio"><span class="n">10</span>Fallout Radio</button>
     <button data-page="team"><span class="n">11</span>My Team</button>
     <button data-page="tutorials"><span class="n">12</span>Tutorials</button>
-    <button data-page="elber"><span class="n">13</span>Talk to Elber Gotas 3000</button>
+    <button data-page="elber"><span class="n">13</span>Talking Heads</button>
     <button data-page="tables"><span class="n">14</span>Table Search</button>
     <button data-page="dice"><span class="n">15</span>Dice Roller</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
@@ -61,7 +61,7 @@
       <button class="tile" data-go="radio"><span class="ic">&#128251;</span><b>Fallout Radio</b><small>Tune in to the Wasteland's stations</small></button>
       <button class="tile" data-go="team"><span class="ic">&#129309;</span><b>My Team</b><small>The characters your players are using</small></button>
       <button class="tile" data-go="tutorials"><span class="ic">&#128218;</span><b>Tutorials</b><small>The rules, explained with pictures</small></button>
-      <button class="tile" data-go="elber"><span class="ic">&#129302;</span><b>Talk to Elber Gotas 3000</b><small>A conversation you may not survive</small></button>
+      <button class="tile" data-go="elber"><span class="ic">&#129302;</span><b>Talking Heads</b><small>Conversations you may not survive</small></button>
       <button class="tile" data-go="tables"><span class="ic">&#128269;</span><b>Table Search</b><small>Weapons, armor, mods, food and chems from the core rulebook</small></button>
       <button class="tile" data-go="dice"><span class="ic">&#127922;</span><b>Dice Roller</b><small>Roll d20s, combat dice and d6s</small></button>
     </div>
@@ -278,10 +278,14 @@
     <p class="hint" id="tu-hint">Pick a guide to see that part of the rules, explained step by step.</p>
     <div id="tu-body"></div>
   </section>
-  <!-- 13. talk to elber gotas 3000 -->
-  <section class="page" id="page-elber" data-title="Talk to Elber Gotas 3000">
+  <!-- 13. talking heads -->
+  <section class="page" id="page-elber" data-title="Talking Heads">
     <div class="eg-as">
-      <label for="eg-char">Talk to Elber Gotas 3000 as:</label>
+      <label for="eg-who">Talk to:</label>
+      <select id="eg-who" aria-label="Who do you want to talk to?"></select>
+    </div>
+    <div class="eg-as">
+      <label for="eg-char">Talk as:</label>
       <select id="eg-char"></select>
       <span class="eg-hp" id="eg-hp" hidden></span>
     </div>
@@ -371,6 +375,7 @@
 <script charset="utf-8" src="radio.js"></script>
 <script charset="utf-8" src="team.js"></script>
 <script charset="utf-8" src="tutorials.js"></script>
+<script charset="utf-8" src="jack.js"></script>
 <script charset="utf-8" src="elber.js"></script>
 <script charset="utf-8" src="tables_data.js"></script>
 <script charset="utf-8" src="tables.js"></script>

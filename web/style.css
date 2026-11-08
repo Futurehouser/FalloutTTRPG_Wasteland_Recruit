@@ -450,12 +450,12 @@ body.walkers-on .page.active { padding-bottom: 140px; }
   .tu-two, .tu-acts.two { grid-template-columns: 1fr; }
 }
 
-/* talk to elber gotas 3000. The frame is cut into 3 strips that grow with the text: each canvas stretches
+/* talking heads (Elber Gotas 3000, Jack Rose). The frame is cut into 3 strips that grow with the text: each canvas stretches
    its slice, and the two black screens sit on top. --cx trims the outer metal on phones to give the text room.
    All sizes are in the gif's own pixels (426 x 240). */
 #page-elber { --cx: 0; --w: calc(426 - 2 * var(--cx)); }
 .eg-as { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; max-width: 860px; margin: 0 auto 10px; }
-.eg-as label { color: var(--amber); font-weight: 700; }
+.eg-as label { color: var(--amber); font-weight: 700; min-width: 6.5em; }
 .eg-as select { flex: 1 1 180px; min-width: 0; }
 .eg-hp { font-weight: 800; color: var(--green); padding: 4px 10px; border: 1px solid var(--line); border-radius: 8px; background: #0b0d0c; white-space: nowrap; }
 .eg-hp.low { color: var(--red); }

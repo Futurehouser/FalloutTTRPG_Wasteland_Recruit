@@ -1,13 +1,13 @@
-// Talk to Elber Gotas 3000: a Fallout-style talking head. Pick a saved character and chat with a
-// power armor that used to be a Mister Handy. Answers can test a S.P.E.C.I.A.L. or a perk; failing one
-// may cost the character's sprite 1 HP. The talk never ends: the options are drawn from shuffled
-// piles that refill, and when the character dies Elber has plenty to say about that too.
+// Talking Heads: Fallout-style talking heads. Pick who to talk to (Elber Gotas 3000, a power armor that
+// used to be a Mister Handy, or Jack Rose, a raider) and a saved character to talk as. Answers can test a
+// S.P.E.C.I.A.L. or a perk; failing one may cost the character's sprite HP. The talk never ends: the
+// options are drawn from shuffled piles that refill, and when the character dies the head has plenty
+// to say about that too.
 //
-// The animation lives in elber/frames.webp (a sheet of the 79 frames of the original gif) and is drawn
+// Each animation lives in <head>/frames.webp (a sheet of the 79 frames of the original gif) and is drawn
 // on canvases, because an <img> gif can't be held on a frame or restarted on demand.
 const Elber = (() => {
   const FRAME_W = 426, FRAME_H = 240, COLS = 9, FRAMES = 79;
-  const FAIL_HIT = 0.45;  // chance that failing a test costs 1 HP
   const ASIDE = 0.3;      // chance that a reply ends with a remark about the group
   const TYPE_MS = 22;
   const READ_MS = 1500;   // pause before Elber comments on a death
@@ -686,11 +686,27 @@ const Elber = (() => {
       return list[0];
     };
   }
-  const nextPlain = pile(DATA.PLAIN), nextStat = pile(DATA.TESTS.filter(t => t.s)), nextPerk = pile(DATA.TESTS.filter(t => t.p));
-  const nextAside = pile(DATA.ASIDES), nextHurt = pile(DATA.HURT), nextGhost = pile(DATA.GHOST);
+
+  // the heads you can talk to. failHit: chance that failing a test hurts. voice: the blip while typing
+  const HEADS = {
+    elber: { name: "Elber Gotas 3000", sheet: "elber/frames.webp", data: DATA, failHit: 0.45,
+      voice: () => tone("sawtooth", 170 + rnd(180), 110 + rnd(120), 0.045, 0.05) },
+    jack: { name: "Jack Rose", sheet: "jack/frames.webp", data: JACK_DATA, failHit: 0.55, // he shouts: low, rough and loud
+      voice: () => { tone("square", 95 + rnd(70), 70 + rnd(40), 0.06, 0.075); tone("sawtooth", 190 + rnd(90), 120, 0.05, 0.04); } },
+  };
+  Object.values(HEADS).forEach(h => {
+    const d = h.data;
+    Object.assign(h, { nextPlain: pile(d.PLAIN), nextStat: pile(d.TESTS.filter(t => t.s)), nextPerk: pile(d.TESTS.filter(t => t.p)),
+      nextAside: pile(d.ASIDES), nextHurt: pile(d.HURT), nextGhost: pile(d.GHOST) });
+  });
+  let headId = "elber";
+  try { if (HEADS[localStorage.getItem("wr_head")]) headId = localStorage.getItem("wr_head"); } catch (e) { /* no storage */ }
+  const head = () => HEADS[headId];
+  const D = () => head().data;
 
   // ---------------- the animation: stays on frame 0, plays once per answer, rests on the last frame
   const Anim = (() => {
+    const sheets = {};
     let sheet = null, ready = false, canvases = [], frame = 0, start = 0, raf = null;
     const ms = i => (i % 3 === 1 ? 60 : 70); // the gif's own timing
     function draw(i) {
@@ -708,12 +724,20 @@ const Elber = (() => {
       draw(i);
       raf = i < FRAMES - 1 ? requestAnimationFrame(tick) : null;
     }
-    function load() {
-      if (sheet) return;
-      canvases = [...document.querySelectorAll("#eg-stage canvas")];
-      sheet = new Image();
-      sheet.onload = () => { ready = true; draw(frame); };
-      sheet.src = "elber/frames.webp";
+    // switch to a head's sheet (each one is loaded once) and draw its frame 0
+    function load(src) {
+      if (!canvases.length) canvases = [...document.querySelectorAll("#eg-stage canvas")];
+      if (sheet && sheet === sheets[src]) return;
+      stop();
+      let img = sheets[src];
+      if (!img) {
+        img = sheets[src] = new Image();
+        img.onload = () => { img.done = true; if (sheet === img) { ready = true; draw(frame); } };
+        img.src = src;
+      }
+      sheet = img; ready = !!img.done; frame = 0;
+      if (ready) draw(0);
+      else canvases.forEach(cv => cv.getContext("2d").clearRect(0, 0, cv.width, cv.height));
     }
     function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
     function play() { stop(); start = performance.now(); draw(0); raf = requestAnimationFrame(tick); } // always from the top
@@ -734,7 +758,7 @@ const Elber = (() => {
     } catch (e) { /* no audio on this device */ }
   }
   const selectBeep = () => { tone("square", 1040, 1040, 0.05, 0.1); tone("square", 1560, 1560, 0.07, 0.1, 0.06); };
-  const talkBlip = () => tone("sawtooth", 170 + rnd(180), 110 + rnd(120), 0.045, 0.05);
+  const talkBlip = () => head().voice();
 
   // ---------------- who is talking
   let cur = null;      // { id, char, race, maxHp, hp, dead }
@@ -796,21 +820,22 @@ const Elber = (() => {
 
   // ---------------- each turn: at least 3 answers, some of them tests
   function dealOptions() {
+    const h = head();
     if (cur.dead) {
-      const first = nextGhost(), second = nextGhost([first]);
-      options = [{ revive: true, ask: DATA.REVIVE.ask }, first, second];
+      const first = h.nextGhost(), second = h.nextGhost([first]);
+      options = [{ revive: true, ask: D().REVIVE.ask }, first, second];
       return showOptions();
     }
     const list = pending.splice(0, 1);
     const push = o => { if (o && !list.includes(o)) list.push(o); };
-    push(nextStat(list));
+    push(h.nextStat(list));
     const mine = Object.keys(perksOf(cur.char));
     if (mine.length && Math.random() < 0.4) {
-      const p = pick(mine), known = DATA.TESTS.find(t => t.p === p);
-      push(known || { p, r: 1, ask: DATA.OWN_PERK.ask, ok: pick(DATA.OWN_PERK.ok), bad: pick(DATA.PLAIN[0].say) });
-    } else push(nextPerk(list));
-    if (Math.random() < 0.35) push(nextStat(list));
-    while (list.length < 4) push(nextPlain(list));
+      const p = pick(mine), known = D().TESTS.find(t => t.p === p);
+      push(known || { p, r: 1, ask: D().OWN_PERK.ask, ok: pick(D().OWN_PERK.ok), bad: pick(D().PLAIN[0].say) });
+    } else push(h.nextPerk(list));
+    if (Math.random() < 0.35) push(h.nextStat(list));
+    while (list.length < 4) push(h.nextPlain(list));
     options = shuffled(list);
     showOptions();
   }
@@ -824,14 +849,14 @@ const Elber = (() => {
       cur.hp = cur.maxHp; cur.dead = false;
       Walkers.talkerRevive();
       setHp();
-      typeOut(say(pick(DATA.REVIVE.say)));
+      typeOut(say(pick(D().REVIVE.say)));
       return dealOptions();
     }
     if (cur.dead) { typeOut(say(pick(o.say))); return dealOptions(); }
     if (o.next) pending.push(...o.next);
     if (o.s || o.p) return testResult(o);
     let line = say(pick(o.say));
-    if (Math.random() < ASIDE) line += " " + T(nextAside());
+    if (Math.random() < ASIDE) line += " " + T(head().nextAside());
     typeOut(line);
     dealOptions();
   }
@@ -839,18 +864,19 @@ const Elber = (() => {
   function testResult(o) {
     const ok = passes(o);
     let line = `[${T(ok ? "Passed" : "Failed")}] ` + say(ok ? o.ok : o.bad, { perk: o.p ? T(o.p) : "" });
-    if (!ok && Math.random() < FAIL_HIT) {
-      cur.hp = Math.max(0, cur.hp - 1);
-      line += " " + say(nextHurt());
+    if (!ok && Math.random() < head().failHit) {
+      const hurt = head().nextHurt(), dmg = hurt.d || 1; // Elber's lines are plain text worth 1 HP
+      cur.hp = Math.max(0, cur.hp - dmg);
+      line += " " + say(hurt.t || hurt);
       setHp();
       if (cur.hp === 0) {
         cur.dead = true;
-        Walkers.talkerHit(true);
+        Walkers.talkerHit(true, dmg);
         typeOut(line);
         options = []; showOptions(); // Elber speaks again once the sprite is gone
         return;
       }
-      Walkers.talkerHit(false);
+      Walkers.talkerHit(false, dmg);
     }
     typeOut(line);
     dealOptions();
@@ -864,7 +890,7 @@ const Elber = (() => {
       if (typing) { setTimeout(wait, 200); return; }
       setTimeout(() => {
         if (cur !== who) return;
-        typeOut(say(pick(DATA.EULOGY[cur.race === "robot" ? "boom" : "fall"])));
+        typeOut(say(pick(D().EULOGY[cur.race === "robot" ? "boom" : "fall"])));
         dealOptions();
       }, READ_MS);
     };
@@ -875,6 +901,7 @@ const Elber = (() => {
   function begin(c) {
     clearInterval(typing); typing = null;
     pending = [];
+    Anim.load(head().sheet);
     Anim.reset();
     if (!c) {
       cur = null; options = [];
@@ -887,12 +914,17 @@ const Elber = (() => {
     cur = { id: c.id, char: c, race, maxHp, hp: maxHp, dead: false };
     Walkers.setTalker(c, eulogy);
     setHp();
-    typeOut(say(pick(DATA.GREET[race] || DATA.GREET.human)));
+    typeOut(say(pick(D().GREET[race] || D().GREET.human)));
     dealOptions();
   }
 
   function show() {
-    Anim.load();
+    const who = $("eg-who");
+    if (!who.options.length) {
+      who.innerHTML = Object.entries(HEADS).map(([k, h]) => `<option value="${k}">${esc(h.name)}</option>`).join("");
+      who.value = headId;
+    }
+    Anim.load(head().sheet);
     const sel = $("eg-char");
     sel.innerHTML = ROSTER.length
       ? ROSTER.slice().sort((a, b) => a.name.localeCompare(b.name)).map(c => `<option value="${esc(c.id)}">${esc(c.name)} (${T("level {n}", { n: c.level || 1 })})</option>`).join("")
@@ -903,6 +935,11 @@ const Elber = (() => {
     begin(ROSTER.find(x => x.id === sel.value) || null);
   }
   $("eg-char").onchange = () => begin(ROSTER.find(x => x.id === $("eg-char").value) || null);
+  $("eg-who").onchange = () => { // a new head: a new conversation, with the same character
+    headId = HEADS[$("eg-who").value] ? $("eg-who").value : "elber";
+    try { localStorage.setItem("wr_head", headId); } catch (e) { /* no storage */ }
+    begin(ROSTER.find(x => x.id === $("eg-char").value) || null);
+  };
   $("eg-say").onclick = () => { // tap the text to skip the typing
     if (!typing) return;
     const rest = $("eg-say").querySelector(".eg-rest"), shown = $("eg-say").firstChild;

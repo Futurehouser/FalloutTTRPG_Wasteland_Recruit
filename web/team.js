@@ -195,15 +195,15 @@ const Walkers = (() => {
     update();
   }
 
-  // the one sprite on the Talk to Elber page. It never comes back on its own, and onGone runs once it has vanished.
+  // the one sprite on the Talking Heads page. It never comes back on its own, and onGone runs once it has vanished.
   function setTalker(c, onGone) {
     if (!c) talker = null;
     else talker = Object.assign(make("elber:" + c.id, c.race || raceFromOrigin(c.origin), c.name, window.innerWidth), { respawn: false, onGone });
     update();
   }
-  function talkerHit(dies) {
+  function talkerHit(dies, n) {
     if (!talker) return;
-    hit(talker, 1);
+    hit(talker, n || 1);
     if (dies) die(talker, false);
   }
   function talkerRevive() { if (talker) revive(talker); }
