@@ -590,6 +590,9 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .pk-hit:hover, .pk-hit:focus-visible { border-color: var(--amber); outline: none; }
 .pk-count, .pk-none { font-size: 12px; margin: 6px 2px 0; }
 .pk-hit.pk-no { opacity: .55; }
+.pk-nopic { flex: none; display: grid; place-items: center; width: 44px; height: 54px; border-radius: 6px; background: var(--panel2);
+  color: var(--amber-d); font-size: 24px; }
+.pk-nopic.big { width: 100%; max-width: 220px; height: 150px; margin: 0 auto; font-size: 64px; border-radius: 12px; }
 .pk-req { margin: 8px 0; font-size: 14px; }
 .pk-desc p { margin: 8px 0 0; line-height: 1.5; font-size: 14px; }
 .pk-en { font-size: 13px; font-style: italic; margin: -2px 0 6px; }

@@ -238,13 +238,13 @@ $("pk-char").onchange = () => { updateCharInfo(); $("pk-out").innerHTML = ""; pe
 function perkHtml(p, opts = {}) {
   const name = perkName(p.n), en = name !== p.n ? `<div class="muted pk-en">${esc(p.n)}</div>` : "";
   return `<div class="card perk">
-    <img src="${esc(p.image)}" alt="${esc(name)}" referrerpolicy="no-referrer" onerror="if(this.src!=='${esc(p.thumb)}')this.src='${esc(p.thumb)}';else this.remove()">
+    ${p.image ? `<img src="${esc(p.image)}" alt="${esc(name)}" referrerpolicy="no-referrer" onerror="if(this.src!=='${esc(p.thumb)}')this.src='${esc(p.thumb)}';else this.remove()">` : `<div class="pk-nopic big" aria-hidden="true">&#9762;</div>`}
     <div class="txt"><h3>${esc(name)}</h3>${en}
       <div class="badges"><span class="badge">${TP(p.max, "{n} rank", "{n} ranks")}</span>${opts.rank ? `<span class="badge"><b>${T("Rank {r} of {m}", { r: opts.rank, m: p.max })}</b></span>` : ""}</div>
       <div class="pk-req"><b>${T("Requirements")}:</b> ${esc(reqText(p))}</div>
       ${opts.extra || ""}
       <div class="pk-desc">${p.desc.map(d => `<p>${esc(T(d))}</p>`).join("")}</div>
-      <div class="muted" style="font-size:12px;margin-top:10px">${T("Fallout 2d20 core rulebook")} &middot; ${T("Card art: fallout.wiki")}${opts.footer ? ` &middot; ${opts.footer}` : ""}</div></div></div>`;
+      <div class="muted" style="font-size:12px;margin-top:10px">${T("Fallout 2d20 core rulebook")}${p.image && /^https?:/.test(p.image) ? ` &middot; ${T("Card art: fallout.wiki")}` : ""}${opts.footer ? ` &middot; ${opts.footer}` : ""}</div></div></div>`;
 }
 
 // the perks that pass the S.P.E.C.I.A.L. filter
@@ -311,7 +311,7 @@ function perkSearch() {
   box.innerHTML = `<div class="muted pk-count">${TP(found.length, q ? "{n} perk found" : "{n} perk with these filters", q ? "{n} perks found" : "{n} perks with these filters")}</div>` + found.map(({ p }) => {
     const rank = (own[p.n] || 0) + 1, no = ch && rank <= p.max && unmet(ch, p, rank).length;
     const mine = own[p.n] ? ` &middot; <b>${T("rank {n}", { n: own[p.n] })}</b>` : "";
-    return `<button type="button" class="pcard pk-hit${no ? " pk-no" : ""}" data-name="${esc(p.n)}"><img src="${esc(p.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
+    return `<button type="button" class="pcard pk-hit${no ? " pk-no" : ""}" data-name="${esc(p.n)}">${perkThumb(p, true)}
       <span class="t"><b>${esc(perkName(p.n))}</b><small>${esc(reqText(p))} &middot; ${TP(p.max, "{n} rank", "{n} ranks")}${mine}</small></span></button>`;
   }).join("");
   box.querySelectorAll(".pk-hit").forEach(b => (b.onclick = () => showFoundPerk(TT_BY[b.dataset.name])));
@@ -414,7 +414,7 @@ function renderCrCards() {
     if (!p) return `<div class="pcard"><img src="${esc(c.thumb || c.image || "")}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
       <div class="t"><b>${esc(c.name)}</b><small>${T("Fallout 76 card, not in the rulebook")}</small></div>${rm}</div>`;
     const miss = unmet(who, p, c.rank);
-    return `<div class="pcard"><img src="${esc(p.thumb)}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
+    return `<div class="pcard">${perkThumb(p)}
       <div class="t"><b>${esc(perkName(p.n))}</b><small>${esc(reqText(p))}</small>${miss.length ? `<small style="color:var(--red);white-space:normal">${T("Requirements not met")}: ${esc(miss.join(", "))}</small>` : ""}</div>
       <select data-i="${i}" title="${T("Rank")}">${Array.from({ length: p.max }, (_, k) => `<option value="${k + 1}" ${k + 1 === c.rank ? "selected" : ""}>${T("Rank {n}", { n: k + 1 })}</option>`).join("")}</select>${rm}</div>`;
   }).join("");
@@ -563,7 +563,7 @@ function renderRoster() {
           const p = TT_BY[pc.name];
           if (!p) return `<div class="pcard"><img src="${esc(pc.thumb || pc.image || "")}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
             <div class="t"><b>${esc(pc.name)}</b> <span class="muted">${T("Fallout 76 card, not in the rulebook")}</span></div></div>`;
-          return `<div class="pcard"><img src="${esc(p.thumb)}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
+          return `<div class="pcard">${perkThumb(p)}
             <div class="t"><b>${esc(perkName(p.n))}</b> <span class="muted">${T("Rank {r} of {m}", { r: pc.rank, m: p.max })}</span>
             <small style="white-space:normal">${p.desc.map(d => esc(T(d))).join(" ")}</small></div></div>`;
         }).join("") : `<div class="muted">${T("No perks yet. Tap <b>Suggest a perk</b> to get one picked for this character.")}</div>`}

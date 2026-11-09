@@ -11,16 +11,21 @@ const F76_TO_TT = {};
 TT_PERKS.forEach(p => p.f76.forEach(n => (F76_TO_TT[n] = p.n)));
 const ttPerk = name => TT_BY[name] || TT_BY[F76_TO_TT[name]] || null;
 
+// the perk's small picture, or a placeholder for perks that don't have one yet
+const perkThumb = (p, lazy) => p.thumb
+  ? `<img src="${esc(p.thumb)}" alt="" ${lazy ? 'loading="lazy" ' : ""}referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`
+  : `<span class="pk-nopic" aria-hidden="true">&#9762;</span>`;
+
 const TT_ATTRS = ["STR", "PER", "END", "CHA", "INT", "AGI", "LCK"];
 const NOT_LABEL = { robot: "Not for robots", ghoul: "Not for ghouls", human: "Not for humans", mutant: "Not for super mutants" };
 const rankLevel = (p, rank) => p.lvl + p.inc * (rank - 1);
 const reqAttrs = p => TT_ATTRS.filter(k => p.req[k]).map(k => `${T(k)} ${p.req[k]}`);
 
-// "STR 5, INT 6 · Level 2+ · +4 levels for each extra rank · Not for robots"
+// "STR 5, INT 6 · Level 2+ · each extra rank needs 4 more levels · Not for robots"
 function reqText(p) {
   const bits = reqAttrs(p);
   if (p.lvl > 1 || p.inc) bits.push(T("Level {n}+", { n: p.lvl }));
-  if (p.inc && p.max > 1) bits.push(T("+{n} levels for each extra rank", { n: p.inc }));
+  if (p.inc && p.max > 1) bits.push(T("each extra rank needs {n} more levels", { n: p.inc }));
   (p.not || []).forEach(n => bits.push(T(NOT_LABEL[n])));
   return bits.length ? bits.join(" · ") : T("No requirements");
 }
