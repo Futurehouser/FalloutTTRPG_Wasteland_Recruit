@@ -23,7 +23,7 @@
     <button data-page="chargen"><span class="n">1</span>Random Character</button>
     <button data-page="scavenge"><span class="n">2</span>Scavenging Location</button>
     <button data-page="loot"><span class="n">3</span>Loot Roller</button>
-    <button data-page="perks"><span class="n">4</span>Random FO76 Perk</button>
+    <button data-page="perks"><span class="n">4</span>Fallout TTRPG Perks</button>
     <button data-page="create"><span class="n">5</span>Create Character</button>
     <button data-page="roster"><span class="n">6</span>Saved Characters</button>
     <button data-page="combat"><span class="n">7</span>Combat Assistant</button>
@@ -52,7 +52,7 @@
       <button class="tile" data-go="chargen"><span class="ic">&#127922;</span><b>Random Character</b><small>Roll a full level-1 character and sheet</small></button>
       <button class="tile" data-go="scavenge"><span class="ic">&#127962;</span><b>Scavenging Location</b><small>Build a place to loot</small></button>
       <button class="tile" data-go="loot"><span class="ic">&#128176;</span><b>Loot Roller</b><small>Turn a 2d20 roll into an item</small></button>
-      <button class="tile" data-go="perks"><span class="ic">&#127183;</span><b>Random FO76 Perk</b><small>Draw or get a suggested perk card</small></button>
+      <button class="tile" data-go="perks"><span class="ic">&#127183;</span><b>Fallout TTRPG Perks</b><small>Every perk from the core rulebook that is also a Fallout 76 card</small></button>
       <button class="tile" data-go="create"><span class="ic">&#9998;</span><b>Create Character</b><small>Enter your own character</small></button>
       <button class="tile" data-go="roster"><span class="ic">&#128101;</span><b>Saved Characters</b><small>Your party: view, edit, level up</small></button>
       <button class="tile" data-go="combat"><span class="ic">&#9876;</span><b>Combat Assistant</b><small>Run a fight step by step</small></button>
@@ -123,17 +123,17 @@
   </section>
 
   <!-- 4. random perk -->
-  <section class="page" id="page-perks" data-title="Random FO76 Perk">
-    <h2>Random Fallout 76 Perk</h2>
-    <p class="hint">Search any perk card, or get a random one, from the <a href="https://fallout.wiki/wiki/Fallout_76_Perks" target="_blank" rel="noopener">fallout.wiki Fallout 76 Perks</a> page. Needs internet the first time.</p>
+  <section class="page" id="page-perks" data-title="Fallout TTRPG Perks">
+    <h2>Fallout TTRPG Perks</h2>
+    <p class="hint">The perks from the Fallout 2d20 core rulebook (pages 59 to 73) that are also Fallout 76 perk cards, with the rulebook's ranks, requirements and description. Browse them, get a random one, or pick a saved character to get one they can take. The card pictures come from fallout.wiki and need internet.</p>
     <div><label class="f">Suggest for a saved character (optional)</label>
       <select id="pk-char"><option value="">Nobody: fully random perk</option></select></div>
     <div id="pk-charinfo" class="hint" style="margin:6px 0 10px"></div>
     <div class="row" id="pk-filters">
-      <div><label class="f">Perk type</label><select id="pk-group"><option value="">Any</option><option>Regular</option><option>Ghoul</option></select></div>
-      <div><label class="f">S.P.E.C.I.A.L.</label><select id="pk-special"><option value="">Any</option>
-        <option>Strength</option><option>Perception</option><option>Endurance</option><option>Charisma</option>
-        <option>Intelligence</option><option>Agility</option><option>Luck</option></select></div>
+      <div><label class="f">Requires S.P.E.C.I.A.L.</label><select id="pk-special"><option value="">Any</option>
+        <option value="STR">Strength</option><option value="PER">Perception</option><option value="END">Endurance</option><option value="CHA">Charisma</option>
+        <option value="INT">Intelligence</option><option value="AGI">Agility</option><option value="LCK">Luck</option>
+        <option value="none">No attribute requirement</option></select></div>
     </div>
     <div class="pk-search">
       <label class="f" for="pk-q">Search any perk</label>
@@ -182,11 +182,11 @@
       <div class="skills" id="cr-skills"></div>
     </div>
     <div class="card">
-      <h4 style="margin-top:0">Fallout 76 perk cards <span class="muted" style="text-transform:none;letter-spacing:0">(used for perk suggestions)</span></h4>
+      <h4 style="margin-top:0">Perks (core rulebook)</h4>
       <div id="cr-cards"></div>
       <div class="row" style="margin-top:8px">
         <div style="flex:3 1 200px"><input type="text" id="cr-cardname" list="cr-perklist" placeholder="Type a perk name to add it"><datalist id="cr-perklist"></datalist></div>
-        <div style="flex:1 1 90px"><button class="btn" id="cr-cardadd" style="width:100%">+ Add card</button></div>
+        <div style="flex:1 1 90px"><button class="btn" id="cr-cardadd" style="width:100%">+ Add perk</button></div>
       </div>
       <div class="muted" id="cr-cardnote" style="font-size:12px;margin-top:6px"></div>
     </div>
@@ -365,6 +365,7 @@
 <script charset="utf-8" src="loot.js"></script>
 <script charset="utf-8" src="scavenge.js"></script>
 <script charset="utf-8" src="perks_es.js"></script>
+<script charset="utf-8" src="ttrpg_perks.js"></script>
 <script charset="utf-8" src="perks.js"></script>
 <script charset="utf-8" src="avatars.js"></script>
 <script charset="utf-8" src="app.js"></script>

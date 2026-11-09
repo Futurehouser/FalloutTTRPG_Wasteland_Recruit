@@ -44,7 +44,6 @@ const Tutorials = (() => {
         ${gain("+1", T("Perk"), T("Pick one new perk whose requirements you meet."), "perk")}
         ${gain("+0", "S.P.E.C.I.A.L.", T("No points by default. The <b>Intense Training</b> perk adds 1 to any attribute."), "special")}
       </div>
-      ${tip("&#127183;", T("<b>Playing with Fallout 76 perk cards?</b> Then each level is <b>+1 to one S.P.E.C.I.A.L.</b> and <b>one new perk card</b>, as the Level up button in Saved Characters explains."))}
     </div>
     <div class="card"><h3>${T("How much XP do I need?")}</h3>
       <div class="row tu-row">${stepper("tu-lvl", 1, T("My current level"))}

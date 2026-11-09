@@ -1,139 +1,97 @@
-// Random Fallout 76 perk, fetched live from fallout.wiki (nothing from the wiki is bundled in the app).
-// The last successful download is cached so the feature still works offline.
+// Fallout TTRPG perks: the core rulebook perks (pp. 59-73) from ttrpg_perks.js, with the rulebook's ranks,
+// requirements and description. Only the card pictures come from fallout.wiki, so everything works offline.
+//
+// Rulebook rules used here: a character takes one perk (or one more rank of a perk) per level; a perk needs
+// its S.P.E.C.I.A.L. minimums and level; each extra rank needs `inc` more levels; some perks are not open to
+// some origins (robots, ghouls...).
 
-const PERKS_PAGE = "https://fallout.wiki/wiki/Fallout_76_Perks";
-const PERKS_API = "https://fallout.wiki/api.php?action=parse&page=Fallout_76_Perks&prop=text&format=json&formatversion=2&origin=*";
-let PERKS = null;
+const TT_BY = Object.fromEntries(TT_PERKS.map(p => [p.n, p]));
+// cards saved by older versions, from the Fallout 76 list: the rulebook perk they match, if any
+const F76_TO_TT = {};
+TT_PERKS.forEach(p => p.f76.forEach(n => (F76_TO_TT[n] = p.n)));
+const ttPerk = name => TT_BY[name] || TT_BY[F76_TO_TT[name]] || null;
 
-function parsePerks(html) {
-  const doc = new DOMParser().parseFromString(html, "text/html");
+const TT_ATTRS = ["STR", "PER", "END", "CHA", "INT", "AGI", "LCK"];
+const NOT_LABEL = { robot: "Not for robots", ghoul: "Not for ghouls", human: "Not for humans", mutant: "Not for super mutants" };
+const rankLevel = (p, rank) => p.lvl + p.inc * (rank - 1);
+const reqAttrs = p => TT_ATTRS.filter(k => p.req[k]).map(k => `${T(k)} ${p.req[k]}`);
+
+// "STR 5, INT 6 · Level 2+ · +4 levels for each extra rank · Not for robots"
+function reqText(p) {
+  const bits = reqAttrs(p);
+  if (p.lvl > 1 || p.inc) bits.push(T("Level {n}+", { n: p.lvl }));
+  if (p.inc && p.max > 1) bits.push(T("+{n} levels for each extra rank", { n: p.inc }));
+  (p.not || []).forEach(n => bits.push(T(NOT_LABEL[n])));
+  return bits.length ? bits.join(" · ") : T("No requirements");
+}
+
+const originKind = ch => ch.race || raceFromOrigin(ch.origin || "");
+
+// what stops this character taking `rank` of perk p (empty = they meet every requirement)
+function unmet(ch, p, rank) {
   const out = [];
-  let group = "", special = "";
-  const clean = el => el.textContent.replace(/\[edit\]/g, "").replace(/\s+/g, " ").trim();
-  doc.querySelectorAll("h2, h3, table").forEach(el => {
-    if (el.tagName === "H2") { group = clean(el); return; }
-    if (el.tagName === "H3") { special = clean(el); return; }
-    if (!el.classList.contains("ace-table")) return;
-    if (!/Regular|Ghoul/i.test(group)) return;
-    let cur = null;
-    el.querySelectorAll("tr").forEach(tr => {
-      const tds = [...tr.children].filter(c => c.tagName === "TD");
-      if (!tds.length) return;
-      const img = tds[0].querySelector("img");
-      if (img && tds.length >= 5) {
-        let src = img.getAttribute("src") || "";
-        if (src.startsWith("//")) src = "https:" + src;
-        const a = tds[1].querySelector("a");
-        cur = {
-          name: clean(tds[1]),
-          special,
-          group: /Ghoul/i.test(group) ? "Ghoul" : "Regular",
-          level: clean(tds[2]),
-          image: src.replace(/\/\d+px-/, "/300px-"),
-          thumb: src,
-          link: a ? "https://fallout.wiki" + a.getAttribute("href") : PERKS_PAGE,
-          ranks: [{ rank: clean(tds[3]), desc: clean(tds[4]) }],
-        };
-        out.push(cur);
-      } else if (cur && tds.length >= 2 && !tds[0].querySelector("img")) {
-        cur.ranks.push({ rank: clean(tds[0]), desc: clean(tds[1]) });
-      }
-    });
+  TT_ATTRS.forEach(k => { if (p.req[k] && (ch.special[k] || 0) < p.req[k]) out.push(`${T(k)} ${p.req[k]}`); });
+  const lvl = rankLevel(p, rank);
+  if ((ch.level || 1) < lvl) out.push(rank > 1 ? T("Rank {r} needs level {n}", { r: rank, n: lvl }) : T("Level {n}+", { n: lvl }));
+  if ((p.not || []).includes(originKind(ch))) out.push(T(NOT_LABEL[originKind(ch)]));
+  return out;
+}
+
+// a character's perks as rulebook names; old Fallout 76 cards with a rulebook match become that perk,
+// the rest stay as they are (shown as Fallout 76 cards) so nothing the player saved is lost
+function migratePerks(ch) {
+  if (!ch.perkCards || !ch.perkCards.length) return false;
+  const out = [];
+  let changed = false;
+  ch.perkCards.forEach(c => {
+    const p = ttPerk(c.name);
+    if (!p) { out.push(c); return; }
+    const rank = Math.min(p.max, Math.max(1, c.rank || 1));
+    if (c.name !== p.n || c.ranks || rank !== c.rank) changed = true;
+    const have = out.find(x => x.name === p.n);
+    if (have) { have.rank = Math.max(have.rank, rank); changed = true; } else out.push({ name: p.n, rank });
   });
-  return out.filter(p => p.name && p.ranks[0].desc);
+  ch.perkCards = out;
+  return changed;
 }
-
-// returns { perks, source: "online" | "cache" }; calls made while the download runs share it
-let perksLoading = null;
-function loadPerks() {
-  if (PERKS) return Promise.resolve({ perks: PERKS, source: "online" });
-  return perksLoading || (perksLoading = fetchPerks().finally(() => (perksLoading = null)));
-}
-async function fetchPerks() {
-  try {
-    const r = await fetch(PERKS_API, { cache: "no-store" });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json();
-    const perks = parsePerks(j.parse.text);
-    if (!perks.length) throw new Error(T("the wiki page layout has changed"));
-    PERKS = perks;
-    Platform.saveJSON("perks_cache", { t: Date.now(), perks });
-    return { perks, source: "online" };
-  } catch (e) {
-    const c = await Platform.loadJSON("perks_cache", null);
-    if (c && c.perks && c.perks.length) {
-      PERKS = c.perks;
-      return { perks: PERKS, source: "cache" };
-    }
-    throw new Error(T("Couldn't reach fallout.wiki ({e}). Check the internet connection.", { e: e.message }));
-  }
-}
-
-// ------------------------------------------------------------------ suggestions for a saved character
-// Fallout 76 rules (from the wiki page's overview): a card costs points equal to its rank, the cards
-// in one S.P.E.C.I.A.L. can't cost more than that attribute, and you get one new card per level.
-
-const SPECIAL_KEY = { Strength: "STR", Perception: "PER", Endurance: "END", Charisma: "CHA", Intelligence: "INT", Agility: "AGI", Luck: "LCK" };
-const specialKey = name => SPECIAL_KEY[Object.keys(SPECIAL_KEY).find(k => (name || "").toLowerCase().startsWith(k.toLowerCase()))] || null;
-const rankCost = (r, i) => { const m = /Cost:\s*(\d+)/i.exec(r.desc); return m ? +m[1] : parseInt(r.rank, 10) || i + 1; };
-const perkLevel = p => parseInt(p.level, 10) || 1;
-
-// saved form of a perk card on a character
-function perkCardFrom(p, rank = 1) {
-  return { name: p.name, special: p.special, group: p.group, rank, image: p.image, thumb: p.thumb, link: p.link,
-           level: perkLevel(p), ranks: p.ranks.map((r, i) => ({ rank: r.rank, desc: r.desc, cost: rankCost(r, i) })) };
-}
-const cardCost = c => (c.ranks[c.rank - 1] || c.ranks[c.ranks.length - 1] || { cost: c.rank }).cost;
-
-function pointsUsed(ch) {
-  const used = {};
-  (ch.perkCards || []).forEach(c => { const k = specialKey(c.special); if (k) used[k] = (used[k] || 0) + cardCost(c); });
-  return used;
-}
+const perkCardFrom = (p, rank = 1) => ({ name: p.n, rank });
+const perksTaken = ch => (ch.perkCards || []).filter(c => TT_BY[c.name]).reduce((n, c) => n + (c.rank || 1), 0);
 
 // which words in a perk description fit which 2d20 skill
-const W = words => new RegExp("\\b(" + words + ")\\b", "i"); // whole words only ("automatic" must not match "automatically")
+const W = words => new RegExp("\\b(" + words + ")\\b", "i"); // whole words only
 const SKILL_WORDS = {
-  "Small Guns": W("pistols?|rifles?|shotguns?|ballistic|automatic|non-automatic|guns?|semi-automatic"),
-  "Big Guns": W("heavy guns?|heavy weapons?|miniguns?|gatling"),
+  "Small Guns": W("small guns|pistols?|rifles?|revolver|one-handed ranged|ranged attacks?|ammunition|firearms|gun"),
+  "Big Guns": W("big guns|heavy weapons?|miniguns?|gatling"),
   "Energy Weapons": W("energy weapons?|lasers?|plasma"),
-  "Melee Weapons": W("melee|one-handed|two-handed|bash(ing)?|block"),
+  "Melee Weapons": W("melee|bashing|charge"),
   "Unarmed": W("unarmed|punch(es)?|fists?"),
-  "Explosives": W("explosives?|explosions?|grenades?|mines?"),
-  "Throwing": W("thrown|throw(ing)?|grenades?"),
-  "Sneak": W("sneak(ing)?|stealth|detected|detection|hidden|silenced"),
-  "Lockpick": W("locks?|lockpick(ing)?|pick"),
-  "Science": W("hack(ing)?|terminals?|craft(ing)?|chems?"),
-  "Repair": W("repair(ing)?|condition|craft(ing)?|scrap(ping)?|junk"),
-  "Medicine": W("stimpaks?|heal(ing|s)?|chems?|diseases?|addiction|health"),
-  "Speech": W("persuade|teammates?|team|friendly"),
-  "Barter": W("prices?|vendors?|caps|buy(ing)?|sell(ing)?|trade"),
-  "Survival": W("food|water|drinks?|hunger|thirst|rads?|radiation|cook(ing)?"),
-  "Athletics": W("carry weight|carry|jump|sprint(ing)?|action points|AP"),
-  "Pilot": W("power armor|fusion cores?"),
+  "Explosives": W("explosives?|blast"),
+  "Throwing": W("thrown"),
+  "Sneak": W("sneak|silenced|suppressed|detect you|hidden|darkness"),
+  "Lockpick": W("locks?|lockpick(ing)?"),
+  "Science": W("hack|computers?|science|robots?|chems recipes|energy weapons"),
+  "Repair": W("repair|modify|mods|scrap|salvage|materials"),
+  "Medicine": W("chems?|addict(ed|ion)?|heal|health"),
+  "Speech": W("group|lead|friendly|animals?"),
+  "Barter": W("buy|sell|price|caps|money"),
+  "Survival": W("food|drinks?|irradiated|radiation|scavenging|sunlight|animals?|creature"),
+  "Athletics": W("carry weight|sprint|STR \\+ Athletics"),
+  "Pilot": W("power armor"),
 };
 
-function isGhoul(ch) { return /ghoul|necr[oó]fago/i.test(ch.origin || ""); }
-
-// returns sorted candidate list [{perk, rank, kind: "new"|"upgrade", score, reasons[]}]
+// sorted candidates [{perk, rank, kind: "new"|"upgrade", score, reasons[]}] the character can take now
 function perkCandidates(ch, perks) {
-  const level = ch.level || 1, used = pointsUsed(ch), owned = {};
+  const owned = {};
   (ch.perkCards || []).forEach(c => (owned[c.name] = c));
   const out = [];
   perks.forEach(p => {
-    const k = specialKey(p.special);
-    if (!k) return;
-    if (p.group === "Ghoul" && !isGhoul(ch)) return;
-    if (perkLevel(p) > level) return;
-    const have = owned[p.name];
+    const have = owned[p.n];
     const rank = have ? have.rank + 1 : 1;
-    if (rank > p.ranks.length) return;
-    const extra = rankCost(p.ranks[rank - 1], rank - 1) - (have ? cardCost(have) : 0);
-    const free = (ch.special[k] || 0) - (used[k] || 0);
-    if (extra > free) return;
-    const reasons = [TP(free, "{sp} has {n} free point (of {max})", "{sp} has {n} free points (of {max})", { sp: T(p.special), max: ch.special[k] })];
-    let score = 1 + free * 0.5 + (ch.special[k] || 0) * 0.3;
-    const text = p.ranks.map(r => r.desc).join(" ");
+    if (rank > p.max || unmet(ch, p, rank).length) return;
+    const attrs = reqAttrs(p);
+    const reasons = [attrs.length ? T("meets {list}", { list: attrs.join(", ") }) : T("No attribute requirement")];
+    let score = 1 + TT_ATTRS.reduce((s, k) => s + (p.req[k] ? ((ch.special[k] || 0) - p.req[k]) * 0.2 + p.req[k] * 0.15 : 0), 0);
+    const text = p.desc.join(" ");
     Object.entries(SKILL_WORDS).forEach(([skill, re]) => {
       const r = (ch.skills || {})[skill] || 0, tag = (ch.tags || []).includes(skill);
       if ((r || tag) && re.test(text)) {
@@ -149,7 +107,7 @@ function perkCandidates(ch, perks) {
 
 // weighted pick among the best few, so repeated presses give variety
 function suggestPerk(ch, perks, exclude = []) {
-  const all = perkCandidates(ch, perks).filter(c => !exclude.includes(c.perk.name));
+  const all = perkCandidates(ch, perks).filter(c => !exclude.includes(c.perk.n));
   const top = all.slice(0, 12);
   if (!top.length) return { pick: null, total: 0 };
   return { pick: wpick(top, top.map(c => c.score * c.score)), total: all.length };

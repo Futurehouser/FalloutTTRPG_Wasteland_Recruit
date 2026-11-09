@@ -67,4 +67,5 @@ const PERK76_ES = {
   "Storm Chaser": "Cazador de tormentas", "Super Duper": "Superduplicador", "Woodchucker": "Castor",
 };
 // the name to show for a perk card in the current language
-const perkName = n => (LANG === "es" && PERK76_ES[n]) || n;
+// rulebook perks use the app's Spanish names; cards from the old Fallout 76 list keep the Spanish wiki's
+const perkName = n => (typeof TT_BY !== "undefined" && TT_BY[n] ? T(n) : (LANG === "es" && PERK76_ES[n]) || n);

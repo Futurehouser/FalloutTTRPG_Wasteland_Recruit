@@ -589,4 +589,7 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .pk-hit { width: 100%; text-align: left; cursor: pointer; color: inherit; font: inherit; }
 .pk-hit:hover, .pk-hit:focus-visible { border-color: var(--amber); outline: none; }
 .pk-count, .pk-none { font-size: 12px; margin: 6px 2px 0; }
+.pk-hit.pk-no { opacity: .55; }
+.pk-req { margin: 8px 0; font-size: 14px; }
+.pk-desc p { margin: 8px 0 0; line-height: 1.5; font-size: 14px; }
 .pk-en { font-size: 13px; font-style: italic; margin: -2px 0 6px; }
