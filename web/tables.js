@@ -1,6 +1,8 @@
 // Table Search: type part of a name and get the core rulebook's stats for weapons, weapon mods,
-// apparel (clothing, armor, power armor, robot plating), apparel mods and consumables (food, drinks, chems). The tables live in
-// tables_data.js; names match in English or Spanish, with or without accents.
+// apparel (clothing, armor, power armor, robot plating), apparel mods, consumables (food, drinks, chems), tools and utility
+// items and robot modules. The tables live in tables_data.js; names match in English or Spanish, with or without accents.
+// The Enemies table shows the app's own enemies (enemies.js, the same ones the Combat Assistant uses) plus the ones you saved
+// with "Add your own enemy".
 const Tables = (() => {
   const LIMIT = 60; // cards drawn at once; typing more narrows the list
   const KINDS = [
@@ -10,7 +12,11 @@ const Tables = (() => {
     { id: "a", label: "Armor and clothing", list: "apparel" },
     { id: "am", label: "Armor mods", list: "amods" },
     { id: "c", label: "Food, drinks and chems", list: "cons" },
+    { id: "t", label: "Tools and utility items", list: "tools" },
+    { id: "rm", label: "Robot modules", list: "robomods" },
+    { id: "e", label: "Enemies (NPCs)" },
   ];
+  const ORDER = { w: 0, m: 1, a: 2, am: 3, c: 4, t: 5, rm: 6, e: 7 };
   const DURATION = { instant: "Instant", brief: "Brief", lasting: "Lasting" };
   const TRAIT = {
     accurate: "Accurate", blast: "Blast", close_quarters: "Close Quarters", concealed: "Concealed", debilitating: "Debilitating",
@@ -29,7 +35,7 @@ const Tables = (() => {
   const RANGE = { C: "Close", M: "Medium", L: "Long", X: "Extreme" };
   const DTYPE = { physical: "Physical", energy: "Energy", radiation: "Radiation", poison: "Poison" };
 
-  let kind = "all", built = false, index = [];
+  let kind = "all", built = false, index = [], custom = [];
   let focus = ""; // the weapon whose mod was just tapped: its version of that mod comes first
 
   // "Tough Clothing" and "Ropa resistente" both become plain lowercase ASCII for matching
@@ -40,13 +46,13 @@ const Tables = (() => {
   const signed = n => (n > 0 ? "+" + n : String(n).replace("-", "−"));
   const perks = s => String(s).split(/\s*[,;]\s*/).map(p => p.replace(/^(.*?)\s*(\d+)$/, (m, n, r) => `${T(n)} ${r}`)).join(", ");
 
+  // both languages always match, whichever one the app is in
+  const both = s => [s, ES[s] || s];
   function build() {
     if (built) return;
     built = true;
-    KINDS.slice(1).forEach(k => TABLES[k.list].forEach(r => {
+    KINDS.filter(k => k.list).forEach(k => TABLES[k.list].forEach(r => {
       r.k = k.id;
-      // both languages always match, whichever one the app is in
-      const both = s => [s, ES[s] || s];
       const group = [r.g, r.top, r.sub, ...(r.g2 || [])].filter(Boolean);
       index.push({
         r,
@@ -55,6 +61,17 @@ const Tables = (() => {
       });
     }));
   }
+  // enemies are rebuilt each time the page opens, so enemies saved in the Combat Assistant show up
+  async function buildEnemies() {
+    try { custom = (await Platform.loadJSON("custom_enemies", [])) || []; } catch (e) { custom = []; }
+    index = index.filter(e => e.r.k !== "e");
+    ENEMY_TEMPLATES.concat(custom.map(c => Object.assign({ group: "Your enemies", mine: true }, c))).forEach(t => {
+      const r = { k: "e", n: t.name, g: t.group, t };
+      const words = [t.group, t.type, t.kind === "character" ? "Character" : "Creature", ...(t.attacks || []).map(a => a.name), ...(t.inventory || [])];
+      index.push({ r, names: (t.mine ? [t.name] : both(t.name)).map(fold), hay: fold([...both(t.name), ...words.flatMap(both), "enemy enemigo npc pnj"].join(" | ")) });
+    });
+  }
+  const enemyCount = () => ENEMY_TEMPLATES.length + custom.length;
 
   // lower is better: the name starts with the text, then a word in the name does, then the name holds it,
   // then only the group does (Small Guns, Combat Armor...)
@@ -71,14 +88,14 @@ const Tables = (() => {
   }
 
   const fits = r => (focus && r.fits && r.fits.includes(focus) ? 1 : 0);
+  const byLevel = (a, b) => a.t.level - b.t.level || T(a.n).localeCompare(T(b.n), LANG);
   function search(q, only = kind) {
     const whole = fold(q).trim().replace(/\s+/g, " ");
     const words = whole.split(" ").filter(Boolean);
     const pool = index.filter(e => only === "all" || e.r.k === only);
-    if (!words.length) return only === "all" ? [] : pool.map(e => e.r).sort((a, b) => T(a.n).localeCompare(T(b.n), LANG));
-    const order = { w: 0, m: 1, a: 2, am: 3, c: 4 };
+    if (!words.length) return only === "all" ? [] : pool.map(e => e.r).sort(only === "e" ? byLevel : (a, b) => T(a.n).localeCompare(T(b.n), LANG));
     return pool.map(e => ({ r: e.r, s: score(e, words, whole) })).filter(x => x.s < 9)
-      .sort((a, b) => a.s - b.s || order[a.r.k] - order[b.r.k] || fits(b.r) - fits(a.r) || T(a.r.n).localeCompare(T(b.r.n), LANG)).map(x => x.r);
+      .sort((a, b) => a.s - b.s || ORDER[a.r.k] - ORDER[b.r.k] || fits(b.r) - fits(a.r) || T(a.r.n).localeCompare(T(b.r.n), LANG)).map(x => x.r);
   }
 
   // ---------------- one card per item
@@ -162,7 +179,62 @@ const Tables = (() => {
     return html + stat("Weight", r.wt === 0 ? "<1" : lbs(r.wt)) + stat("Cost", esc(r.c)) + stat("Rarity", esc(r.r)) + `</div>`;
   }
 
-  const card = r => `<div class="card ts-card ts-${r.k}" data-n="${esc(r.n)}">${{ w: weapon, m: weaponMod, a: apparel, am: apparelMod, c: consumable }[r.k](r)}</div>`;
+  const fxList = (fx, none) => `<ul class="ts-fx">${(fx.length ? fx : [T(none)]).map(f => `<li>${esc(f)}</li>`).join("")}</ul>`;
+  function tool(r) {
+    return head(r, T("Tools and utility items")) + fxList(r.eff ? [T(r.eff)] : [], "No effect of its own") + `<div class="ts-grid">` + common(r) + `</div>`;
+  }
+  function robotModule(r) {
+    return head(r, T("Robot module")) + fxList(r.eff ? [T(r.eff)] : [], "No effect of its own") + `<div class="ts-grid">` +
+      stat("Perks needed", r.perks ? esc(perks(r.perks)) : T("None")) +
+      stat("Carry weight", r.wt ? signed(r.wt) : "0") + stat("Cost", esc(r.c)) + stat("Rarity", esc(r.r)) + `</div>`;
+  }
+
+  // ---------------- enemies
+  const DR_KEYS = [["p", "Physical"], ["e", "Energy"], ["r", "Radiation"], ["po", "Poison"]];
+  const imm = v => v === "Imm" || v === Infinity;
+  const SPECIAL_KEYS = ["STR", "PER", "END", "CHA", "INT", "AGI", "LCK"];
+  const RANGE_WORD = { C: "Close", M: "Medium", L: "Long", X: "Extreme" };
+  function attackLine(a) {
+    const bits = [T("TN {n}", { n: a.tn }), T("crit on {n} or less", { n: a.crit }), `${a.cd} DC ${T(DTYPE[{ p: "physical", e: "energy", r: "radiation", po: "poison" }[a.type]] || "Physical")}`];
+    if (a.eff && a.eff.length) bits.push(a.eff.map(x => T(x.replace(/ \d+$/, "")) + (/ \d+$/.test(x) ? x.match(/ \d+$/)[0] : "")).join(", "));
+    if (a.ranged) {
+      bits.push(T("Fire Rate") + " " + (a.rate || 0));
+      if (a.range) bits.push(T("Range") + " " + T(RANGE_WORD[a.range] || a.range));
+      if (a.ammo) bits.push(T(a.ammo));
+    } else bits.push(T("melee"));
+    return `<li><b>${esc(T(a.name))}</b>: ${esc(bits.join(" · "))}</li>`;
+  }
+  function enemy(r) {
+    const t = r.t, char = t.kind === "character";
+    let html = head(r, `${T("Enemy")} · ${esc(T(t.group))} · ${T(char ? "Character" : "Creature")}`);
+    html += `<div class="ts-grid">` + stat("Level", t.level) + stat("Type", esc(T(t.type))) + stat("XP", T("{n} XP each", { n: xpFor(t.level, t.type) })) +
+      stat("HP", t.hp) + stat("Defense", t.def) + stat("Initiative", t.init) + `</div>`;
+    html += `<div class="ts-dr ts-dr4">${DR_KEYS.map(([k, l]) => `<div><small>${T(l + " DR")}</small><b>${imm(t.dr[k]) ? T("Imm") : t.dr[k]}</b></div>`).join("")}</div>`;
+    if (char && t.special) html += `<h4>S.P.E.C.I.A.L.</h4><div class="ts-grid ts-special">${SPECIAL_KEYS.map(k => stat(k, t.special[k])).join("")}</div>`;
+    else if (t.body != null) html += `<div class="ts-grid">${stat("Body", t.body)}${stat("Mind", t.mind)}</div>`;
+    if (t.attacks && t.attacks.length) html += `<h4>${T("Attacks")}</h4><ul class="ts-fx">${t.attacks.map(attackLine).join("")}</ul>`;
+    // abilities that follow from the stats and the rulebook's NPC rules
+    const ab = [];
+    const immune = DR_KEYS.filter(([k]) => imm(t.dr[k])).map(([, l]) => T(l).toLowerCase());
+    if (immune.length) ab.push(T("Immune to {list} damage", { list: immune.join(", ") }));
+    if (t.type === "Mighty") ab.push(T("Mighty: twice the HP and XP of a normal creature"));
+    if (t.type === "Legendary") ab.push(T("Legendary: three times the HP and XP of a normal creature"));
+    if (t.type === "Notable") ab.push(T("Notable: extra HP equal to its Luck, +2 initiative, twice the XP"));
+    if (t.type === "Major") ab.push(T("Major: extra HP equal to twice its Luck, +4 initiative, three times the XP"));
+    if (char && t.meleeBonus) ab.push(T("Melee bonus: +{n} DC on melee attacks", { n: t.meleeBonus }));
+    if (ab.length) html += `<h4>${T("Abilities")}</h4><ul class="ts-fx">${ab.map(a => `<li>${esc(a)}</li>`).join("")}</ul>`;
+    const loot = [];
+    if (t.inventory && t.inventory.length) loot.push(stat("Inventory", esc(t.inventory.map(i => T(i)).join(", "))));
+    if (t.wealth) loot.push(stat("Caps (d20s)", t.wealth));
+    if (t.junk) loot.push(stat("Junk (combat dice)", t.junk));
+    if (t.butchery) loot.push(stat("Butchery", esc(T(t.butchery))));
+    if (t.salvage) loot.push(stat("Salvage", esc(T(t.salvage))));
+    if (t.notes) loot.push(stat("Notes", esc(t.notes)));
+    if (loot.length) html += `<h4>${T("Loot")}</h4><div class="ts-grid ts-loot">${loot.join("")}</div>`;
+    return html;
+  }
+
+  const card = r => `<div class="card ts-card ts-${r.k}" data-n="${esc(r.n)}">${{ w: weapon, m: weaponMod, a: apparel, am: apparelMod, c: consumable, t: tool, rm: robotModule, e: enemy }[r.k](r)}</div>`;
 
   function render() {
     const q = $("ts-q").value;
@@ -193,14 +265,13 @@ const Tables = (() => {
     render();
   }
 
-  function show() {
+  async function show() {
     build();
+    await buildEnemies();
     const bar = $("ts-kinds");
-    if (!bar.childElementCount) {
-      bar.innerHTML = KINDS.map(k => `<button type="button" class="chip" data-kind="${k.id}">${T(k.label)}${k.list ? ` <b>${TABLES[k.list].length}</b>` : ""}</button>`).join("");
-      bar.querySelectorAll("button").forEach(b => (b.onclick = () => setKind(b.dataset.kind)));
-      setKind(kind);
-    } else render();
+    bar.innerHTML = KINDS.map(k => `<button type="button" class="chip" data-kind="${k.id}">${T(k.label)}${k.id === "all" ? "" : ` <b>${k.list ? TABLES[k.list].length : enemyCount()}</b>`}</button>`).join("");
+    bar.querySelectorAll("button").forEach(b => (b.onclick = () => setKind(b.dataset.kind)));
+    setKind(kind);
   }
 
   let timer = null;

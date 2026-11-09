@@ -62,7 +62,7 @@
       <button class="tile" data-go="team"><span class="ic">&#129309;</span><b>My Team</b><small>The characters your players are using</small></button>
       <button class="tile" data-go="tutorials"><span class="ic">&#128218;</span><b>Tutorials</b><small>The rules, explained with pictures</small></button>
       <button class="tile" data-go="elber"><span class="ic">&#129302;</span><b>Talking Heads</b><small>Conversations you may not survive</small></button>
-      <button class="tile" data-go="tables"><span class="ic">&#128269;</span><b>Table Search</b><small>Weapons, armor, mods, food and chems from the core rulebook</small></button>
+      <button class="tile" data-go="tables"><span class="ic">&#128269;</span><b>Table Search</b><small>Weapons, armor, mods, items, food, chems and enemies</small></button>
       <button class="tile" data-go="dice"><span class="ic">&#127922;</span><b>Dice Roller</b><small>Roll d20s, combat dice and d6s</small></button>
     </div>
     <p class="hint tiles-hint">Hold and drag a tile to move it (click and drag with a mouse).
@@ -298,9 +298,9 @@
   <!-- 14. table search -->
   <section class="page" id="page-tables" data-title="Table Search">
     <h2>Table Search</h2>
-    <p class="hint">Look up any weapon, weapon mod, armor piece, armor mod, food, drink or chem from the core rulebook tables.</p>
+    <p class="hint">Look up any weapon, weapon mod, armor piece, armor mod, food, drink, chem, tool, utility item or robot module from the core rulebook tables, or any enemy from this app's enemy list.</p>
     <div class="ts-bar">
-      <input type="search" id="ts-q" placeholder="e.g. Combat Rifle, Long Scope, Metal Helmet, Stimpak" autocomplete="off" spellcheck="false" aria-label="Search the tables">
+      <input type="search" id="ts-q" placeholder="e.g. Combat Rifle, Metal Helmet, Stimpak, Multi-Tool, Raider" autocomplete="off" spellcheck="false" aria-label="Search the tables">
       <button class="btn" type="button" id="ts-clear" aria-label="Clear">&#10005;</button>
     </div>
     <div class="ts-kinds" id="ts-kinds"></div>
@@ -317,7 +317,7 @@
       <div class="row tu-row">
         <div class="tu-step"><label class="f" for="dr-n">How many dice</label><div>
           <button class="btn" type="button" data-step="-1" data-for="dr-n" aria-label="-1">&minus;</button>
-          <input type="number" id="dr-n" value="2" min="1" max="20" inputmode="numeric">
+          <input type="number" id="dr-n" value="2" min="1" max="30" inputmode="numeric">
           <button class="btn" type="button" data-step="1" data-for="dr-n" aria-label="+1">+</button></div></div>
       </div>
       <div class="row tu-row" id="dr-test">

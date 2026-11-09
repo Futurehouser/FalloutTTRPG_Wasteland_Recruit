@@ -43,9 +43,13 @@ function parsePerks(html) {
   return out.filter(p => p.name && p.ranks[0].desc);
 }
 
-// returns { perks, source: "online" | "cache" }
-async function loadPerks() {
-  if (PERKS) return { perks: PERKS, source: "online" };
+// returns { perks, source: "online" | "cache" }; calls made while the download runs share it
+let perksLoading = null;
+function loadPerks() {
+  if (PERKS) return Promise.resolve({ perks: PERKS, source: "online" });
+  return perksLoading || (perksLoading = fetchPerks().finally(() => (perksLoading = null)));
+}
+async function fetchPerks() {
   try {
     const r = await fetch(PERKS_API, { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);

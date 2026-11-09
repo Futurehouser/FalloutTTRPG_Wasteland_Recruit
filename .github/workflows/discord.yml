@@ -5,8 +5,13 @@
 #   v4.16.0.png  a screenshot of the changes, optional: without it the post has text only
 # A release with no notes file is not posted, and the run shows a warning.
 #
+# Quiet hours: nothing is posted from 22:00 to 10:00 Canary Islands time (WET, or WEST in summer).
+# A release published in that window is held back, and the scheduled run at 10:00 posts every
+# release published since 22:00 the evening before, oldest first.
+#
 # To post a release again: Actions -> "Post release to Discord" -> Run workflow, or
 #   gh workflow run discord.yml -f tag=v4.16.0
+# (also held back during quiet hours: run it again after 10:00).
 #
 # Needs the repository secret DISCORD_WEBHOOK_URL.
 name: Post release to Discord
@@ -14,6 +19,11 @@ name: Post release to Discord
 on:
   release:
     types: [published]
+  schedule:
+    # 10:00 local time is 10:00 UTC in winter (WET) and 09:00 UTC in summer (WEST): both run,
+    # and only the one that is 10:00 in the Canary Islands that day posts.
+    - cron: "0 9 * * *"
+    - cron: "0 10 * * *"
   workflow_dispatch:
     inputs:
       tag:
@@ -23,38 +33,97 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: discord-post
+  cancel-in-progress: false
+
+env:
+  TZ: Atlantic/Canary
+  QUIET_FROM: 22
+  QUIET_UNTIL: 10
+
 jobs:
   post:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Send to Discord
+      - name: Pick the releases to post
+        id: pick
         env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
           TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          PUBLISHED: ${{ github.event.release.published_at }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          quiet() { local h=$((10#$1)); [ "$h" -ge "$QUIET_FROM" ] || [ "$h" -lt "$QUIET_UNTIL" ]; }
+          TAGS=""
+          case "$EVENT" in
+            release)
+              # judged by when the release was published, so the 10:00 run finds exactly the ones held back
+              H=$(date -d "$PUBLISHED" +%H)
+              if quiet "$H"; then
+                echo "::notice::$TAG was published at $(date -d "$PUBLISHED" '+%H:%M %Z'), inside quiet hours (${QUIET_FROM}:00-${QUIET_UNTIL}:00). It will be posted at ${QUIET_UNTIL}:00."
+              else
+                TAGS="$TAG"
+              fi ;;
+            workflow_dispatch)
+              if quiet "$(date +%H)"; then
+                echo "::error::Quiet hours (${QUIET_FROM}:00-${QUIET_UNTIL}:00 $(date +%Z)): nothing is posted now. Run this again after ${QUIET_UNTIL}:00."
+                exit 1
+              fi
+              TAGS="$TAG" ;;
+            schedule)
+              # which UTC hour this run was scheduled for, and what time that is here today
+              UTC_H=$(echo "$SCHEDULE" | awk '{print $2}')
+              LOCAL_H=$(date -d "$(date -u +%Y-%m-%d) $UTC_H:00 UTC" +%H)
+              if [ "$((10#$LOCAL_H))" -ne "$QUIET_UNTIL" ]; then
+                echo "Scheduled for $UTC_H:00 UTC, which is $LOCAL_H:00 here today: the other run posts."
+                exit 0
+              fi
+              FROM=$(date -d "yesterday ${QUIET_FROM}:00" +%s)
+              UNTIL=$(date -d "today ${QUIET_UNTIL}:00" +%s)
+              TAGS=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 50 --json tagName,publishedAt,isDraft \
+                --jq ".[] | select(.isDraft | not) | select(.publishedAt != null)
+                      | select((.publishedAt | fromdate) >= $FROM and (.publishedAt | fromdate) < $UNTIL)
+                      | [(.publishedAt | fromdate), .tagName] | @tsv" | sort -n | cut -f2 | tr '\n' ' ')
+              echo "Released during quiet hours: ${TAGS:-none}" ;;
+          esac
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
+      - name: Send to Discord
+        if: steps.pick.outputs.tags != ''
+        env:
+          TAGS: ${{ steps.pick.outputs.tags }}
           WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Release tags must look like v4.1.0 (got $TAG)"; exit 1; }
           [ -n "$WEBHOOK" ] || { echo "::error::Add the DISCORD_WEBHOOK_URL repository secret first"; exit 1; }
-          NOTES="docs/releases/$TAG.md"
-          IMAGE="docs/releases/$TAG.png"
-          if [ ! -f "$NOTES" ]; then
-            echo "::warning::$NOTES does not exist, so nothing was posted to Discord"
-            exit 0
-          fi
-          URL="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
-          jq -n --arg tag "$TAG" --arg url "$URL" --rawfile notes "$NOTES" '{
-            allowed_mentions: {parse: []},
-            embeds: [{
-              title: ("Novedades de Wasteland Recruit " + $tag),
-              url: $url,
-              color: 16106776,
-              description: ($notes[0:3800] + "\n\n**[Descargar esta versión](" + $url + ")**")
-            }]
-          }' > payload.json
-          ARGS=()
-          if [ -f "$IMAGE" ]; then
-            jq '.embeds[0].image.url = "attachment://novedades.png"' payload.json > with_image.json
-            mv with_image.json payload.json
-            ARGS=(-F "files[0]=@$IMAGE;filename=novedades.png;type=image/png")
-          fi
-          curl -sS --fail-with-body -F "payload_json=<payload.json;type=application/json" "${ARGS[@]}" "$WEBHOOK"
+          FIRST=1
+          for TAG in $TAGS; do
+            [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Release tags must look like v4.1.0 (got $TAG)"; exit 1; }
+            NOTES="docs/releases/$TAG.md"
+            IMAGE="docs/releases/$TAG.png"
+            if [ ! -f "$NOTES" ]; then
+              echo "::warning::$NOTES does not exist, so $TAG was not posted to Discord"
+              continue
+            fi
+            [ "$FIRST" = 1 ] || sleep 3 # several held-back releases: keep them apart and in order
+            FIRST=0
+            URL="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+            jq -n --arg tag "$TAG" --arg url "$URL" --rawfile notes "$NOTES" '{
+              allowed_mentions: {parse: []},
+              embeds: [{
+                title: ("Novedades de Wasteland Recruit " + $tag),
+                url: $url,
+                color: 16106776,
+                description: ($notes[0:3800] + "\n\n**[Descargar esta versión](" + $url + ")**")
+              }]
+            }' > payload.json
+            ARGS=()
+            if [ -f "$IMAGE" ]; then
+              jq '.embeds[0].image.url = "attachment://novedades.png"' payload.json > with_image.json
+              mv with_image.json payload.json
+              ARGS=(-F "files[0]=@$IMAGE;filename=novedades.png;type=image/png")
+            fi
+            curl -sS --fail-with-body -F "payload_json=<payload.json;type=application/json" "${ARGS[@]}" "$WEBHOOK"
+            echo "Posted $TAG"
+          done

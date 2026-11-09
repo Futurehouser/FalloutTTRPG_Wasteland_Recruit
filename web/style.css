@@ -122,6 +122,17 @@ table.lt td.n { width: 64px; }
 .entry small { color: var(--muted); }
 .profile-head { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
 .profile-head .avatar { width: 120px; height: 120px; }
+/* my current main character: a gold frame, a gold ring on the photo and a star */
+.entry.is-main, .card.is-main { border: 2px solid #ffcf3f; background: linear-gradient(135deg, rgba(255, 207, 63, .13), rgba(255, 207, 63, .02) 55%), var(--panel);
+  box-shadow: 0 0 0 1px rgba(255, 207, 63, .35), 0 0 16px rgba(255, 196, 0, .28); }
+.is-main .avatar { box-shadow: 0 0 0 3px #ffcf3f, 0 0 12px rgba(255, 196, 0, .55); }
+.main-badge { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 999px; background: #ffcf3f; color: #2a1f00;
+  font-size: 11px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; max-width: 100%; line-height: 1.35; }
+.entry .main-badge { margin: 2px 0 3px; }
+.star-btn { flex: none; padding: 6px 10px; font-size: 20px; line-height: 1; color: var(--muted); }
+.star-btn.on, .star-btn:hover { color: #ffcf3f; border-color: #ffcf3f; }
+.main-toggle { margin-top: 12px; width: 100%; }
+.main-toggle.on { color: #ffcf3f; border-color: #ffcf3f; }
 .statgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
 .stat { background: #0f1115; border: 1px solid var(--line); border-radius: 10px; padding: 6px 2px; }
 .stat b { display: block; font-size: 22px; color: var(--amber); }
@@ -503,6 +514,9 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .ts-dr div { text-align: center; background: var(--panel2); border-radius: 9px; padding: 6px 4px; }
 .ts-dr small { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; }
 .ts-dr b { font-size: 22px; color: var(--amber); }
+.ts-dr4 { grid-template-columns: repeat(4, 1fr); margin-top: 6px; }
+.ts-special { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); }
+.ts-loot { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 .ts-fx { margin: 0 0 8px; padding-left: 18px; line-height: 1.45; font-size: 14px; }
 .ts-links { display: flex; flex-wrap: wrap; margin: 0 -3px; }
 .ts-links .chip { font-size: 12px; padding: 5px 9px; }

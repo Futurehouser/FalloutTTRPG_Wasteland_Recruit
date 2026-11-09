@@ -31,7 +31,7 @@ function showPage(id) {
   $("main").scrollTop = 0;
   currentPage = id;
   if (id === "roster") renderRoster();
-  if (id === "perks") fillCharSelect();
+  if (id === "perks") { fillCharSelect(); perkSearch(); }
   if (id === "create") fillPerkList();
   if (id === "combat" && typeof Combat !== "undefined") Combat.show();
   if (id === "hack" && typeof Hack !== "undefined") Hack.show();
@@ -308,25 +308,29 @@ $("pk-gen").onclick = async () => {
   }
 };
 
-// ---- search any perk by name (English or Spanish) or by a word from its ranks
+// ---- every perk that fits the filters, narrowed by name (English or Spanish) or a word from its ranks
 const pkFold = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 let pkTimer = null;
 async function perkSearch() {
-  const raw = $("pk-q").value.trim(), q = pkFold(raw), box = $("pk-results");
-  if (!q) { box.innerHTML = ""; return; }
+  const box = $("pk-results");
   let perks;
+  if (!PERKS) box.innerHTML = `<div class="muted pk-none">${T("Loading perks from fallout.wiki…")}</div>`;
   try { perks = (await loadPerks()).perks; } catch (e) { box.innerHTML = `<div class="muted pk-none">${esc(e.message)}</div>`; return; }
+  const raw = $("pk-q").value.trim(), q = pkFold(raw); // read after loading: typing may have changed it
   const g = $("pk-group").value, s = $("pk-special").value;
   const words = q.split(/\s+/);
   const found = perks.filter(p => (!g || p.group === g) && (!s || p.special.toLowerCase().startsWith(s.toLowerCase()))).map(p => {
     const names = pkFold(p.name + " | " + perkName(p.name)), text = pkFold(p.ranks.map(r => r.desc).join(" "));
-    const score = pkFold(p.name).startsWith(q) || pkFold(perkName(p.name)).startsWith(q) ? 0 : words.every(w => names.includes(w)) ? 1
+    const score = !q ? 0 : pkFold(p.name).startsWith(q) || pkFold(perkName(p.name)).startsWith(q) ? 0 : words.every(w => names.includes(w)) ? 1
       : words.every(w => (names + " " + text).includes(w)) ? 2 : 9;
     return { p, score };
   }).filter(x => x.score < 9).sort((a, b) => a.score - b.score || perkName(a.p.name).localeCompare(perkName(b.p.name), LANG));
-  if (!found.length) { box.innerHTML = `<div class="muted pk-none">${T("No perk matches \"{q}\".", { q: esc(raw) })}</div>`; return; }
-  box.innerHTML = `<div class="muted pk-count">${TP(found.length, "{n} perk found", "{n} perks found")}</div>` + found.slice(0, 40).map(({ p }) =>
-    `<button type="button" class="pcard pk-hit" data-name="${esc(p.name)}"><img src="${esc(p.thumb)}" alt="" referrerpolicy="no-referrer">
+  if (!found.length) {
+    box.innerHTML = `<div class="muted pk-none">${q ? T("No perk matches \"{q}\".", { q: esc(raw) }) : T("No perks match those filters.")}</div>`;
+    return;
+  }
+  box.innerHTML = `<div class="muted pk-count">${TP(found.length, q ? "{n} perk found" : "{n} perk with these filters", q ? "{n} perks found" : "{n} perks with these filters")}</div>` + found.map(({ p }) =>
+    `<button type="button" class="pcard pk-hit" data-name="${esc(p.name)}"><img src="${esc(p.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer">
       <span class="t"><b>${esc(perkName(p.name))}</b><small>${esc(T(p.special))} &middot; ${T(p.group === "Ghoul" ? "Ghoul perk" : "Regular perk")} &middot; ${T("unlocks at level {n}", { n: p.level })}</small></span></button>`).join("");
   box.querySelectorAll(".pk-hit").forEach(b => (b.onclick = () => showFoundPerk(perks.find(p => p.name === b.dataset.name))));
 }
@@ -359,7 +363,7 @@ function showFoundPerk(p) {
   $("pk-out").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 $("pk-q").oninput = () => { clearTimeout(pkTimer); pkTimer = setTimeout(perkSearch, 150); };
-["pk-group", "pk-special", "pk-char"].forEach(id => $(id).addEventListener("change", () => { if ($("pk-q").value.trim()) perkSearch(); }));
+["pk-group", "pk-special"].forEach(id => $(id).addEventListener("change", perkSearch));
 
 // ------------------------------------------------------------------ 5. create / edit character
 let ROSTER = [], editingId = null, crPhoto = null, crCards = [];
@@ -545,6 +549,15 @@ async function addToRoster(c) {
   await storeRoster();
 }
 function closeProfile() { openProfileId = null; renderRoster(); }
+// only one character can be "my current main character": marking one unmarks the rest
+async function setMain(c, on) {
+  ROSTER.forEach(x => delete x.main);
+  if (on) c.main = true;
+  await storeRoster();
+  toast(T(on ? "{name} is now your main character" : "{name} is no longer your main character", { name: c.name }));
+  renderRoster();
+}
+const mainBadge = c => (c.main ? `<span class="main-badge">&#9733; ${T("My current main character")}</span>` : "");
 
 function derived(c) {
   const s = c.special;
@@ -562,8 +575,9 @@ function renderRoster() {
     list.innerHTML = "";
     const skills = G.SKILLS.filter(([s]) => c.skills[s] || (c.tags || []).includes(s));
     prof.innerHTML = `<button class="btn" id="ro-back">&larr; ${T("All characters")}</button>
-      <div class="card"><div class="profile-head"><div class="avatar" id="ro-av"></div>
-        <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="muted">${esc(c.origin || T("Unknown origin"))} &middot; ${T("Level")} ${c.level || 1}</div></div></div>
+      <div class="card${c.main ? " is-main" : ""}"><div class="profile-head"><div class="avatar" id="ro-av"></div>
+        <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="muted">${esc(c.origin || T("Unknown origin"))} &middot; ${T("Level")} ${c.level || 1}</div>${mainBadge(c)}</div></div>
+        <button class="btn main-toggle${c.main ? " on" : ""}" id="ro-main">${c.main ? `&#9733; ${T("Main character (tap to unmark)")}` : `&#9734; ${T("Set as my current main character")}`}</button>
         <h4>S.P.E.C.I.A.L.</h4><div class="statgrid">${G.SPECIAL.map(a => `<div class="stat"><b>${c.special[a]}</b><small>${T(SPECIAL_FULL[a])}</small></div>`).join("")}</div>
         <h4>${T("Derived (from S.P.E.C.I.A.L., before gear and perks)")}</h4>
         <div class="derived">${derived(c).map(([k, v]) => `<div class="stat"><b style="font-size:17px">${v}</b><small>${k}</small></div>`).join("")}</div>
@@ -598,6 +612,7 @@ function renderRoster() {
       await storeRoster(); renderWeapons(c);
     };
     $("ro-back").onclick = closeProfile;
+    $("ro-main").onclick = () => setMain(c, !c.main);
     $("ro-edit").onclick = () => { fillForm(c); showPage("create"); };
     $("ro-lvl").onclick = () => {
       if ((c.level || 1) >= 50) { toast(T("Already at the maximum level (50)")); return; }
@@ -612,18 +627,21 @@ function renderRoster() {
     list.innerHTML = `<div class="empty">${T("No saved characters yet.<br><br>Create one in <b>Create Character</b>, or tap <b>Add to saved</b> after generating a random one.")}</div>`;
     return;
   }
-  const sorted = ROSTER.slice().sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = ROSTER.slice().sort((a, b) => !!b.main - !!a.main || a.name.localeCompare(b.name)); // the main character first
   list.innerHTML = `<p class="hint">${TP(sorted.length, "{n} character. Tap one to see the profile.", "{n} characters. Tap one to see the profile.")}</p><div class="list">` +
-    sorted.map(c => `<div class="entry" data-id="${esc(c.id)}"><div class="avatar" data-av="${esc(c.id)}"></div><div style="flex:1;min-width:0">
-      <b>${esc(c.name)}</b><small>${esc(c.origin || T("Unknown origin"))} &middot; ${T("Lvl")} ${c.level || 1}${(c.perkCards || []).length ? ` &middot; ${TP(c.perkCards.length, "{n} perk card", "{n} perk cards")}` : ""}</small><br>
+    sorted.map(c => `<div class="entry${c.main ? " is-main" : ""}" data-id="${esc(c.id)}"><div class="avatar" data-av="${esc(c.id)}"></div><div style="flex:1;min-width:0">
+      <b>${esc(c.name)}</b>${mainBadge(c)}<small>${esc(c.origin || T("Unknown origin"))} &middot; ${T("Lvl")} ${c.level || 1}${(c.perkCards || []).length ? ` &middot; ${TP(c.perkCards.length, "{n} perk card", "{n} perk cards")}` : ""}</small><br>
       <small>${G.SPECIAL.map(a => `${T(a)} ${c.special[a]}`).join(" &middot; ")}</small></div>
+      <button class="btn star-btn${c.main ? " on" : ""}" data-star="${esc(c.id)}" title="${T(c.main ? "Main character (tap to unmark)" : "Set as my current main character")}"
+        aria-label="${T(c.main ? "Main character (tap to unmark)" : "Set as my current main character")}" aria-pressed="${!!c.main}">${c.main ? "&#9733;" : "&#9734;"}</button>
       <button class="btn danger" data-del="${esc(c.id)}" title="${T("Delete")}" style="flex:none;padding:8px 11px">&#128465;</button></div>`).join("") + "</div>";
   list.querySelectorAll("[data-av]").forEach(el => setAvatar(el, ROSTER.find(x => x.id === el.dataset.av)));
   list.querySelectorAll(".entry").forEach(el => (el.onclick = e => {
-    if (e.target.closest("[data-del]")) return;
+    if (e.target.closest("[data-del], [data-star]")) return;
     openProfileId = el.dataset.id; renderRoster(); $("main").scrollTop = 0;
   }));
   list.querySelectorAll("[data-del]").forEach(b => (b.onclick = () => deleteChar(ROSTER.find(x => x.id === b.dataset.del))));
+  list.querySelectorAll("[data-star]").forEach(b => (b.onclick = () => { const c = ROSTER.find(x => x.id === b.dataset.star); setMain(c, !c.main); }));
 }
 
 // ammo a weapon starts with: what a random character rolled for its caliber, or a handful
@@ -763,6 +781,7 @@ async function startApp() {
   await Team.load();
   if (currentPage === "combat") Combat.show(); // a fight opened before the sprites were ready
   if (currentPage === "elber") Elber.show();   // opened before the saved characters were read
+  if (currentPage === "roster") renderRoster(); // same for Saved Characters
   buildLootEditor();
   setTimeout(() => Updater.check(false), 1500); // ask about new versions on startup
 }

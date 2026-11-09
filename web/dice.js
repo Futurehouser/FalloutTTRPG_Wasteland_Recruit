@@ -2,7 +2,7 @@
 // flicker through faces before they land, with a rattle. d20 rolls can also count successes against a
 // target number, the way a Fallout 2d20 skill test does.
 const Dice = (() => {
-  const MAX = 20;
+  const MAX = 30;
   const SPIN_MS = 650;   // how long the dice tumble before landing
   const STAGGER_MS = 45; // each die lands a moment after the one before
   const KEEP = 6;        // past rolls listed under the result
