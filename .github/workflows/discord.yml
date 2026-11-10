@@ -4,14 +4,19 @@
 #   v4.16.0.md   the notes in Spanish (Discord markdown, keep it under 3800 characters)
 #   v4.16.0.png  a screenshot of the changes, optional: without it the post has text only
 # A release with no notes file is not posted, and the run shows a warning.
+# A release is posted only once: before posting, the run looks for "Posted <tag>" in the logs of
+# this workflow's earlier runs and skips the tags it finds.
 #
 # Quiet hours: nothing is posted from 22:00 to 10:00 Canary Islands time (WET, or WEST in summer).
 # A release published in that window is held back, and the scheduled run at 10:00 posts every
 # release published since 22:00 the evening before, oldest first.
 #
-# To post a release again: Actions -> "Post release to Discord" -> Run workflow, or
+# To post a release by hand: Actions -> "Post release to Discord" -> Run workflow, or
 #   gh workflow run discord.yml -f tag=v4.16.0
-# (also held back during quiet hours: run it again after 10:00).
+# (refused during quiet hours: run it again after 10:00). If it was already posted, add -f again=true.
+#
+# GitHub often starts scheduled runs late (and busy hours at :00 can drop them), so they are set
+# at :17. A late run still posts: it goes by the hour it was scheduled for, not when it starts.
 #
 # Needs the repository secret DISCORD_WEBHOOK_URL.
 name: Post release to Discord
@@ -21,17 +26,22 @@ on:
     types: [published]
   schedule:
     # 10:00 local time is 10:00 UTC in winter (WET) and 09:00 UTC in summer (WEST): both run,
-    # and only the one that is 10:00 in the Canary Islands that day posts.
-    - cron: "0 9 * * *"
-    - cron: "0 10 * * *"
+    # and only the one that is 10:xx in the Canary Islands that day posts.
+    - cron: "17 9 * * *"
+    - cron: "17 10 * * *"
   workflow_dispatch:
     inputs:
       tag:
         description: "Release tag to post, e.g. v4.15.0"
         required: true
+      again:
+        description: "Post it even if it was already posted"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
+  actions: read # to read earlier runs' logs and skip releases already posted
 
 concurrency:
   group: discord-post
@@ -55,6 +65,7 @@ jobs:
           TAG: ${{ github.event.release.tag_name || inputs.tag }}
           PUBLISHED: ${{ github.event.release.published_at }}
           SCHEDULE: ${{ github.event.schedule }}
+          AGAIN: ${{ inputs.again }}
         run: |
           quiet() { local h=$((10#$1)); [ "$h" -ge "$QUIET_FROM" ] || [ "$h" -lt "$QUIET_UNTIL" ]; }
           TAGS=""
@@ -89,6 +100,22 @@ jobs:
                       | [(.publishedAt | fromdate), .tagName] | @tsv" | sort -n | cut -f2 | tr '\n' ' ')
               echo "Released during quiet hours: ${TAGS:-none}" ;;
           esac
+          # skip the ones an earlier run already posted (a manual post and a late scheduled run, say)
+          if [ -n "$TAGS" ] && [ "$AGAIN" != "true" ]; then
+            LOGS=$(mktemp)
+            for ID in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow discord.yml --status success                           --limit 30 --json databaseId --jq '.[].databaseId'); do
+              [ "$ID" = "$GITHUB_RUN_ID" ] || gh run view "$ID" --repo "$GITHUB_REPOSITORY" --log >> "$LOGS" 2>/dev/null || true
+            done
+            KEEP=""
+            for T in $TAGS; do
+              if grep -q "Posted ${T//./[.]}[[:space:]]*$" "$LOGS"; then
+                echo "::notice::$T was already posted to Discord, so it is skipped (to post it again: gh workflow run discord.yml -f tag=$T -f again=true)."
+              else
+                KEEP="$KEEP $T"
+              fi
+            done
+            TAGS="${KEEP# }"
+          fi
           echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
       - name: Send to Discord
         if: steps.pick.outputs.tags != ''
