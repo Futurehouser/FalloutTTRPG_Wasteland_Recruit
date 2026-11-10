@@ -3446,3 +3446,8 @@ Object.assign(ES, {
   "Quest maps in Pip-Boy style": "Mapas de misiones al estilo Pip-Boy",
   "Pick a quest to open its map. Tap a location to see its local map, and any mark to see who or what is there.": "Elige una misión para abrir su mapa. Toca un lugar para ver su mapa local, y cualquier marca para ver quién o qué hay ahí.",
 });
+
+// ---- v4.28.0: map editor
+Object.assign(ES, {
+  "Pick a quest to open its map, or create your own. Tap a location to see its local map, and any mark to see who or what is there.": "Elige una misión para abrir su mapa, o crea el tuyo. Toca un lugar para ver su mapa local, y cualquier marca para ver quién o qué hay ahí.",
+});

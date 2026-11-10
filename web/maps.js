@@ -69,6 +69,7 @@ const Maps = (() => {
   const KIND = {
     loc: L("Location", "Lugar"), npc: L("Character", "Personaje"), enemy: L("Hostile", "Hostil"),
     dead: L("Body", "Cadáver"), item: L("Point of interest", "Punto de interés"), exit: L("Way out", "Salida"),
+    loot: L("Loot", "Botín"), trap: L("Hazard", "Peligro"), // used on the maps people draw (mapedit.js)
   };
   const QUESTS = [
     { id: "bang", name: L("With a Bang, or a Whimper", "Con un estallido o con un gemido"), start: "bang_world",
@@ -375,7 +376,7 @@ const Maps = (() => {
       if (audio.state === "suspended") audio.resume();
       const t = audio.currentTime, o = audio.createOscillator(), g = audio.createGain();
       o.type = "square";
-      o.frequency.setValueAtTime(kind === "enemy" ? 520 : kind === "loc" || kind === "exit" ? 1180 : 880, t);
+      o.frequency.setValueAtTime(kind === "enemy" || kind === "trap" ? 520 : kind === "loc" || kind === "exit" ? 1180 : 880, t);
       if (kind === "loc" || kind === "exit") o.frequency.setValueAtTime(1560, t + 0.05);
       g.gain.setValueAtTime(0.0001, t);
       g.gain.exponentialRampToValueAtTime(0.08, t + 0.008);
@@ -392,6 +393,8 @@ const Maps = (() => {
     dead: `<path class="ic" d="M-8 -8L8 8M8 -8L-8 8"/>`,
     item: `<rect class="ic" x="-6.5" y="-6.5" width="13" height="13"/>`,
     exit: `<circle class="ic" r="10"/><path class="ic fill" d="M-4 -6L6 0L-4 6Z"/>`,
+    loot: `<rect class="ic" x="-9" y="-6.5" width="18" height="13"/><path class="ic" d="M-9 -1.5H9"/><rect class="ic fill" x="-2.2" y="-3.6" width="4.4" height="4.4"/>`,
+    trap: `<path class="ic" d="M0 -11L11 8.5H-11Z"/><path class="ic fill" d="M-1.4 -4H1.4L0.8 2.6H-0.8Z"/><circle class="ic fill" cy="5.2" r="1.3"/>`,
   };
   function markSvg(m, i) {
     const lines = String(T(m.n)).split("\n");
@@ -401,9 +404,25 @@ const Maps = (() => {
 
   function renderList() {
     questId = null; mapId = null;
-    root().innerHTML = `<div class="mp-list">${QUESTS.map(q => `<button type="button" class="mp-quest" data-q="${q.id}">
-      <span class="mp-q-ic" aria-hidden="true">&#9673;</span><span><b>${esc(T(q.name))}</b><small>${esc(T(q.blurb))}</small></span></button>`).join("")}</div>`;
+    const mine = typeof MapEdit !== "undefined" ? MapEdit.quests() : [];
+    root().innerHTML = `<button type="button" class="btn primary mp-create" id="mp-create">+ ${esc(T(L("Create Map", "Crear mapa")))}</button>
+      <div class="mp-list">${QUESTS.map(q => `<button type="button" class="mp-quest" data-q="${q.id}">
+      <span class="mp-q-ic" aria-hidden="true">&#9673;</span><span><b>${esc(T(q.name))}</b><small>${esc(T(q.blurb))}</small></span></button>`).join("")}</div>
+      ${mine.length ? `<h4 class="mp-sub">${esc(T(L("My maps", "Mis mapas")))}</h4><div class="mp-list">${mine.map(q => {
+        const n = Object.keys(q.maps).length - 1;
+        return `<div class="mp-mine"><button type="button" class="mp-quest" data-mine="${q.id}"><span class="mp-q-ic" aria-hidden="true">&#9998;&#xFE0E;</span>
+          <span><b>${esc(q.name)}</b><small>${esc(T(L("General map", "Mapa general")))}${n ? " · " + esc(TP(n, L("{n} local map", "{n} mapa local"), L("{n} local maps", "{n} mapas locales"))) : ""}</small></span></button>
+          <button type="button" class="btn mp-del" data-del="${q.id}" title="${esc(T("Delete"))}" aria-label="${esc(T("Delete"))}: ${esc(q.name)}">&#10005;&#xFE0E;</button></div>`;
+      }).join("")}</div>` : ""}`;
     root().querySelectorAll("[data-q]").forEach(b => (b.onclick = () => { beep("loc"); openQuest(b.dataset.q); }));
+    $("mp-create").onclick = () => { beep("loc"); MapEdit.create(); };
+    root().querySelectorAll("[data-mine]").forEach(b => (b.onclick = () => { beep("loc"); MapEdit.open(b.dataset.mine); }));
+    root().querySelectorAll("[data-del]").forEach(b => (b.onclick = async () => {
+      const q = mine.find(x => x.id === b.dataset.del);
+      if (!(await confirmBox(T(L("Delete the map “{name}” and all its local maps?", "¿Borrar el mapa «{name}» y todos sus mapas locales?"), { name: q.name })))) return;
+      await MapEdit.remove(q.id);
+      renderList();
+    }));
   }
 
   function openQuest(id) { questId = id; openMap(QUESTS.find(q => q.id === id).start); }
@@ -567,6 +586,7 @@ const Maps = (() => {
 
   // back: local map > its parent map > quest list; false when already on the list (leave the page)
   function back() {
+    if (typeof MapEdit !== "undefined" && MapEdit.active()) return MapEdit.back();
     if (!mapId) return false;
     const m = MAPS[mapId];
     beep("exit");
@@ -579,8 +599,10 @@ const Maps = (() => {
       wired = true;
       window.addEventListener("resize", () => { if (mapId && $("mp-stage")) apply(); });
     }
-    if (mapId) openMap(mapId); else renderList();
+    const go = () => { if (typeof MapEdit !== "undefined" && MapEdit.active()) MapEdit.reopen(); else if (mapId) openMap(mapId); else renderList(); };
+    if (typeof MapEdit !== "undefined") MapEdit.load().then(go); else go();
   }
 
-  return { show, back };
+  // the map editor (mapedit.js) draws with the same pieces
+  return { show, back, kit: { D, rng, ICON, KIND, beep, L, renderList } };
 })();

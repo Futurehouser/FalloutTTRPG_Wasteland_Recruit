@@ -686,3 +686,45 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .mp-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 12px; color: #13a35a; font-family: "Courier New", monospace; text-transform: uppercase; }
 .mp-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .mp-note { margin-top: 6px; }
+
+/* ---- map editor (mapedit.js) */
+.mp-create { width: 100%; margin-bottom: 10px; font-family: "Courier New", monospace; letter-spacing: 1px; text-transform: uppercase; font-weight: 800; }
+.mp-sub { margin: 16px 0 8px; color: #1bff80; font-family: "Courier New", monospace; letter-spacing: 1px; text-transform: uppercase; }
+.mp-mine { display: flex; gap: 6px; align-items: stretch; }
+.mp-mine .mp-quest { flex: 1; min-width: 0; }
+.mp-mine .mp-quest b { overflow-wrap: anywhere; }
+.mp-del { flex: none; width: 46px; padding: 0; color: #1bff80; border-color: #0f7a3f; background: #020c05; }
+.me-rename { flex: none; margin-left: auto; color: #1bff80; border-color: #0f7a3f; background: #020c05; }
+.me-bar { display: grid; gap: 5px; margin-bottom: 8px; }
+.me-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.me-tool { flex: 1 1 52px; min-width: 52px; max-width: 92px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 3px 4px;
+  border-radius: 8px; border: 1px solid #0f7a3f; background: #020c05; color: #13a35a; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none;
+  font: 700 10px/1.1 "Courier New", monospace; text-transform: uppercase; }
+.me-tool svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.me-tool .mp-svg-mini { stroke: none; }
+.me-tool span { text-align: center; overflow-wrap: anywhere; }
+.me-tool:hover, .me-tool:focus-visible { color: #1bff80; outline: none; border-color: #13a35a; }
+.me-tool[aria-pressed=true] { color: #b8ffd6; border-color: #1bff80; background: #06301a; box-shadow: 0 0 10px rgba(27, 255, 128, .3); }
+.me-tool:disabled { opacity: .35; cursor: default; }
+.me-stage:not([data-tool=move]) { cursor: crosshair; }
+.me-stage.drag { cursor: grabbing; }
+.mp-svg .me-ln { fill: none; stroke: #1bff80; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.mp-svg .me-dash { stroke-dasharray: 14 10; stroke-linecap: butt; }
+.mp-svg .me-pv { stroke: #b8ffd6; opacity: .8; }
+.mp-svg .me-dot { fill: #b8ffd6; }
+.mp-svg .me-gone { opacity: .15; }
+.mp-svg .me-has { fill: none; stroke: #13a35a; stroke-width: 1.5; stroke-dasharray: 3 3; }
+.me-ghost { position: fixed; z-index: 60; width: 40px; height: 40px; transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 0 6px rgba(27, 255, 128, .7)); }
+.me-ghost svg { width: 100%; height: 100%; }
+.me-dim { color: #0f7a3f; }
+.mp-info .me-note { white-space: pre-wrap; }
+.me-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.me-acts .btn { color: #1bff80; border-color: #0f7a3f; background: #031008; }
+.me-form h3 { margin: 0 0 6px; color: var(--amber); }
+.me-form label { display: block; margin: 10px 0 4px; font-size: 13px; color: var(--muted, #aaa); }
+.me-stage { height: clamp(300px, calc(100vh - 280px), 640px); height: clamp(300px, calc(100dvh - 280px), 640px); }
+@media (max-width: 560px) { /* phones: icons only (the hint under the map names the tool) */
+  .me-row { gap: 3px; }
+  .me-tool { flex-basis: 34px; min-width: 34px; padding: 7px 1px; }
+  .me-tool span { display: none; }
+}
