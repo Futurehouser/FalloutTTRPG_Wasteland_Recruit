@@ -35,6 +35,7 @@
     <button data-page="elber"><span class="n">13</span>Talking Heads</button>
     <button data-page="tables"><span class="n">14</span>Table Search</button>
     <button data-page="dice"><span class="n">15</span>Dice Roller</button>
+    <button data-page="maps"><span class="n">16</span>Maps</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
   </nav>
   <div class="foot">Version <span id="app-version"></span><br>Fan-made tool for the Fallout 2d20 tabletop game.</div>
@@ -64,6 +65,7 @@
       <button class="tile" data-go="elber"><span class="ic">&#129302;</span><b>Talking Heads</b><small>Conversations you may not survive</small></button>
       <button class="tile" data-go="tables"><span class="ic">&#128269;</span><b>Table Search</b><small>Weapons, armor, mods, items, food, chems and enemies</small></button>
       <button class="tile" data-go="dice"><span class="ic">&#127922;</span><b>Dice Roller</b><small>Roll d20s, combat dice and d6s</small></button>
+      <button class="tile" data-go="maps"><span class="ic">&#128506;&#xFE0F;</span><b>Maps</b><small>Quest maps in Pip-Boy style</small></button>
     </div>
     <p class="hint tiles-hint">Hold and drag a tile to move it (click and drag with a mouse).
       <button class="linkbtn" id="tiles-reset">Reset order</button></p>
@@ -307,6 +309,12 @@
     <p class="hint" id="ts-count"></p>
     <div id="ts-results"></div>
   </section>
+  <!-- 16. maps -->
+  <section class="page" id="page-maps" data-title="Maps">
+    <h2>Maps</h2>
+    <p class="hint">Pick a quest to open its map. Tap a location to see its local map, and any mark to see who or what is there.</p>
+    <div id="mp-root"></div>
+  </section>
   <!-- 15. dice roller -->
   <section class="page" id="page-dice" data-title="Dice Roller">
     <h2>Dice Roller</h2>
@@ -382,5 +390,6 @@
 <script charset="utf-8" src="tables_data.js"></script>
 <script charset="utf-8" src="tables.js"></script>
 <script charset="utf-8" src="dice.js"></script>
+<script charset="utf-8" src="maps.js"></script>
 </body>
 </html>

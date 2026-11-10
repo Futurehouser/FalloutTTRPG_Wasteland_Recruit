@@ -3437,3 +3437,12 @@ Object.assign(ES, {
   "Terrifying Presence": "Presencia aterradora",
   "Your physical Damage Resistance to all hit locations increases by +1 per rank in this perk.": "Tu resistencia al daño físico en todas las localizaciones aumenta en +1 por rango de esta ventaja.",
 });
+
+// ---- v4.27.0: perk arrows, maps
+Object.assign(ES, {
+  "Previous perk": "Ventaja anterior",
+  "Next perk": "Ventaja siguiente",
+  "Maps": "Mapas",
+  "Quest maps in Pip-Boy style": "Mapas de misiones al estilo Pip-Boy",
+  "Pick a quest to open its map. Tap a location to see its local map, and any mark to see who or what is there.": "Elige una misión para abrir su mapa. Toca un lugar para ver su mapa local, y cualquier marca para ver quién o qué hay ahí.",
+});

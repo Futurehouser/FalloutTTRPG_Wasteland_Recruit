@@ -590,9 +590,99 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .pk-hit:hover, .pk-hit:focus-visible { border-color: var(--amber); outline: none; }
 .pk-count, .pk-none { font-size: 12px; margin: 6px 2px 0; }
 .pk-hit.pk-no { opacity: .55; }
+/* the perk view with previous / next arrows on both sides */
+.pk-nav { display: flex; gap: 6px; align-items: flex-start; }
+.pk-nav > .card { flex: 1; min-width: 0; margin-top: 0; }
+.pk-arrow { flex: none; position: sticky; top: 38vh; width: 38px; height: 64px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--panel2); color: var(--amber); font-size: 18px; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.pk-arrow:hover, .pk-arrow:focus-visible { border-color: var(--amber); outline: none; background: var(--panel); }
+.pk-arrow:active { transform: scale(.94); }
+@media (max-width: 480px) { .pk-nav { gap: 4px; } .pk-arrow { width: 30px; height: 56px; font-size: 15px; } }
 .pk-nopic { flex: none; display: grid; place-items: center; width: 44px; height: 54px; border-radius: 6px; background: var(--panel2);
   color: var(--amber-d); font-size: 24px; }
 .pk-nopic.big { width: 100%; max-width: 220px; height: 150px; margin: 0 auto; font-size: 64px; border-radius: 12px; }
 .pk-req { margin: 8px 0; font-size: 14px; }
 .pk-desc p { margin: 8px 0 0; line-height: 1.5; font-size: 14px; }
 .pk-en { font-size: 13px; font-style: italic; margin: -2px 0 6px; }
+/* ---------------------------------------------------------------- Maps: Fallout 3 Pip-Boy style */
+.mp-list { display: grid; gap: 10px; }
+.mp-quest { display: flex; gap: 14px; align-items: center; text-align: left; width: 100%; padding: 14px; border-radius: 12px; cursor: pointer;
+  background: #031008; border: 2px solid #0f7a3f; color: #1bff80; font: inherit; }
+.mp-quest:hover, .mp-quest:focus-visible { border-color: #1bff80; outline: none; box-shadow: 0 0 14px rgba(27, 255, 128, .25); }
+.mp-quest b { display: block; font-family: "Courier New", monospace; font-size: 17px; letter-spacing: 1px; text-transform: uppercase; }
+.mp-quest small { color: #13a35a; }
+.mp-q-ic { font-size: 30px; flex: none; text-shadow: 0 0 8px rgba(27, 255, 128, .6); }
+.mp-head { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.mp-back { flex: none; }
+.mp-title { min-width: 0; font-family: "Courier New", monospace; color: #1bff80; text-transform: uppercase; letter-spacing: 1px; }
+.mp-title small { display: block; color: #13a35a; font-size: 11px; }
+.mp-title b { font-size: 16px; }
+.mp-stage { position: relative; height: min(68vh, 640px); min-height: 340px; overflow: hidden; border-radius: 12px; border: 2px solid #0f7a3f;
+  background: radial-gradient(ellipse at center, #04170b 0%, #020c05 70%, #010502 100%); touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.mp-stage.drag { cursor: grabbing; }
+.mp-stage::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .22) 0 1px, transparent 1px 3px), radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, .55) 100%); }
+.mp-svg { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: visible; }
+.mp-svg .grid { fill: none; stroke: #06301a; stroke-width: 1; }
+.mp-svg .hatch-bg { fill: #052414; } .mp-svg .hatch { stroke: #0b5a2c; stroke-width: 3; }
+.mp-svg .mp-frame { fill: none; stroke: #0f7a3f; stroke-width: 3; stroke-dasharray: 18 10; }
+.mp-svg .bld { fill: url(#mp-hatch); stroke: #1bff80; stroke-width: 3; }
+.mp-svg .bld-barn { stroke-width: 4; } .mp-svg .bld-steel { stroke-width: 5; fill: #062b16; } .mp-svg .bld-in { fill: #04190c; stroke-width: 2; }
+.mp-svg .bld-hall { fill: #031208; stroke-width: 5; }
+.mp-svg .wall, .mp-svg .counter-l { fill: none; stroke: #1bff80; stroke-width: 3; stroke-linejoin: round; }
+.mp-svg .wall-thin { stroke-width: 2; stroke: #13a35a; }
+.mp-svg .gap { stroke: #020c05; stroke-width: 9; }
+.mp-svg .curtain { stroke: #13a35a; stroke-width: 3; stroke-dasharray: 6 5; }
+.mp-svg .road { fill: none; stroke: #073d1e; stroke-width: 22; stroke-linecap: round; }
+.mp-svg .track { fill: none; stroke: #0b5a2c; stroke-width: 9; stroke-linecap: round; }
+.mp-svg .trail { fill: none; stroke: #13a35a; stroke-width: 3; stroke-dasharray: 12 9; stroke-linecap: round; }
+.mp-svg .highway { fill: none; stroke: #0f7a3f; stroke-width: 4; }
+.mp-svg .steps { fill: none; stroke: #1bff80; stroke-width: 4; stroke-dasharray: 2 12; stroke-linecap: round; }
+.mp-svg .water { fill: none; stroke: #0f7a3f; stroke-width: 3; }
+.mp-svg .water-fill { fill: #052414; stroke: #13a35a; stroke-width: 2; stroke-dasharray: 4 4; }
+.mp-svg .grass { fill: none; stroke: #0a4d26; stroke-width: 2; stroke-linecap: round; }
+.mp-svg .grass-pale { stroke: #0d6b35; }
+.mp-svg .tree { fill: #052414; stroke: #13a35a; stroke-width: 2; } .mp-svg .tree-big { stroke-width: 3; stroke: #1bff80; }
+.mp-svg .geck { fill: #04190c; stroke: #0f7a3f; stroke-width: 3; stroke-dasharray: 3 7; }
+.mp-svg .contour { fill: none; stroke: #073d1e; stroke-width: 2; stroke-dasharray: 10 8; }
+.mp-svg .ruin { fill: #03140a; stroke: #0b5a2c; stroke-width: 2; }
+.mp-svg .field-edge { fill: #03140a; stroke: #0b5a2c; stroke-width: 2; } .mp-svg .field { stroke: #0b5a2c; stroke-width: 3; fill: none; }
+.mp-svg .stone, .mp-svg .counter, .mp-svg .reactor { fill: none; stroke: #1bff80; stroke-width: 3; }
+.mp-svg .reactor-core { fill: #1bff80; } .mp-svg .floor { fill: #031008; stroke: #0f7a3f; stroke-width: 2; }
+.mp-svg .box, .mp-svg .bench { fill: #052414; stroke: #13a35a; stroke-width: 2; }
+.mp-svg .stool, .mp-svg .table { fill: #052414; stroke: #13a35a; stroke-width: 2; }
+.mp-svg .tower, .mp-svg .lamp { fill: none; stroke: #13a35a; stroke-width: 3; }
+.mp-svg .fence { fill: none; stroke: #0f7a3f; stroke-width: 3; stroke-dasharray: 4 6; }
+.mp-svg .cable { fill: none; stroke: #0f7a3f; stroke-width: 3; stroke-dasharray: 16 6 2 6; }
+.mp-svg .lights { fill: none; stroke: #13a35a; stroke-width: 2; stroke-dasharray: 2 8; stroke-linecap: round; }
+.mp-svg .barrel { fill: #052414; stroke: #1bff80; stroke-width: 2; } .mp-svg .flame { fill: none; stroke: #1bff80; stroke-width: 2; }
+.mp-svg .spiral { fill: none; stroke: #1bff80; stroke-width: 4; }
+.mp-svg .compass circle { fill: none; stroke: #0f7a3f; stroke-width: 2; } .mp-svg .compass path { fill: none; stroke: #13a35a; stroke-width: 2; }
+.mp-svg .compass .fill { fill: #13a35a; } .mp-svg .compass text { fill: #13a35a; font: 700 20px "Courier New", monospace; text-anchor: middle; }
+.mp-svg .lbl { fill: #13a35a; font: 700 18px "Courier New", monospace; text-anchor: middle; letter-spacing: 2px; text-transform: uppercase; pointer-events: none; }
+.mp-svg .lbl-big { font-size: 34px; fill: #1bff80; } .mp-svg .lbl-dim { fill: #0f7a3f; } .mp-svg .lbl-s { font-size: 14px; letter-spacing: 1px; }
+.mp-svg .lbl-room { font-size: 15px; fill: #13a35a; letter-spacing: 1px; } .mp-svg .lbl-l { text-anchor: start; }
+.mp-svg .lbl-v { writing-mode: vertical-rl; }
+.mp-svg .ic, .mp-svg-mini .ic { fill: #020c05; stroke: #1bff80; stroke-width: 2.5; }
+.mp-svg .ic.fill, .mp-svg-mini .ic.fill { fill: #1bff80; }
+.mp-svg .mk { cursor: pointer; outline: none; }
+.mp-svg .mk .hit { fill: transparent; }
+.mp-svg .mk text { pointer-events: none; fill: #1bff80; font: 700 14px "Courier New", monospace; text-anchor: middle; letter-spacing: 1px; text-transform: uppercase;
+  paint-order: stroke; stroke: #020c05; stroke-width: 4px; stroke-linejoin: round; }
+.mp-svg .mk-loc .ic { stroke-width: 3; }
+.mp-svg .mk:hover .ic, .mp-svg .mk:focus-visible .ic, .mp-svg .mk.on .ic { fill: #1bff80; stroke: #b8ffd6; }
+.mp-svg .mk.on text, .mp-svg .mk:focus-visible text { fill: #b8ffd6; }
+.mp-svg .blink { animation: mp-blink 1.2s steps(2, start) infinite; }
+@keyframes mp-blink { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .mp-svg .blink { animation: none; } }
+.mp-zoom { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 6px; z-index: 2; }
+.mp-zoom .btn { width: 42px; height: 42px; padding: 0; font-size: 22px; font-weight: 800; background: rgba(2, 12, 5, .85); color: #1bff80; border-color: #0f7a3f; }
+.mp-info { margin-top: 8px; min-height: 48px; padding: 10px 12px; border-radius: 10px; border: 1px solid #0f7a3f; background: #020c05; color: #13a35a;
+  font-family: "Courier New", monospace; font-size: 14px; line-height: 1.45; }
+.mp-info b { color: #1bff80; text-transform: uppercase; letter-spacing: 1px; }
+.mp-info div { margin-top: 4px; color: #8fe6b2; }
+.mp-kind { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border: 1px solid #0f7a3f; border-radius: 6px; padding: 1px 6px; margin-left: 4px; }
+.mp-go { margin-top: 8px; color: #1bff80; border-color: #0f7a3f; background: #031008; }
+.mp-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 12px; color: #13a35a; font-family: "Courier New", monospace; text-transform: uppercase; }
+.mp-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.mp-note { margin-top: 6px; }

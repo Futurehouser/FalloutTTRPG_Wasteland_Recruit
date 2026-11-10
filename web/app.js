@@ -41,6 +41,7 @@ function showPage(id) {
   if (id === "elber" && typeof Elber !== "undefined") Elber.show();
   if (id === "tables" && typeof Tables !== "undefined") Tables.show();
   if (id === "dice" && typeof Dice !== "undefined") Dice.show();
+  if (id === "maps" && typeof Maps !== "undefined") Maps.show();
   if (typeof Walkers !== "undefined") Walkers.update(); // sprites walk on Home and My Team, and in a running fight
 }
 $("burger").onclick = () => document.body.classList.toggle("menu-open");
@@ -55,6 +56,7 @@ window.handleBack = () => {
   if ($("upd-modal").classList.contains("show")) { $("upd-later").click(); return true; }
   if (document.body.classList.contains("menu-open")) { document.body.classList.remove("menu-open"); return true; }
   if (currentPage === "roster" && openProfileId) { closeProfile(); return true; }
+  if (currentPage === "maps" && typeof Maps !== "undefined" && Maps.back()) return true; // local map > general map > quest list
   if (currentPage !== "home") { showPage("home"); return true; }
   return false;
 };
@@ -303,6 +305,7 @@ function perkSearch() {
       : words.every(w => (names + " " + text).includes(w)) ? 2 : 9;
     return { p, score };
   }).filter(x => x.score < 9).sort((a, b) => a.score - b.score || pkSort(a.p).localeCompare(pkSort(b.p), LANG));
+  pkOrder = found.map(x => x.p.n);
   if (!found.length) {
     box.innerHTML = `<div class="muted pk-none">${q ? T("No perk matches \"{q}\".", { q: esc(raw) }) : T("No perks match those filters.")}</div>`;
     return;
@@ -316,8 +319,15 @@ function perkSearch() {
   }).join("");
   box.querySelectorAll(".pk-hit").forEach(b => (b.onclick = () => showFoundPerk(TT_BY[b.dataset.name])));
 }
-// the chosen perk, with a button to add it to the selected character when there is one
-function showFoundPerk(p) {
+// the chosen perk, with a button to add it to the selected character when there is one, and arrows on both
+// sides to step through the list as it is filtered and sorted right now (wrapping round at the ends)
+let pkOrder = [];
+function pkStep(name, dir) {
+  const list = pkOrder.length ? pkOrder : TT_PERKS.map(p => p.n);
+  const i = list.indexOf(name);
+  return TT_BY[list[(i < 0 ? 0 : i + dir + list.length) % list.length]];
+}
+function showFoundPerk(p, scroll = true) {
   const ch = pkChar();
   let extra = "", rank = 1;
   if (ch) {
@@ -330,10 +340,22 @@ function showFoundPerk(p) {
     extra = `<div class="why">${why}</div>` + (rank <= p.max ? `<div class="bar" style="margin:8px 0"><button class="btn primary" id="pk-add">&#10010; ${have
       ? T("Rank up to {n} on {name}", { n: rank, name: esc(ch.name) }) : T("Add to {name}", { name: esc(ch.name) })}</button></div>` : "");
   }
-  $("pk-out").innerHTML = perkHtml(p, { rank: ch ? Math.min(rank, p.max) : 0, extra, footer: T("Picked from the search") });
+  $("pk-out").innerHTML = `<div class="pk-nav">
+    <button type="button" class="pk-arrow" id="pk-prev" title="${T("Previous perk")}" aria-label="${T("Previous perk")}">&#9664;&#xFE0E;</button>
+    ${perkHtml(p, { rank: ch ? Math.min(rank, p.max) : 0, extra, footer: T("Picked from the search") })}
+    <button type="button" class="pk-arrow" id="pk-next" title="${T("Next perk")}" aria-label="${T("Next perk")}">&#9654;&#xFE0E;</button></div>`;
   if ($("pk-add")) $("pk-add").onclick = async () => { await addPerkTo(p, rank); fillCharSelect(); perkSearch(); };
-  $("pk-out").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("pk-prev").onclick = () => showFoundPerk(pkStep(p.n, -1), false);
+  $("pk-next").onclick = () => showFoundPerk(pkStep(p.n, 1), false);
+  if (scroll) $("pk-out").scrollIntoView({ behavior: "smooth", block: "start" });
 }
+// the keyboard's left and right arrows step through the perks too
+document.addEventListener("keydown", e => {
+  if (currentPage !== "perks" || !$("pk-prev") || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (/^(INPUT|SELECT|TEXTAREA)$/.test((document.activeElement || {}).tagName || "")) return;
+  if (e.key === "ArrowLeft") { e.preventDefault(); $("pk-prev").click(); }
+  if (e.key === "ArrowRight") { e.preventDefault(); $("pk-next").click(); }
+});
 $("pk-q").oninput = () => { clearTimeout(pkTimer); pkTimer = setTimeout(perkSearch, 150); };
 $("pk-special").addEventListener("change", perkSearch);
 
