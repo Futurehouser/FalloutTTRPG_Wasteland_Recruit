@@ -35,7 +35,8 @@ const Combat = (() => {
       if (S.turn && S.turn.actor === "P") S.turn.actor = "P0";
     }
   }
-  const allTemplates = () => ENEMY_TEMPLATES.concat(CUSTOM.map(c => Object.assign({ group: "Your enemies" }, c)));
+  const allTemplates = () => ENEMY_TEMPLATES.concat(CUSTOM.map(c => Object.assign({ group: "Your enemies" }, c)),
+    typeof questTemplates === "function" ? questTemplates() : []); // the enemies of the quests on the Quests page
 
   function log(msg) { S.log.unshift(`R${S.round}: ${msg}`); S.log = S.log.slice(0, 60); }
 

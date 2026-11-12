@@ -3463,3 +3463,12 @@ Object.assign(ES, {
   "Back to the top": "Volver arriba",
   "Core rulebook, page {n}": "Libro básico, página {n}",
 });
+
+// ---- v4.30.0: encounter buttons, character creation guide
+Object.assign(ES, {
+  "How to create your character": "Cómo crear tu personaje",
+  "The six steps of the core rulebook, and how to fill in your sheet": "Los seis pasos del libro básico, y cómo rellenar tu hoja",
+  "Player characters": "Personajes jugadores",
+  "Add to the Combat Assistant": "Añadir al Asistente de combate",
+  "Quest enemies": "Enemigos de misiones",
+});

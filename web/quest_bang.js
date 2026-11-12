@@ -3,7 +3,7 @@
 // with the book's game numbers (difficulties, stat blocks) and page references. The book's own read-aloud texts
 // are not copied: the "read or paraphrase" boxes here are short descriptions of our own.
 (() => {
-  const { h, p, say, gm, test, ul, stat, clues } = QB;
+  const { h, p, say, gm, test, ul, stat, clues, enc } = QB;
 
   Object.assign(QSTATS, {
     bang_ghoul: { n: ["Joseph (ghoul)", "Joseph (necrófago)"], sub: ["Level 2, mutated human, notable character (34 XP)", "Nivel 2, humano mutado, personaje notable (34 PX)"], page: 406,
@@ -69,6 +69,17 @@
       abil: [["**Let rip:** once per combat, 6 CD with Burst and no ammo spent.", "**A discreción:** una vez por combate, 6 DC con Ráfaga sin gastar munición."],
              ["**Protect me!** With a robotic synth in his zone, he may spend 1 Luck point for +2 Defense against an attack.", "**¡Protegedme!** Con un sintético robótico en su zona, puede gastar 1 punto de Suerte para tener +2 a la Defensa contra un ataque."]],
       inv: ["Lab coat, Institute laser pistol, robot repair kit, Stimpak, Mentats, Wealth 3. Carry weight 200 lbs, 3 Luck points.", "Bata de laboratorio, pistola láser del Instituto, kit de reparación de robots, Estimulante, Mentats, Riqueza 3. Carga 200 lb, 3 puntos de Suerte."] },
+  });
+
+  // combat numbers for the Combat Assistant (from the stat blocks above)
+  Object.assign(QCOMBAT, {
+    bang_ghoul: { lvl: 2, type: "Notable", kind: "character", wealth: 1, a: [["Unarmed strike", "Golpe sin armas", 8, 1, 3, "p"], ["Double-barrel shotgun", "Escopeta de dos cañones", 10, 1, 5, "p", ["Spread", "Vicious"], 0, "C"]] },
+    bang_scav: { lvl: 2, type: "Normal", kind: "character", wealth: 1, a: [["Machete", "Machete", 7, 1, 3, "p", ["Piercing 1"]], ["Double-barrel shotgun", "Escopeta de dos cañones", 8, 2, 5, "p", ["Spread", "Vicious"], 0, "C"], ["Unarmed strike", "Golpe sin armas", 6, 1, 2, "p"]] },
+    bang_replica: { lvl: 4, type: "Normal", kind: "creature", dr: ["2", "3", "Immune", "Immune"], a: [["Institute laser", "Láser del Instituto", 8, 2, 4, "e", ["Vicious", "Burst"], 3, "C"], ["Shock baton", "Porra eléctrica", 8, 2, 5, "e"]] },
+    bang_jesse: { lvl: 4, type: "Notable", kind: "character", wealth: 2, a: [["Modified Institute laser pistol", "Pistola láser del Instituto modificada", 10, 3, 3, "e", ["Burst", "Vicious"], 3, "C"], ["Stun baton", "Porra aturdidora", 8, 1, 6, "e", ["Stun"]], ["Unarmed strike", "Golpe sin armas", 7, 1, 2, "p"]] },
+    bang_strider: { lvl: 7, type: "Normal", kind: "creature", a: [["Institute laser", "Láser del Instituto", 10, 4, 6, "e", ["Vicious", "Burst"], 3, "M"], ["Shock baton", "Porra eléctrica", 10, 4, 5, "e"]] },
+    bang_incomplete: { lvl: 2, type: "Normal", kind: "creature", a: [["Unarmed", "Sin armas", 7, 2, 2, "p"]] },
+    bang_chief: { lvl: 2, type: "Notable", kind: "character", wealth: 3, a: [["Institute laser pistol", "Pistola láser del Instituto", 9, 1, 3, "e", ["Burst"], 3, "C"], ["Unarmed strike", "Golpe sin armas", 5, 1, 2, "p"]] },
   });
 
   QUEST_BOOK.push({
@@ -141,6 +152,7 @@
         p("Joseph first shoots the PC most visible through the door; resolve it before the description. His memory loss has broken him: he fights until he dies, always attacking whoever is closest.",
           "Joseph dispara primero al PJ más visible por la puerta; resuélvelo antes de la descripción. La pérdida de memoria le ha roto: lucha hasta morir, atacando siempre a quien tenga más cerca."),
         stat("bang_ghoul"),
+        enc("Encounter 1A: Old man Joseph", "Encuentro 1A: El viejo Joseph", [["bang_ghoul", 1]]),
         h("An unhappy Founders' Day", "Un Día de los Fundadores triste"),
         p("The barn holds nothing else. The PCs may finish searching the house; looting it yields household items and up to **5d20 caps**. Then they should report to Jesse, who is waiting as the party ends. He is shaken, asks for a day or two to decide what to tell people (he fears a wave of hatred against ghouls), and asks the PCs to ask around quietly tomorrow about anything odd the couple did lately.",
           "En el granero no hay nada más. Los PJ pueden terminar de registrar la casa; saquearla da objetos domésticos y hasta **5d20 chapas**. Después deberían informar a Jesse, que espera mientras acaba la fiesta. Está conmocionado, pide uno o dos días para decidir qué contar (teme una ola de odio contra los necrófagos) y les pide que mañana pregunten con discreción por cualquier cosa rara que hiciera la pareja."),
@@ -167,6 +179,7 @@
         p("Whatever happens, the scavenger then shoots at the quartermaster and tries to flee town. If the PCs attack first, they act first.",
           "Pase lo que pase, después el chatarrero dispara al intendente e intenta huir del pueblo. Si los PJ atacan primero, actúan primero."),
         stat("bang_qm"), stat("bang_scav"),
+        enc("The scavenger opens fire", "El chatarrero abre fuego", [["bang_scav", 1]]),
         test("Questioning either survivor: **(CHA or STR) + Speech**, difficulty 1, then Obtain Information. Diagnosing the quartermaster: **INT + Medicine**, difficulty 2: partial amnesia.",
              "Interrogar a cualquiera de los dos: **(CAR o FUE) + Oratoria**, dificultad 1, y Obtener información. Diagnosticar al intendente: **INT + Medicina**, dificultad 2: amnesia parcial."),
         ul(["Quartermaster: swears he's never seen the scavenger, who came claiming a debt. He doesn't remember Joseph or Theresa, though they sold him tarberries all the time.", "Intendente: jura que nunca ha visto al chatarrero, que vino reclamando una deuda. No recuerda a Joseph ni a Theresa, aunque le vendían bayabrea a menudo."],
@@ -202,6 +215,7 @@
         p("Use your notes to describe the attackers: people the PCs know, with no recognition in their eyes. They and Jesse have been replaced by Institute synth replicas. There are as many **synth replicas** as PCs, **Jesse** included. At the start of each turn you may spend **2 AP** to bring one more in through the door. Destroyed synths burst into metal and sparks; describe the fight wrecking the clinic. At the end of the first round the doctor runs from room four to room two to protect the boy.",
           "Usa tus notas para describir a los atacantes: gente que los PJ conocen, sin rastro de reconocimiento en la mirada. Ellos y Jesse han sido sustituidos por réplicas sintéticas del Instituto. Hay tantas **réplicas sintéticas** como PJ, **Jesse** incluido. Al principio de cada turno puedes gastar **2 PA** para que entre una más por la puerta. Las réplicas destruidas estallan en metal y chispas; describe cómo el tiroteo destroza la clínica. Al final del primer asalto el médico corre de la sala cuatro a la dos para proteger al niño."),
         stat("bang_replica"), stat("bang_jesse"),
+        enc("Encounter 2A: Friends and murderers (Jesse + replicas, as many as PCs)", "Encuentro 2A: Amigos y asesinos (Jesse + réplicas, tantas como PJ)", [["bang_jesse", 1], ["bang_replica", "pcs-1"]]),
         gm("**The Institute's plan:** the Institute hijacked the Vault-Tec experimental device in the generator. It steals the townsfolk's memories and sends them to a compound nearby, where they're used to build better synth copies. The goal: replace the whole town with perfect copies and turn it into a beacon of hope that lures more humans to be replaced. If your group played the Starter Set, this is a great moment to remember Rast and his betrayal.",
            "**El plan del Instituto:** el Instituto secuestró el dispositivo experimental de Vault-Tec del generador. Roba los recuerdos de los vecinos y los envía a un complejo cercano, donde sirven para fabricar mejores copias sintéticas. El objetivo: sustituir a todo el pueblo por copias perfectas y convertirlo en un faro de esperanza que atraiga a más humanos para sustituirlos. Si tu grupo jugó la caja de inicio, es un gran momento para recordar a Rast y su traición."),
         h("After the gunfight", "Después del tiroteo"),
@@ -220,6 +234,7 @@
         p("**Synth striders**, better armed than the replicas, fight to the death. There are half as many as PCs, rounded up. When the fight starts a silent alarm warns the Chief Scientist. At the start of each round you may spend **3 AP** to add another strider. They explode in fire and metal when destroyed. Afterwards the PCs can go in.",
           "**Sintéticos zancudos**, mejor armados que las réplicas, que luchan hasta la muerte. Hay la mitad que PJ, redondeando hacia arriba. Al empezar la lucha, una alarma silenciosa avisa al científico jefe. Al principio de cada asalto puedes gastar **3 PA** para añadir otro zancudo. Explotan en fuego y metal al ser destruidos. Después, los PJ pueden entrar."),
         stat("bang_strider"),
+        enc("Encounter 3A: Synth guards", "Encuentro 3A: Guardias sintéticos", [["bang_strider", "half"]]),
         h("Scene two: Our town (page 416)", "Escena dos: Nuestro pueblo (página 416)"),
         say("Inside, it feels like a summer noon: artificial sunlight pours from the ceiling of one huge room. In the middle rises a tall spiral machine of blinking lights. Around it lies your own town square, perfect down to the initials carved in the old tree, and people you know stroll and chat as if nothing were wrong.\n\nBehind you, a thin nasal voice: a small, frail older man in a clean lab coat, holding a little computer, coughs and smiles. He introduces himself as one of the Institute's chief scientists and insists on showing you around.",
             "Dentro parece un mediodía de verano: una luz solar artificial cae del techo de una sala enorme. En el centro se alza una alta máquina en espiral de luces parpadeantes. A su alrededor está vuestra propia plaza, perfecta hasta las iniciales grabadas en el árbol viejo, y gente que conocéis pasea y charla como si nada.\n\nDetrás de vosotros, una vocecilla nasal: un hombre mayor, menudo y frágil, con una bata impecable y un pequeño ordenador en la mano, tose y sonríe. Se presenta como uno de los científicos jefe del Instituto e insiste en enseñaros el lugar."),
@@ -236,6 +251,7 @@
         p("The PCs can target the **information core**, the spiral machine downloading the memories: **Defense 2, 15 HP**. Destroyed, it explodes for **5 CD energy damage** to everyone in its zone; afterwards the replicas glitch and only attack if you spend **1 AP** each round; otherwise they freeze where they stand. Destroying it cuts the signal and ends the threat to the town.",
           "Los PJ pueden atacar el **núcleo de información**, la máquina en espiral que descarga los recuerdos: **Defensa 2, 15 PV**. Al destruirlo explota y hace **5 DC de daño de energía** a todos en su zona; después las réplicas fallan y solo atacan si gastas **1 PA** cada asalto; si no, se quedan congeladas donde están. Destruirlo corta la señal y acaba con la amenaza para el pueblo."),
         stat("bang_chief"), stat("bang_incomplete"),
+        enc("Encounter 3B: Just like us", "Encuentro 3B: Igual que nosotros", [["bang_replica", "twice"], ["bang_chief", 1]]),
       ] },
       { t: ["Conclusion", "Conclusión"], b: [
         ul(["**The bargain:** the PCs return and try to convince the people to scatter and find new homes; many refuse. Whoever stays, PCs included, keeps losing memories until they go mad and the town falls into chaos.", "**El pacto:** los PJ vuelven e intentan convencer a la gente de dispersarse y buscar nuevos hogares; muchos se niegan. Quien se quede, PJ incluidos, seguirá perdiendo recuerdos hasta enloquecer, y el pueblo caerá en el caos."],

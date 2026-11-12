@@ -2,7 +2,7 @@
 // It follows the structure of "With a Bang, or a Whimper" (three acts, clues, a hidden truth and a final choice)
 // and only uses enemies from the core rulebook (stat blocks with their page numbers).
 (() => {
-  const { h, p, say, gm, test, ul, stat, clues } = QB;
+  const { h, p, say, gm, test, ul, stat, clues, enc } = QB;
   const robot = ["**Robot:** no food, water or air needed; immune to poison and radiation; doesn't heal naturally and Medicine can't heal it, only repairs.", "**Robot:** no necesita comer, beber ni respirar; inmune al veneno y la radiación; no se cura sola y la Medicina no la cura, solo las reparaciones."];
 
   Object.assign(QSTATS, {
@@ -42,6 +42,16 @@
              ["**Mister Handy:** 360° vision and sensors for smells, chemicals and radiation: −1 difficulty on PER tests by sight or smell. Hovers on a jet, ignoring difficult terrain and obstacles.", "**Mister Handy:** visión de 360° y sensores de olores, sustancias y radiación: −1 a la dificultad de las pruebas de PER por vista u olfato. Flota con un propulsor, sin que le afecten el terreno difícil ni los obstáculos."],
              ["**For level 1 characters:** Mister Welcome is 200 years old and badly maintained. He starts the fight with **10 HP** instead of 15, and his flamer only has fuel for **2 attacks**.", "**Para personajes de nivel 1:** el Señor Bienvenido tiene 200 años y está mal mantenido. Empieza el combate con **10 PV** en vez de 15, y su lanzallamas solo tiene combustible para **2 ataques**."]],
       inv: ["**Salvage:** INT + Science, difficulty 1: 2d20 flamer fuel, 2 CD common materials (+1 per AP spent), 1 uncommon material per Effect. Melee bonus +0, 2 Luck points.", "**Recuperación:** INT + Ciencia, dificultad 1: 2d20 de combustible de lanzallamas, 2 DC materiales comunes (+1 por PA gastado), 1 material poco común por cada Efecto. Bonificación c. a c. +0, 2 puntos de Suerte."] },
+  });
+
+  // combat numbers for the Combat Assistant (from the stat blocks above)
+  Object.assign(QCOMBAT, {
+    tb_roach: { lvl: 1, type: "Normal", kind: "creature", a: [["Bite", "Mordisco", 6, 1, 1, "p", ["Radioactive"]]] },
+    tb_molerat: { lvl: 2, type: "Normal", kind: "creature", a: [["Bite", "Mordisco", 7, 2, 4, "p", ["Piercing 1"]]] },
+    tb_raider: { lvl: 2, type: "Normal", kind: "character", wealth: 1, junk: 1, a: [["Pipe gun", "Pistola de tubo", 8, 2, 3, "p", [], 2, "C"], ["Tire iron", "Llave de ruedas", 8, 2, 4, "p"], ["Unarmed strike", "Golpe sin armas", 8, 1, 2, "p"]] },
+    tb_settler: { lvl: 2, type: "Normal", kind: "character", n: ["Angry settler", "Vecino furioso"], dr: ["0", "0", "0", "0"], hp: 8, a: [["Unarmed strike", "Golpe sin armas", 8, 1, 2, "p"]] },
+    tb_feral: { lvl: 3, type: "Normal", kind: "creature", junk: 1, a: [["Unarmed", "Sin armas", 8, 3, 3, "p", ["Radioactive"]]] },
+    tb_handy: { lvl: 6, type: "Notable", kind: "character", hp: 10, a: [["Buzzsaw", "Sierra circular", 9, 3, 3, "p", ["Piercing 1"]], ["Pincer", "Pinza", 9, 3, 3, "p"], ["Flamer", "Lanzallamas", 9, 3, 3, "e", ["Persistent"], 1, "C"]] },
   });
 
   QUEST_BOOK.push({
@@ -117,6 +127,7 @@
         p("A nest of **radroaches** has moved into the dark, damp cellar: one per PC. They hide among the sacks (Sneaky) and jump on whoever comes down the ladder first. It's a short fight to get the dice rolling; radroaches die from any hit that causes an injury.",
           "Un nido de **cucarachas radiactivas** se ha instalado en la bodega oscura y húmeda: una por PJ. Se esconden entre los sacos (Sigilosas) y saltan sobre el primero que baje por la escalera. Es una pelea corta para que rueden los dados; las cucarachas mueren con cualquier impacto que cause una herida."),
         stat("tb_roach"),
+        enc("Encounter 1A: The root cellar", "Encuentro 1A: La bodega", [["tb_roach", "pcs"]]),
         p("Behind the sacks: a tin box with **2d20 caps** (Ollie lets the PCs keep half if they ask nicely) and Tom's notebook. The last page reads: \"3:00 again. The Vault-Tec song. Who would play that? Can't sleep. Doc's tonic tomorrow.\"",
           "Detrás de los sacos: una caja de lata con **2d20 chapas** (Ollie deja que los PJ se queden la mitad si lo piden con buenos modales) y el cuaderno de Tom. La última página dice: \"Otra vez a las 3:00. La canción de Vault-Tec. ¿Quién pondría eso? No puedo dormir. Mañana, el tónico de la doctora.\""),
         h("The first night", "La primera noche"),
@@ -160,6 +171,7 @@
            ["Send them after a fake treasure: **CHA + Speech**, difficulty 1, if the PCs offer a believable lie.", "Mandarlos tras un tesoro falso: **CAR + Oratoria**, dificultad 1, si los PJ ofrecen una mentira creíble."],
            ["Buy them off: 30 caps.", "Comprarlos: 30 chapas."]),
         stat("tb_raider"),
+        enc("Encounter 2A: Scab and Tinny", "Encuentro 2A: Costra y Latitas", [["tb_raider", "2|4:3"]]),
         p("Captured or bribed, a raider admits they saw \"a floating light\" go into the side of Kettle Hill two nights ago, \"like the hill swallowed it\".", "Si les capturan o les sobornan, un saqueador admite que vieron \"una luz flotante\" meterse en la ladera de la colina del Caldero hace dos noches, \"como si la colina se la tragara\"."),
         h("Dez", "Dez"),
         p("Dez is gentle, shy and terrified of the hamlet. If the PCs saved him, he trusts them. He keeps a notebook of the broadcasts (dates and times, always 3:00) and admits that three weeks ago he saw \"a round thing with three arms and a little lamp\" fly past carrying a sleeping man, Tom Barrow, towards Kettle Hill. He never told anyone: \"Who'd believe a ghoul?\"",
@@ -173,6 +185,7 @@
              "Calmarlos: **CAR + Oratoria**, dificultad 2, menos 1 por cada prueba que enseñen los PJ (mínimo 0). Intimidarlos también funciona (**FUE + Oratoria**, dificultad 2), pero la aldea lo recordará."),
         p("If it fails, three settlers start a brawl. Use the **raider** stat block without weapons (unarmed only); they give up as soon as they're hurt. Killing a settler is murder: Ruth will throw the PCs out.",
           "Si falla, tres vecinos empiezan una pelea. Usa la ficha del **saqueador** sin armas (solo sin armas); se rinden en cuanto resultan heridos. Matar a un vecino es un asesinato: Ruth echará a los PJ."),
+        enc("The mob turns into a brawl", "La turba acaba en pelea", [["tb_settler", 3]]),
         h("Event: The 3 o'clock visit", "Suceso: La visita de las tres"),
         p("If the PCs watch the Barrow farm that night (Ollie took the tonic), at **3:00** the radios start the jingle and a light floats down from Kettle Hill: **Mister Welcome**, humming, with a folding stretcher. It slides Ollie through the window as gently as a nurse.",
           "Si los PJ vigilan la granja de los Barrow esa noche (Ollie tomó el tónico), a las **3:00** las radios empiezan la sintonía y una luz baja flotando desde la colina del Caldero: el **Señor Bienvenido**, tarareando, con una camilla plegable. Saca a Ollie por la ventana con la delicadeza de un enfermero."),
@@ -191,6 +204,7 @@
         p("The digging around the hatch has drawn **mole rats**: half as many as PCs, rounded up. They burrow and pop up around the party. A PC watching the ground (**PER + Survival**, difficulty 1) spots where the next one will come out and gets +1d20 on the next attack against it.",
           "Las excavaciones alrededor de la escotilla han atraído a unas **ratas topo**: la mitad que PJ, redondeando hacia arriba. Excavan y aparecen alrededor del grupo. Un PJ que vigile el suelo (**PER + Supervivencia**, dificultad 1) ve dónde va a salir la siguiente y gana +1d20 en el siguiente ataque contra ella."),
         stat("tb_molerat"),
+        enc("Encounter 3A: The burrows", "Encuentro 3A: Las madrigueras", [["tb_molerat", "half"]]),
         test("Opening the hatch: the code from Ada's pamphlet, or **PER + Lockpick**, difficulty 2, or **INT + Science**, difficulty 1 (the keypad still accepts the factory code \"2077\"). Or simply wait: Mister Welcome opens it for \"visitors\".",
              "Abrir la escotilla: el código del folleto de Ada, o **PER + Forzar cerraduras**, dificultad 2, o **INT + Ciencia**, dificultad 1 (el teclado aún acepta el código de fábrica \"2077\"). O simplemente esperar: el Señor Bienvenido abre a las \"visitas\"."),
         h("Scene two: Inside the shelter", "Escena dos: Dentro del refugio"),
@@ -206,6 +220,7 @@
         p("Two **feral ghouls**, the shelter's builders sealed in on the day of the bombs, shuffle in the dark maintenance corridor that links the reception to the pods. Each PC sneaking past makes **AGI + Sneak**, difficulty 1; one failure wakes them. The PCs can also lock the corridor door from the terminal and go round through the office.",
           "Dos **necrófagos salvajes**, los constructores del refugio que quedaron encerrados el día de las bombas, deambulan por el oscuro pasillo de mantenimiento que une la recepción con las cápsulas. Cada PJ que pase a escondidas hace **AGI + Sigilo**, dificultad 1; un fallo los despierta. Los PJ también pueden cerrar la puerta del pasillo desde la terminal y dar la vuelta por el despacho."),
         stat("tb_feral"),
+        enc("Encounter 3B: The night crew", "Encuentro 3B: El turno de noche", [["tb_feral", 2]]),
         h("Scene three: Mister Welcome", "Escena tres: El Señor Bienvenido"),
         say("A familiar hum, and the robot floats out to meet you, three eye-stalks bobbing, a faded Vault-Tec cap painted on its dome. \"Visitors! Splendid! Shelter 7-B is at fifty percent occupancy, and you look like exactly the kind of forward-thinking citizens Vault-Tec is looking for. May I interest you in a reservation?\"",
             "Un zumbido familiar, y el robot sale flotando a recibiros, con sus tres ojos balanceándose y una gorra de Vault-Tec desteñida pintada en la cúpula. \"¡Visitas! ¡Espléndido! El Refugio 7-B está al cincuenta por ciento de ocupación, y ustedes parecen justo el tipo de ciudadanos previsores que busca Vault-Tec. ¿Puedo interesarles en una reserva?\""),
@@ -219,6 +234,7 @@
         p("Mister Welcome fights politely (\"This will go on your permanent record!\"), alone, and only while the PCs threaten the residents. It's a level 6 robot, so it uses the reduced numbers in its stat block for level 1 characters. A PC can spend their action trying to calm it again (**CHA + Speech**, difficulty 2) or to jam its thruster from close by (**AGI + Repair**, difficulty 2: it loses its next turn).",
           "El Señor Bienvenido lucha con educación (\"¡Esto constará en su expediente permanente!\"), solo, y únicamente mientras los PJ amenacen a los residentes. Es un robot de nivel 6, así que usa los números reducidos de su ficha para personajes de nivel 1. Un PJ puede gastar su acción en intentar calmarlo otra vez (**CAR + Oratoria**, dificultad 2) o en atascarle el propulsor de cerca (**AGI + Reparar**, dificultad 2: pierde su siguiente turno)."),
         stat("tb_handy"),
+        enc("Encounter 3C: Customer service", "Encuentro 3C: Atención al cliente", [["tb_handy", 1]]),
         h("The twist: Ada", "El giro: Ada"),
         say("Footsteps on the stairs. Ada Kessler stands in the doorway with Lily asleep in her arms, wrapped in a blanket. She looks at the pods, at the robot, at you. \"Please,\" she says. \"Two more. Just two more, and she lives.\"",
             "Pasos en la escalera. Ada Kessler aparece en la puerta con Lily dormida en brazos, envuelta en una manta. Mira las cápsulas, al robot, a vosotros. \"Por favor\", dice. \"Dos más. Solo dos más, y ella vivirá.\""),

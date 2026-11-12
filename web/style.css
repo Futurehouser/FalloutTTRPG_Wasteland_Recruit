@@ -778,3 +778,28 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .qs-clue { display: grid; gap: 2px; padding: 8px 12px; border-radius: 8px; background: rgba(255, 255, 255, .04); font-size: 14px; }
 .qs-clue span { color: var(--muted); }
 .qs-top { margin-top: 10px; }
+
+/* ---- quest encounters (quests.js) and the character creation guide (tutorials.js) */
+.qs-enc { margin: 12px 0; padding: 12px; border-radius: 12px; border: 1px solid var(--red, #c0392b); background: rgba(192, 57, 43, .08); }
+.qs-enc-h { font-size: 15px; margin-bottom: 6px; }
+.qs-enc-pcs { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin: 6px 0; }
+.qs-enc-pcs input { width: 70px; padding: 6px; text-align: center; }
+.qs-enc-list { margin: 6px 0 10px; padding-left: 20px; }
+.qs-enc-go { width: 100%; }
+.tu-cflow { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.tu-cflow span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 99px; background: var(--panel2); border: 1px solid var(--line); font-size: 13px; }
+.tu-cflow b, .tu-cn { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--amber); color: #1a1a1a; font-size: 12px; flex: none; }
+.tu-cstep h3 { display: flex; align-items: center; gap: 10px; }
+.tu-cn { width: 28px; height: 28px; font-size: 15px; }
+.tu-sheet { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--amber-d); background: rgba(240, 190, 40, .06); font-size: 14px; }
+.tu-sheet b { color: var(--amber); }
+.tu-ctable { display: grid; gap: 4px; margin: 10px 0; font-size: 14px; }
+.tu-crow { display: grid; grid-template-columns: minmax(110px, 1fr) 2fr; gap: 10px; padding: 7px 10px; border-radius: 8px; background: var(--panel2); line-height: 1.4; }
+.tu-chead { background: none; color: var(--muted); font-size: 12px; text-transform: uppercase; padding-bottom: 0; }
+.tu-cbuild { margin-top: 10px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel2); }
+.tu-csp { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 10px 0 4px; }
+.tu-ca { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.tu-ca b { font-size: 13px; color: var(--amber); }
+.tu-ca span { font-size: 22px; font-weight: 800; }
+.tu-ca .btn { width: 100%; max-width: 44px; padding: 6px 0; font-size: 18px; }
+@media (max-width: 560px) { .tu-csp { gap: 3px; } .tu-crow { grid-template-columns: 1fr; gap: 2px; } }
