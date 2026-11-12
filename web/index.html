@@ -36,6 +36,7 @@
     <button data-page="tables"><span class="n">14</span>Table Search</button>
     <button data-page="dice"><span class="n">15</span>Dice Roller</button>
     <button data-page="maps"><span class="n">16</span>Maps</button>
+    <button data-page="quests"><span class="n">17</span>Quests</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
   </nav>
   <div class="foot">Version <span id="app-version"></span><br>Fan-made tool for the Fallout 2d20 tabletop game.</div>
@@ -66,6 +67,7 @@
       <button class="tile" data-go="tables"><span class="ic">&#128269;</span><b>Table Search</b><small>Weapons, armor, mods, items, food, chems and enemies</small></button>
       <button class="tile" data-go="dice"><span class="ic">&#127922;</span><b>Dice Roller</b><small>Roll d20s, combat dice and d6s</small></button>
       <button class="tile" data-go="maps"><span class="ic">&#128506;&#xFE0F;</span><b>Maps</b><small>Quest maps in Pip-Boy style</small></button>
+      <button class="tile" data-go="quests"><span class="ic">&#128220;</span><b>Quests</b><small>Whole quests for the game master to run</small></button>
     </div>
     <p class="hint tiles-hint">Hold and drag a tile to move it (click and drag with a mouse).
       <button class="linkbtn" id="tiles-reset">Reset order</button></p>
@@ -315,6 +317,13 @@
     <p class="hint">Pick a quest to open its map, or create your own. Tap a location to see its local map, and any mark to see who or what is there.</p>
     <div id="mp-root"></div>
   </section>
+
+  <!-- 17. quests -->
+  <section class="page" id="page-quests" data-title="Quests">
+    <h2>Quests</h2>
+    <p class="hint">Whole quests for the game master: story, scenes, tests, enemies, rewards and endings. Tap a quest to open it.</p>
+    <div id="qs-root"></div>
+  </section>
   <!-- 15. dice roller -->
   <section class="page" id="page-dice" data-title="Dice Roller">
     <h2>Dice Roller</h2>
@@ -392,5 +401,8 @@
 <script charset="utf-8" src="dice.js"></script>
 <script charset="utf-8" src="maps.js"></script>
 <script charset="utf-8" src="mapedit.js"></script>
+<script charset="utf-8" src="quests.js"></script>
+<script charset="utf-8" src="quest_bang.js"></script>
+<script charset="utf-8" src="quest_broadcast.js"></script>
 </body>
 </html>

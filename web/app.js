@@ -42,6 +42,7 @@ function showPage(id) {
   if (id === "tables" && typeof Tables !== "undefined") Tables.show();
   if (id === "dice" && typeof Dice !== "undefined") Dice.show();
   if (id === "maps" && typeof Maps !== "undefined") Maps.show();
+  if (id === "quests" && typeof Quests !== "undefined") Quests.show();
   if (typeof Walkers !== "undefined") Walkers.update(); // sprites walk on Home and My Team, and in a running fight
 }
 $("burger").onclick = () => document.body.classList.toggle("menu-open");
@@ -57,6 +58,7 @@ window.handleBack = () => {
   if (document.body.classList.contains("menu-open")) { document.body.classList.remove("menu-open"); return true; }
   if (currentPage === "roster" && openProfileId) { closeProfile(); return true; }
   if (currentPage === "maps" && typeof Maps !== "undefined" && Maps.back()) return true; // local map > general map > quest list
+  if (currentPage === "quests" && typeof Quests !== "undefined" && Quests.back()) return true; // quest > quest list
   if (currentPage !== "home") { showPage("home"); return true; }
   return false;
 };

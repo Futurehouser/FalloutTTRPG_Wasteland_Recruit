@@ -3451,3 +3451,15 @@ Object.assign(ES, {
 Object.assign(ES, {
   "Pick a quest to open its map, or create your own. Tap a location to see its local map, and any mark to see who or what is there.": "Elige una misión para abrir su mapa, o crea el tuyo. Toca un lugar para ver su mapa local, y cualquier marca para ver quién o qué hay ahí.",
 });
+
+// ---- v4.29.0: quests
+Object.assign(ES, {
+  "Whole quests for the game master to run": "Misiones completas para que las dirija el director de juego",
+  "Whole quests for the game master: story, scenes, tests, enemies, rewards and endings. Tap a quest to open it.": "Misiones completas para el director de juego: historia, escenas, pruebas, enemigos, recompensas y finales. Toca una misión para abrirla.",
+  "Quests": "Misiones",
+  "Open the maps": "Abrir los mapas",
+  "Read or paraphrase": "Lee o parafrasea",
+  "Game master": "Director de juego",
+  "Back to the top": "Volver arriba",
+  "Core rulebook, page {n}": "Libro básico, página {n}",
+});

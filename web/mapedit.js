@@ -588,5 +588,7 @@ const MapEdit = (() => {
   const active = () => qid !== null;
   const reopen = () => openMap(mid);
 
-  return { load, quests, create, open, remove, back, active, reopen };
+  const close = () => { qid = null; mid = null; pend = null; };
+
+  return { load, quests, create, open, remove, back, active, reopen, close };
 })();

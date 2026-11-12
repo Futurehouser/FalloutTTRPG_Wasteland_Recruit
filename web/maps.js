@@ -75,6 +75,10 @@ const Maps = (() => {
     { id: "bang", name: L("With a Bang, or a Whimper", "Con un estallido o con un gemido"), start: "bang_world",
       blurb: L("Core rulebook, chapter eleven: a murder mystery in a G.E.C.K. town in the Commonwealth.",
                "Libro básico, capítulo once: un misterio de asesinato en un pueblo G.E.C.K. de la Commonwealth.") },
+    { id: "broadcast", name: L("The Three O'Clock Broadcast", "La emisión de las tres"), start: "tb_world",
+      blurb: L("Original quest for level 1 characters: people vanish from their beds whenever a Vault-Tec jingle plays at 3 a.m.",
+               "Misión original para personajes de nivel 1: la gente desaparece de sus camas cada vez que suena una sintonía de Vault-Tec a las tres."),
+      note: L("The maps of an original quest made for this app (see Quests).", "Los mapas de una misión original hecha para esta app (ver Misiones).") },
   ];
 
   const MAPS = {
@@ -183,7 +187,7 @@ const Maps = (() => {
                   "El alcalde (o el jefe de la milicia). Os manda a la granja la noche del Día de los Fundadores, espera aquí vuestro informe y os pide que investiguéis con discreción al día siguiente.") },
         { x: 575, y: 430, n: L("Townsfolk", "Vecinos"), k: "npc",
           note: L("Act two. Locals by the fountain. Ask for rumours (CHA + Speech, difficulty 1): Joseph hadn't been seen for weeks, people whisper he went feral, and the doctor visited the farm.",
-                  "Acto dos. Vecinos junto a la fuente. Preguntad por rumores (CAR + Conversación, dificultad 1): hacía semanas que no se veía a Joseph, se dice que se volvió feral y el médico visitó la granja.") },
+                  "Acto dos. Vecinos junto a la fuente. Preguntad por rumores (CAR + Oratoria, dificultad 1): hacía semanas que no se veía a Joseph, se dice que se volvió feral y el médico visitó la granja.") },
         { x: 380, y: 420, n: L("Townsfolk", "Vecinos"), k: "npc",
           note: L("Human neighbours are scared their ghoul neighbours will 'go feral' too.", "Los vecinos humanos temen que sus vecinos necrófagos también se vuelvan ferales.") },
         { x: 155, y: 85, n: L("To the pub", "Al pub"), k: "exit", go: "bang_pub" },
@@ -212,7 +216,7 @@ const Maps = (() => {
       marks: [
         { x: 500, y: 330, n: L("Bartender", "Camarero"), k: "npc",
           note: L("Only gossips through a drinking game: moonshine shots at 3 caps (plus tip). After each shot ask a question with END + Speech, difficulty 1 + shots drunk. Knows Theresa drank here a lot lately, Joseph attacked the doctor three nights ago, and many regulars act strange.",
-                  "Solo cotillea con un juego de beber: chupitos de licor casero a 3 chapas (más propina). Tras cada chupito se pregunta con RES + Conversación, dificultad 1 + chupitos tomados. Sabe que Theresa bebía mucho aquí, que Joseph atacó al médico hace tres noches y que muchos clientes actúan raro.") },
+                  "Solo cotillea con un juego de beber: chupitos de licor casero a 3 chapas (más propina). Tras cada chupito se pregunta con RES + Oratoria, dificultad 1 + chupitos tomados. Sabe que Theresa bebía mucho aquí, que Joseph atacó al médico hace tres noches y que muchos clientes actúan raro.") },
         { x: 395, y: 245, n: L("Regulars", "Clientes"), k: "npc", note: L("Locals at the bar. They know no useful gossip.", "Vecinos en la barra. No saben nada útil.") },
         { x: 620, y: 450, n: L("Regulars", "Clientes"), k: "npc", note: L("Locals at the bar. They know no useful gossip.", "Vecinos en la barra. No saben nada útil.") },
         { x: 500, y: 620, n: L("To the square", "A la plaza"), k: "exit", go: "bang_square" },
@@ -247,7 +251,7 @@ const Maps = (() => {
         { x: 535, y: 470, n: L("Bloody sheets", "Sábanas ensangrentadas"), k: "item", note: L("An empty room; the bed sheets are stained with fresh blood.", "Una sala vacía; las sábanas tienen sangre fresca.") },
         { x: 765, y: 470, n: L("Doctor", "Médico"), k: "npc",
           note: L("Sobbing over a clipboard. Calm them first ((CHA or INT) + Speech, difficulty 0). A hidden device in the cold fusion generator is stealing memories and sending a signal; the clipboard has its coordinates. They are losing their memory too.",
-                  "Llora abrazado a una carpeta. Primero hay que calmarle ((CAR o INT) + Conversación, dificultad 0). Un dispositivo oculto en el generador de fusión fría roba recuerdos y emite una señal; la carpeta tiene sus coordenadas. Él también está perdiendo la memoria.") },
+                  "Llora abrazado a una carpeta. Primero hay que calmarle ((CAR o INT) + Oratoria, dificultad 0). Un dispositivo oculto en el generador de fusión fría roba recuerdos y emite una señal; la carpeta tiene sus coordenadas. Él también está perdiendo la memoria.") },
         { x: 210, y: 470, n: L("Jesse Pedigrue\n(synth replica)", "Jesse Pedigrue\n(réplica sintética)"), k: "enemy",
           note: L("Act two, encounter 2A: when you come back to the sitting room, the mayor and several townsfolk are synth replicas, and they open fire.",
                   "Acto dos, encuentro 2A: al volver a la sala de espera, el alcalde y varios vecinos son réplicas sintéticas y abren fuego.") },
@@ -364,6 +368,241 @@ const Maps = (() => {
         { x: 550, y: 625, n: L("Metal door", "Puerta de metal"), k: "exit", go: "bang_compound" },
       ],
     },
+
+    // ============================================================ The Three O'Clock Broadcast (quests: quest_broadcast.js)
+    tb_world: {
+      title: L("Sweetwater Crossing and Kettle Hill", "Cruce de Aguadulce y la colina del Caldero"), w: 1600, h: 1000, seed: 111, back: null,
+      draw: r => [
+        D.grass(r, 0, 0, 1600, 1000, 380),
+        // the creek
+        D.path("M420 0C470 160 380 300 450 430S560 640 500 800S430 930 470 1000", "water"),
+        D.path("M444 0C494 160 404 300 474 430S584 640 524 800S454 930 494 1000", "water"),
+        D.text(395, 220, L("Sweetwater creek", "Arroyo Aguadulce"), "lbl lbl-dim lbl-v"),
+        // the old road through the hamlet
+        D.path("M0 600C300 590 520 560 760 575S1150 640 1600 610", "road"),
+        D.text(200, 572, L("Old road", "Carretera vieja"), "lbl lbl-dim lbl-s"),
+        // the hamlet: fields and houses
+        D.rows(560, 330, 230, 120, 14), D.rows(820, 330, 150, 120, 14), D.rows(180, 640, 210, 150, 14),
+        D.rect(600, 500, 46, 34), D.rect(670, 495, 40, 30), D.rect(735, 505, 52, 36), D.rect(640, 620, 40, 30), D.rect(720, 615, 36, 30), D.rect(800, 600, 60, 34),
+        D.rect(230, 560, 50, 40), D.rect(300, 590, 46, 50, "bld bld-barn"),
+        D.text(700, 470, L("Sweetwater Crossing", "Cruce de Aguadulce"), "lbl lbl-big"),
+        D.text(285, 815, L("Barrow farm", "Granja Barrow"), "lbl lbl-dim"),
+        D.rect(670, 300, 22, 22, "box"), D.text(681, 290, L("North field", "Campo norte"), "lbl lbl-dim lbl-s"),
+        // Kettle Hill and the line of scorched circles that leads to it
+        D.hills(1100, 380, 230, 150, 4), D.trees(r, 900, 230, 1300, 520, 26, 10),
+        D.text(1100, 200, L("Kettle Hill", "Colina del Caldero"), "lbl lbl-big"),
+        ...[[720, 330], [790, 345], [860, 360], [930, 372], [1000, 380], [1070, 388]].map(([x, y]) => D.circ(x, y, 8, "lights")),
+        D.path("M1292 370C1320 380 1330 400 1318 420", "trail"),
+        // the old radio mast and Dez's shack
+        D.path("M780 590C900 680 1020 720 1180 730", "trail"), D.text(960, 730, L("Half an hour on foot", "Media hora a pie"), "lbl lbl-dim lbl-s"),
+        D.path("M1220 640L1190 800M1220 640L1250 800M1200 740h40M1195 770h50M1210 690h20", "tower"),
+        D.rect(1270, 770, 50, 34), D.text(1225, 860, L("Old radio mast", "Vieja antena de radio"), "lbl lbl-dim"),
+        D.rubble(r, 1300, 60, 1590, 220, 22), D.text(1450, 245, L("Ruins", "Ruinas"), "lbl lbl-dim lbl-s"),
+        D.compass(1520, 380),
+      ],
+      marks: [
+        { x: 681, y: 311, n: L("Watch post", "Puesto de guardia"), k: "loc", go: "tb_post" },
+        { x: 265, y: 600, n: L("Barrow farm", "Granja Barrow"), k: "loc", go: "tb_farm" },
+        { x: 700, y: 560, n: L("The hamlet", "La aldea"), k: "loc", go: "tb_town" },
+        { x: 1230, y: 720, n: L("Radio mast", "Antena de radio"), k: "loc", go: "tb_mast" },
+        { x: 1318, y: 420, n: L("Hidden hatch", "Escotilla oculta"), k: "loc", go: "tb_hill" },
+      ],
+    },
+
+    tb_post: {
+      title: L("The north field watch post", "El puesto de guardia del campo norte"), w: 1000, h: 700, seed: 121, back: "tb_world",
+      draw: r => [
+        D.grass(r, 0, 0, 1000, 700, 300),
+        D.rows(80, 360, 380, 260, 18), D.rows(560, 80, 360, 200, 18),
+        D.text(270, 655, L("Corn rows", "Hileras de maíz"), "lbl lbl-dim lbl-s"),
+        D.rect(330, 170, 140, 120), D.path("M330 170l140 120M470 170l-140 120", "wall wall-thin"),
+        D.path("M330 290l-30 40M470 290l30 40", "wall"), D.text(400, 155, L("Platform on stilts", "Plataforma sobre pilotes"), "lbl lbl-room"),
+        ...[[560, 330], [640, 340], [720, 352], [800, 362], [880, 372], [960, 380]].map(([x, y]) => D.circ(x, y, 22, "lights") + D.circ(x, y, 10, "lights")),
+        D.text(760, 420, L("Scorched circles, every few metres", "Círculos chamuscados cada pocos metros"), "lbl lbl-dim lbl-s"),
+        D.path("M0 640C200 620 300 520 330 300", "track"), D.text(110, 600, L("Path to the hamlet", "Camino a la aldea"), "lbl lbl-dim lbl-s"),
+        D.compass(940, 80),
+      ],
+      marks: [
+        { x: 370, y: 210, n: L("Joan's rifle", "El rifle de Joan"), k: "item",
+          note: L("Still loaded, leaning on the rail. Joan's tracks go up the ladder and never come down (PER + Survival, difficulty 1).",
+                  "Aún cargado, apoyado en la barandilla. Las huellas de Joan suben por la escalera y nunca bajan (PER + Supervivencia, dificultad 1).") },
+        { x: 440, y: 255, n: L("Sleep tonic", "Tónico para dormir"), k: "item",
+          note: L("A small brown bottle with the clinic's label and a tipped-over cup. The dregs smell of a heavy dose of Med-X (PER + Medicine, difficulty 1).",
+                  "Un frasquito marrón con la etiqueta de la clínica y una taza volcada. Los posos huelen a una dosis fuerte de Med-X (PER + Medicina, dificultad 1).") },
+        { x: 640, y: 340, n: L("Scorched circles", "Círculos chamuscados"), k: "item",
+          note: L("Flattened, burned grass in neat circles, with drops of pre-war machine oil: a small downward jet, like a household robot's (INT + Repair, difficulty 1). They lead east to Kettle Hill.",
+                  "Hierba aplastada y quemada en círculos perfectos, con gotas de aceite de máquina de antes de la guerra: un pequeño propulsor hacia abajo, como el de un robot doméstico (INT + Reparar, dificultad 1). Llevan al este, a la colina del Caldero.") },
+        { x: 945, y: 330, n: L("To Kettle Hill", "A la colina del Caldero"), k: "exit", go: "tb_hill" },
+      ],
+    },
+
+    tb_farm: {
+      title: L("The Barrow farm", "La granja de los Barrow"), w: 1000, h: 700, seed: 131, back: "tb_world",
+      draw: r => [
+        D.grass(r, 0, 0, 1000, 700, 260),
+        D.rows(560, 360, 380, 280, 18), D.rows(60, 470, 230, 190, 18), D.text(750, 670, L("Tato and corn fields", "Campos de tatos y maíz"), "lbl lbl-dim lbl-s"),
+        D.rect(200, 140, 300, 220), D.line([[350, 140], [350, 360]]), D.door(350, 200, 350, 250), D.door(200, 230, 200, 280),
+        D.text(275, 165, L("Kitchen", "Cocina"), "lbl lbl-room"), D.text(425, 165, L("Ollie's room", "Cuarto de Ollie"), "lbl lbl-room"),
+        D.path("M500 260h12M500 300h12", "wall"), D.text(560, 285, L("Window", "Ventana"), "lbl lbl-dim lbl-s"),
+        D.rect(240, 390, 130, 70, "bld bld-in"), D.text(305, 485, L("Root cellar (trapdoor)", "Bodega (trampilla)"), "lbl lbl-dim lbl-s"),
+        D.rect(640, 120, 180, 150, "bld bld-barn"), D.line([[640, 120], [730, 85], [820, 120]]), D.text(730, 75, L("Barn", "Granero"), "lbl"),
+        D.path("M0 330C90 330 150 300 198 255", "track"), D.text(70, 305, L("To the hamlet", "A la aldea"), "lbl lbl-dim lbl-s"),
+        D.compass(945, 80),
+      ],
+      marks: [
+        { x: 430, y: 290, n: L("Ollie Barrow", "Ollie Barrow"), k: "npc",
+          note: L("Tom's son, sixteen, angry and grieving. Blames the ghoul at the mast. Dr. Kessler gave him a sleep tonic this morning: he'll be taken tonight at 3:00.",
+                  "El hijo de Tom, dieciséis años, furioso y dolido. Culpa al necrófago de la antena. La doctora Kessler le dio un tónico para dormir esta mañana: se lo llevarán esta noche a las 3:00.") },
+        { x: 270, y: 230, n: L("Kitchen radio", "Radio de la cocina"), k: "item",
+          note: L("The night Tom vanished it played \"that cheerful song\" at 3:00.", "La noche que desapareció Tom tocó \"esa canción alegre\" a las 3:00.") },
+        { x: 290, y: 425, n: L("Radroaches", "Cucarachas radiactivas"), k: "enemy",
+          note: L("Encounter 1A: one per PC, hiding among the sacks; they jump on whoever comes down first.", "Encuentro 1A: una por PJ, escondidas entre los sacos; saltan sobre el primero que baja.") },
+        { x: 345, y: 420, n: L("Tom's box", "La caja de Tom"), k: "loot",
+          note: L("2d20 caps and Tom's notebook: \"3:00 again. The Vault-Tec song... Doc's tonic tomorrow.\"", "2d20 chapas y el cuaderno de Tom: \"Otra vez a las 3:00. La canción de Vault-Tec... Mañana, el tónico de la doctora.\"") },
+        { x: 600, y: 285, n: L("3 o'clock visit", "Visita de las tres"), k: "item",
+          note: L("Night two: at 3:00 Mister Welcome floats down from Kettle Hill and slides the sleeping Ollie out through this window.", "Segunda noche: a las 3:00 el Señor Bienvenido baja flotando de la colina del Caldero y saca a Ollie dormido por esta ventana.") },
+      ],
+    },
+
+    tb_town: {
+      title: L("Sweetwater Crossing", "Cruce de Aguadulce"), w: 1000, h: 700, seed: 141, back: "tb_world",
+      draw: r => [
+        D.grass(r, 0, 0, 1000, 700, 200),
+        D.path("M80 0C130 160 60 320 120 470S90 640 110 700", "water"), D.path("M102 0C152 160 82 320 142 470S112 640 132 700", "water"),
+        D.path("M140 380C400 360 600 380 1000 360", "road"),
+        D.circ(520, 300, 26, "stone"), D.text(520, 345, L("Well", "Pozo"), "lbl lbl-dim lbl-s"),
+        D.rect(380, 120, 260, 130), D.text(510, 105, L("Ruth's hall", "Casa comunal"), "lbl"),
+        D.rect(250, 430, 230, 160), D.line([[390, 430], [390, 590]]), D.door(390, 480, 390, 530), D.door(300, 430, 350, 430),
+        D.text(320, 615, L("Clinic", "Clínica"), "lbl"), D.text(320, 455, L("Surgery", "Consulta"), "lbl lbl-room"), D.text(435, 455, L("Back room", "Cuarto"), "lbl lbl-room"),
+        D.rect(660, 420, 230, 150), D.rect(700, 600, 150, 40, "box"), D.text(775, 665, L("Old pumps", "Surtidores viejos"), "lbl lbl-dim lbl-s"),
+        D.text(775, 405, L("Pell's trading post", "Puesto de Pell"), "lbl"),
+        D.rect(720, 120, 90, 70), D.rect(840, 150, 80, 70), D.rect(190, 150, 80, 70),
+        D.compass(945, 80),
+      ],
+      marks: [
+        { x: 510, y: 190, n: L("Ruth Calloway", "Ruth Calloway"), k: "npc",
+          note: L("The hamlet's leader. Pays 50 caps each. Asked directly (CHA + Speech, difficulty 1), she remembers all three missing went to the clinic for bad sleep.",
+                  "La líder de la aldea. Paga 50 chapas a cada uno. Si se lo preguntan directamente (CAR + Oratoria, dificultad 1), recuerda que los tres desaparecidos fueron a la clínica porque dormían mal.") },
+        { x: 320, y: 530, n: L("Dr. Ada Kessler", "Doctora Ada Kessler"), k: "npc",
+          note: L("Kind, exhausted, shaking hands. The culprit. Confronting her: CHA + Speech, difficulty 3, minus 1 per clue shown.",
+                  "Amable, agotada, con manos temblorosas. La culpable. Enfrentarse a ella: CAR + Oratoria, dificultad 3, menos 1 por cada pista que le enseñen.") },
+        { x: 440, y: 545, n: L("Lily", "Lily"), k: "npc",
+          note: L("Nine, coughing: advanced radiation sickness (PER + Medicine, difficulty 2). Her drawings show \"Mama's flying friend\" with three arms over a hill.",
+                  "Nueve años, tose: enfermedad por radiación avanzada (PER + Medicina, dificultad 2). Sus dibujos muestran \"el amigo volador de mamá\" con tres brazos sobre una colina.") },
+        { x: 270, y: 470, n: L("Ada's drawer", "Cajón de Ada"), k: "item",
+          note: L("Locked (PER + Lockpick, difficulty 1): a Shelter 7-B pamphlet, \"the medical wing opens at 6 residents\", and the hatch code.",
+                  "Cerrado (PER + Forzar cerraduras, dificultad 1): un folleto del Refugio 7-B, \"el ala médica se abre con 6 residentes\", y el código de la escotilla.") },
+        { x: 740, y: 490, n: L("Marcus Pell", "Marcus Pell"), k: "npc",
+          note: L("Red herring. His ledger (CHA + Barter, difficulty 2) shows Ada bought 12 Med-X this month. He waters down his purified water (PER + Survival, difficulty 1).",
+                  "Pista falsa. Su libro (CAR + Trueque, dificultad 2) muestra que Ada compró 12 Med-X este mes. Agua el agua depurada que vende (PER + Supervivencia, dificultad 1).") },
+        { x: 560, y: 420, n: L("The mob", "La turba"), k: "enemy",
+          note: L("Midday: Ollie and five settlers go for Dez with a rope. Talk them down (CHA + Speech, difficulty 2, minus 1 per piece of evidence) or brawl with three of them (raider stats, unarmed).",
+                  "A mediodía: Ollie y cinco vecinos van a por Dez con una cuerda. Calmadlos (CAR + Oratoria, dificultad 2, menos 1 por prueba) o pelead con tres (ficha de saqueador, sin armas).") },
+        { x: 950, y: 360, n: L("To the radio mast", "A la antena de radio"), k: "exit", go: "tb_mast" },
+        { x: 160, y: 360, n: L("To the Barrow farm", "A la granja Barrow"), k: "exit", go: "tb_farm" },
+      ],
+    },
+
+    tb_mast: {
+      title: L("The old radio mast", "La vieja antena de radio"), w: 1000, h: 700, seed: 151, back: "tb_world",
+      draw: r => [
+        D.grass(r, 0, 0, 1000, 700, 260, "grass grass-pale"), D.rubble(r, 650, 450, 980, 680, 20),
+        D.path("M420 80L330 520M420 80L510 520M350 420h140M370 320h100M390 220h60M335 500l170 -100M505 500l-170 -100", "tower"),
+        D.circ(420, 80, 14, "lamp"), D.text(420, 50, L("Rusted transmitter tower", "Torre emisora oxidada"), "lbl lbl-dim lbl-s"),
+        D.rect(580, 300, 170, 120), D.door(580, 340, 580, 380), D.text(665, 285, L("Dez's shack", "Chabola de Dez"), "lbl"),
+        D.rect(690, 330, 40, 30, "box"),
+        D.path("M0 620C200 600 330 560 420 520", "track"), D.text(120, 590, L("Trail to the hamlet", "Sendero a la aldea"), "lbl lbl-dim lbl-s"),
+        D.compass(940, 80),
+      ],
+      marks: [
+        { x: 640, y: 380, n: L("Dez", "Dez"), k: "npc",
+          note: L("Gentle ghoul hermit, the town's favourite suspect. Saw a three-armed flying thing carry Tom to Kettle Hill and keeps a notebook of every 3:00 broadcast.",
+                  "Ermitaño necrófago amable, el sospechoso favorito del pueblo. Vio una cosa voladora de tres brazos llevar a Tom a la colina del Caldero y apunta cada emisión de las 3:00 en un cuaderno.") },
+        { x: 470, y: 470, n: L("Scab and Tinny", "Costra y Latitas"), k: "enemy",
+          note: L("Encounter 2A: two raider scouts (three with 4-5 PCs) roughing Dez up for \"Vault-Tec loot\". Cowards: they flee when one drops. Scare them (CHA + Speech or a weapon skill, difficulty 2), trick them (difficulty 1) or pay 30 caps.",
+                  "Encuentro 2A: dos exploradores saqueadores (tres con 4-5 PJ) zarandeando a Dez por un \"botín de Vault-Tec\". Cobardes: huyen cuando cae uno. Asustadlos (CAR + Oratoria o una habilidad de armas, dificultad 2), engañadlos (dificultad 1) o pagad 30 chapas.") },
+        { x: 710, y: 345, n: L("Old receiver", "Receptor viejo"), k: "item",
+          note: L("Runs on a car battery. INT + Science, difficulty 1: the broadcast comes from inside Kettle Hill.", "Funciona con una batería de coche. INT + Ciencia, dificultad 1: la emisión sale de dentro de la colina del Caldero.") },
+        { x: 60, y: 610, n: L("To the hamlet", "A la aldea"), k: "exit", go: "tb_town" },
+      ],
+    },
+
+    tb_hill: {
+      title: L("Kettle Hill, far side", "La colina del Caldero, cara oculta"), w: 1000, h: 700, seed: 161, back: "tb_world",
+      draw: r => [
+        D.grass(r, 0, 0, 1000, 700, 340),
+        D.hills(380, 300, 420, 260, 4),
+        D.trees(r, 560, 360, 760, 520, 22, 9), D.text(660, 545, L("Dead brambles", "Zarzas secas"), "lbl lbl-dim lbl-s"),
+        D.circ(700, 420, 70, "lights"), D.circ(700, 420, 34, "lights"),
+        D.circ(700, 420, 28, "stone"), D.path("M680 420h40M700 400v40", "wall"),
+        ...[[180, 560], [260, 600], [880, 300], [820, 610]].map(([x, y]) => D.ell(x, y, 26, 14, "ruin")),
+        D.text(230, 650, L("Mole rat burrows", "Madrigueras de ratas topo"), "lbl lbl-dim lbl-s"),
+        D.text(380, 300, L("Top of the hill", "Cima"), "lbl lbl-dim"),
+        D.compass(940, 80),
+      ],
+      marks: [
+        { x: 700, y: 420, n: L("Shelter 7-B hatch", "Escotilla del Refugio 7-B"), k: "exit", go: "tb_shelter",
+          note: L("Round steel hatch, blue and yellow under the rust. Keypad: the code from Ada's pamphlet, PER + Lockpick (difficulty 2) or INT + Science (difficulty 1, factory code 2077).",
+                  "Escotilla redonda de acero, azul y amarilla bajo el óxido. Teclado: el código del folleto de Ada, PER + Forzar cerraduras (dificultad 2) o INT + Ciencia (dificultad 1, código de fábrica 2077).") },
+        { x: 260, y: 600, n: L("Mole rats", "Ratas topo"), k: "enemy",
+          note: L("Encounter 3A: half as many as PCs, rounded up. They burrow and pop up anywhere nearby. PER + Survival (difficulty 1) spots the next one: +1d20 to hit it.",
+                  "Encuentro 3A: la mitad que PJ, redondeando hacia arriba. Excavan y salen en cualquier punto cercano. PER + Supervivencia (dificultad 1) adivina la siguiente: +1d20 para darle.") },
+        { x: 880, y: 300, n: L("Mole rats", "Ratas topo"), k: "enemy",
+          note: L("Encounter 3A: half as many as PCs, rounded up. They burrow and pop up anywhere nearby. PER + Survival (difficulty 1) spots the next one: +1d20 to hit it.",
+                  "Encuentro 3A: la mitad que PJ, redondeando hacia arriba. Excavan y salen en cualquier punto cercano. PER + Supervivencia (dificultad 1) adivina la siguiente: +1d20 para darle.") },
+        { x: 60, y: 120, n: L("To the watch post", "Al puesto de guardia"), k: "exit", go: "tb_post" },
+      ],
+    },
+
+    tb_shelter: {
+      title: L("Vault-Tec Shelter 7-B", "Refugio 7-B de Vault-Tec"), w: 1000, h: 700, seed: 171, back: "tb_hill",
+      draw: r => [
+        D.rect(40, 40, 920, 620, "bld bld-hall"),
+        // entrance and reception
+        D.rect(60, 280, 200, 160, "bld bld-in"), D.text(160, 300, L("Reception", "Recepción"), "lbl lbl-room"), D.rect(110, 380, 100, 26, "counter"),
+        D.circ(60, 360, 30, "stone"),
+        // maintenance corridor (dark), to the pods
+        D.rect(260, 330, 330, 60, "bld bld-in"), D.text(425, 320, L("Maintenance corridor", "Pasillo de mantenimiento"), "lbl lbl-room"),
+        D.path("M270 360h310", "cable"),
+        // pods room
+        D.rect(590, 240, 220, 240, "bld bld-in"), D.text(700, 262, L("Orientation pods", "Cápsulas de orientación"), "lbl lbl-room lbl-s"),
+        ...[0, 1, 2].flatMap(i => [D.ell(630 + i * 70, 300, 22, 34, "barrel"), D.ell(630 + i * 70, 420, 22, 34, "barrel")]),
+        // overseer's office
+        D.rect(260, 80, 330, 200, "bld bld-in"), D.text(425, 105, L("Overseer's office", "Despacho del supervisor"), "lbl lbl-room"),
+        D.rect(330, 150, 120, 50, "box"),
+        D.door(425, 280, 470, 280), D.door(590, 140, 590, 200),
+        // medical wing, sealed
+        D.rect(810, 80, 140, 240, "bld bld-steel"), D.text(880, 70, L("Medical wing", "Ala médica"), "lbl lbl-room"),
+        D.rect(845, 170, 70, 40, "reactor"),
+        // storeroom
+        D.rect(260, 440, 330, 200, "bld bld-in"), D.text(425, 465, L("Storeroom", "Almacén"), "lbl lbl-room"),
+        ...[[300, 500], [360, 500], [420, 500], [300, 560], [360, 560]].map(([x, y]) => D.rect(x, y, 44, 34, "box")),
+        D.door(425, 390, 470, 390),
+        D.rect(810, 360, 140, 280, "bld bld-in"), D.text(880, 380, L("Living quarters\n(empty)", "Dormitorios\n(vacíos)"), "lbl lbl-room"),
+      ],
+      marks: [
+        { x: 700, y: 360, n: L("Mister Welcome", "Señor Bienvenido"), k: "npc",
+          note: L("A polite Mister Handy running the Occupancy Drive. Not hostile: sign up as residents (best ending), argue the rules (CHA + Speech, difficulty 3, 2 with the pamphlet), hack the terminal, or fight (encounter 3C: 10 HP, 2 flamer shots).",
+                  "Un Mister Handy educado que dirige la Campaña de Ocupación. No es hostil: apuntaos como residentes (el mejor final), discutid las normas (CAR + Oratoria, dificultad 3, 2 con el folleto), hackead la terminal o luchad (encuentro 3C: 10 PV, 2 disparos de lanzallamas).") },
+        { x: 700, y: 300, n: L("Tom, Greta, Joan", "Tom, Greta, Joan"), k: "item",
+          note: L("The missing, alive in cryo-sleep (Ollie too if he was taken). Opening a pod by hand: INT + Science, difficulty 1 each.",
+                  "Los desaparecidos, vivos en sueño criogénico (también Ollie si se lo llevaron). Abrir una cápsula a mano: INT + Ciencia, dificultad 1 cada una.") },
+        { x: 380, y: 360, n: L("Feral ghouls", "Necrófagos salvajes"), k: "enemy",
+          note: L("Encounter 3B (optional): two builders sealed in since 2077. Sneak past (AGI + Sneak, difficulty 1 each) or lock the corridor from the terminal.",
+                  "Encuentro 3B (opcional): dos constructores encerrados desde 2077. Pasad a escondidas (AGI + Sigilo, dificultad 1 cada uno) o cerrad el pasillo desde la terminal.") },
+        { x: 390, y: 175, n: L("Overseer terminal", "Terminal del supervisor"), k: "item",
+          note: L("INT + Science, difficulty 2 (or the app's Hack a Terminal): open the pods, set occupancy to 6/6, lock the corridor or shut the robot down. The desk has a 10mm pistol and 20 rounds.",
+                  "INT + Ciencia, dificultad 2 (o Hackear una terminal de la app): abrir las cápsulas, poner la ocupación a 6/6, cerrar el pasillo o apagar el robot. En el escritorio hay una pistola de 10 mm y 20 balas.") },
+        { x: 880, y: 250, n: L("Auto-doc", "Autodoc"), k: "item",
+          note: L("Sealed until OCCUPANCY 6/6. It can cure Lily.", "Sellado hasta OCUPACIÓN 6/6. Puede curar a Lily.") },
+        { x: 360, y: 600, n: L("Supplies", "Suministros"), k: "loot",
+          note: L("4 Stimpaks, 2 RadAway, 2 Rad-X, three Vault 7-B jumpsuits and canned food.", "4 Estimulantes, 2 Antirradiación, 2 Rad-X, tres monos del Refugio 7-B y comida enlatada.") },
+        { x: 160, y: 350, n: L("Ada and Lily", "Ada y Lily"), k: "npc",
+          note: L("The twist: Ada arrives with Lily in her arms and begs for \"just two more\". She won't fight, but she'll shield the auto-doc.",
+                  "El giro: Ada llega con Lily en brazos y suplica \"solo dos más\". No luchará, pero protegerá el autodoc con su cuerpo.") },
+        { x: 75, y: 330, n: L("Hatch", "Escotilla"), k: "exit", go: "tb_hill" },
+      ],
+    },
   };
 
   // ---------------------------------------------------------------- state and rendering
@@ -433,7 +672,7 @@ const Maps = (() => {
     const r = rng(m.seed);
     root().innerHTML = `
       <div class="mp-head">
-        <button type="button" class="btn mp-back" id="mp-back">&#9664;&#xFE0E; ${esc(T(m.back ? (m.back === "bang_world" ? L("General map", "Mapa general") : MAPS[m.back].title) : L("Quests", "Misiones")))}</button>
+        <button type="button" class="btn mp-back" id="mp-back">&#9664;&#xFE0E; ${esc(T(m.back ? (QUESTS.some(x => x.start === m.back) ? L("General map", "Mapa general") : MAPS[m.back].title) : L("Quests", "Misiones")))}</button>
         <div class="mp-title"><small>${esc(T(q.name))}</small><b>${esc(T(m.title))}</b></div>
       </div>
       <div class="mp-stage" id="mp-stage">
@@ -458,7 +697,7 @@ const Maps = (() => {
             "Toca un lugar para abrir su mapa local. Arrastra para mover el mapa; pellizca, usa la rueda del ratón o los botones para hacer zoom.")))}</div>
       <div class="mp-legend">${Object.keys(KIND).filter(k => m.marks.some(x => x.k === k)).map(k =>
         `<span><svg viewBox="-13 -13 26 26" width="20" height="20" class="mp-svg-mini">${ICON[k]}</svg>${esc(T(KIND[k]))}</span>`).join("")}</div>
-      <p class="hint mp-note">${esc(T(L("An approximate map made by this app from what the quest describes; the rulebook has no map for it.",
+      <p class="hint mp-note">${esc(T(q.note || L("An approximate map made by this app from what the quest describes; the rulebook has no map for it.",
         "Un mapa aproximado hecho por esta app a partir de lo que describe la misión; el libro no trae mapa.")))}</p>`;
     $("mp-back").onclick = back;
     $("mp-in").onclick = () => zoomBy(1.4);
@@ -604,5 +843,12 @@ const Maps = (() => {
   }
 
   // the map editor (mapedit.js) draws with the same pieces
-  return { show, back, kit: { D, rng, ICON, KIND, beep, L, renderList } };
+  // from the Quests page: open a quest's general map
+  function openFromGuide(id) {
+    if (!QUESTS.some(q => q.id === id)) return;
+    if (typeof MapEdit !== "undefined" && MapEdit.active()) MapEdit.close();
+    openQuest(id);
+  }
+
+  return { show, back, openQuest: openFromGuide, kit: { D, rng, ICON, KIND, beep, L, renderList } };
 })();
