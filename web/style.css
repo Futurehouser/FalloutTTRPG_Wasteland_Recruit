@@ -842,3 +842,10 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .gx-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .gx-load { font-size: 13px; color: var(--green); margin: 10px 0 0; font-weight: 700; }
 .gx-load.over { color: var(--red); }
+
+/* ---- caps carried (Create Character and the profile) */
+.caps-in { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
+.caps-in label { margin: 0; flex: none; }
+.caps-in input { width: 140px; }
+.caps-show { display: inline-block; margin-top: 14px; padding: 8px 14px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); }
+.caps-show b { color: var(--amber); font-size: 18px; margin-left: 4px; }

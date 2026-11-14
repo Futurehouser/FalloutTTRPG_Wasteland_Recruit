@@ -94,7 +94,7 @@ $("cg-keep").onclick = async () => {
   const perks = c.perks.map(([p, r]) => T("{perk} (rank {r})", { perk: T(p), r })).join(", ");
   await addToRoster({
     name: c.name, origin: T(c.origin), race: c.race, level: 1, special: Object.assign({}, c.special),
-    maxHp: c.hp, carryWeight: c.carry_max,
+    maxHp: c.hp, carryWeight: c.carry_max, caps: c.caps || 0,
     skills: Object.assign({}, c.skills), tags: c.tags.slice(), photo: null,
     weapons: [...new Set(c.weapons)].filter(n => WEAPONS_FOR_COMBAT[n]).map(n => ({ name: n, ammo: startAmmo(n, c.ammo), mods: [] })),
     apparel: (c.worn || []).filter(n => TABLES.apparel.some(a => a.n === n)).map(n => ({ name: n, mods: [] })),
@@ -423,7 +423,7 @@ function resetForm() {
   $("cr-hint").innerHTML = T("Fill in your character and save it. It will appear under <b>Saved Characters</b>.");
   $("cr-levelup").hidden = true;
   $("cr-name").value = ""; $("cr-origin").value = ""; $("cr-level").value = 1; $("cr-notes").value = "";
-  $("cr-race").value = ""; $("cr-maxhp").value = ""; $("cr-carry").value = "";
+  $("cr-race").value = ""; $("cr-maxhp").value = ""; $("cr-carry").value = ""; $("cr-caps").value = 0;
   G.SPECIAL.forEach(a => ($("cr-s-" + a).value = 5));
   G.SKILL_NAMES.forEach(s => { $("cr-k-" + safeName(s)).value = 0; $("cr-t-" + safeName(s)).checked = false; });
   crAvatar(); crAutoHints();
@@ -442,7 +442,7 @@ function fillForm(c, levelUp = false) {
   $("cr-hint").innerHTML = T("Change anything you need, then press <b>Save changes</b>. Nothing is changed until you save.");
   $("cr-name").value = c.name; $("cr-origin").value = c.origin || ""; $("cr-notes").value = c.notes || "";
   $("cr-race").value = c.race || "";
-  $("cr-maxhp").value = c.maxHp || ""; $("cr-carry").value = c.carryWeight || "";
+  $("cr-maxhp").value = c.maxHp || ""; $("cr-carry").value = c.carryWeight || ""; $("cr-caps").value = c.caps || 0;
   $("cr-level").value = Math.min(50, (c.level || 1) + (levelUp ? 1 : 0));
   G.SPECIAL.forEach(a => ($("cr-s-" + a).value = c.special[a]));
   G.SKILL_NAMES.forEach(s => {
@@ -551,6 +551,7 @@ $("cr-save").onclick = async () => {
     perkCards: crCards, race: $("cr-race").value || null,
     avatar: avatarFor({ race: crRace(), avatar: crLookAv }), sprite: spriteFor({ race: crRace(), sprite: crLookSp }),
     weapons: crGear.weapons, apparel: crGear.apparel, robomods: crGear.robomods, items: crGear.items,
+    caps: clamp($("cr-caps").value, 0, 9999999, 0),
     maxHp: $("cr-maxhp").value === "" ? null : clamp($("cr-maxhp").value, 1, 999, null),
     carryWeight: $("cr-carry").value === "" ? null : clamp($("cr-carry").value, 0, 9999, null),
   };
@@ -633,6 +634,7 @@ function renderRoster() {
             <div class="t"><b>${esc(perkName(p.n))}</b> <span class="muted">${T("Rank {r} of {m}", { r: pc.rank, m: p.max })}</span>
             <small style="white-space:normal">${p.desc.map(d => esc(T(d))).join(" ")}</small></div></div>`;
         }).join("") : `<div class="muted">${T("No perks yet. Tap <b>Suggest a perk</b> to get one picked for this character.")}</div>`}
+        <div class="caps-show">&#129689; ${T("Caps")} <b>${(c.caps || 0).toLocaleString(LANG)}</b></div>
         <h4>${T("Weapons")}</h4><div id="ro-weapons"></div>
         <div class="row" style="margin-top:8px"><div style="flex:3 1 200px"><select id="ro-wpick">${Object.keys(WEAPONS_FOR_COMBAT)
           .sort((a, b) => T(a).localeCompare(T(b))).map(n => `<option value="${esc(n)}">${esc(T(n))}</option>`).join("")}</select></div>
