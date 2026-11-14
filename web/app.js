@@ -46,6 +46,7 @@ function showPage(id) {
   if (typeof Walkers !== "undefined") Walkers.update(); // sprites walk on Home and My Team, and in a running fight
 }
 $("burger").onclick = () => document.body.classList.toggle("menu-open");
+$("go-home").onclick = () => showPage("home"); // the app's name at the top takes you Home
 $("scrim").onclick = () => document.body.classList.remove("menu-open");
 document.querySelectorAll("#nav button[data-page]").forEach(b => (b.onclick = () => showPage(b.dataset.page)));
 document.querySelectorAll(".tile[data-go]").forEach(b => (b.onclick = () => showPage(b.dataset.go)));
@@ -95,7 +96,9 @@ $("cg-keep").onclick = async () => {
     name: c.name, origin: T(c.origin), race: c.race, level: 1, special: Object.assign({}, c.special),
     maxHp: c.hp, carryWeight: c.carry_max,
     skills: Object.assign({}, c.skills), tags: c.tags.slice(), photo: null,
-    weapons: [...new Set(c.weapons)].filter(n => WEAPONS_FOR_COMBAT[n]).map(n => ({ name: n, ammo: startAmmo(n, c.ammo) })),
+    weapons: [...new Set(c.weapons)].filter(n => WEAPONS_FOR_COMBAT[n]).map(n => ({ name: n, ammo: startAmmo(n, c.ammo), mods: [] })),
+    apparel: (c.worn || []).filter(n => TABLES.apparel.some(a => a.n === n)).map(n => ({ name: n, mods: [] })),
+    items: (c.gear || []).map(g => String(g[0])).filter(n => TABLES.cons.some(r => r.n === n) || TABLES.tools.some(r => r.n === n)).map(n => ({ name: n, qty: 1 })),
     notes: c.gimmick_long + "\n\n" + T("Archetype: {a}. Equipment pack: {p}. Perks: {perks}.", { a: T(c.archetype), p: T(c.pack), perks: perks || T("none") }) +
            (c.survivor_traits.length ? " " + T("Traits: {t}.", { t: c.survivor_traits.map(x => T(x)).join(", ") }) : ""),
   });
@@ -363,6 +366,14 @@ $("pk-special").addEventListener("change", perkSearch);
 
 // ------------------------------------------------------------------ 5. create / edit character
 let ROSTER = [], editingId = null, crPhoto = null, crCards = [];
+// the equipment being edited in the form (gear.js draws and changes it)
+const emptyGear = () => ({ weapons: [], apparel: [], robomods: [], items: [] });
+let crGear = emptyGear(), crGearEd = null;
+function mountGear() {
+  if (typeof Gear === "undefined") return; // gear.js loads after this file; startApp mounts it
+  crGearEd = Gear.editor($("cr-gear"), crGear, () => crRace(),
+    () => ({ carry: $("cr-carry").value !== "" ? clamp($("cr-carry").value, 0, 9999, 0) : crRace() === "robot" ? 150 : autoCarry(crSpecial()) }));
+}
 G.SPECIAL.forEach(a => $("cr-special").insertAdjacentHTML("beforeend",
   `<div><label for="cr-s-${a}" title="${T(SPECIAL_FULL[a])}">${T(a)}</label><input type="number" id="cr-s-${a}" min="1" max="12" value="5" inputmode="numeric"></div>`));
 G.SKILLS.forEach(([s, a]) => $("cr-skills").insertAdjacentHTML("beforeend",
@@ -376,7 +387,7 @@ function setAvatar(el, c) {
 const crRace = () => $("cr-race").value || raceFromOrigin($("cr-origin").value);
 // the picture and walking sprite chosen in the form (null: the kind's default); only the kind's own choices are offered
 let crLookAv = null, crLookSp = null;
-const crAvatar = () => { setAvatar($("cr-avatar"), { photo: crPhoto, race: crRace(), avatar: crLookAv }); renderLooks(); };
+const crAvatar = () => { setAvatar($("cr-avatar"), { photo: crPhoto, race: crRace(), avatar: crLookAv }); renderLooks(); if (crGearEd) crGearEd.redraw(); };
 function renderLooks() {
   const race = crRace(), av = avatarFor({ race, avatar: crLookAv }), sp = spriteFor({ race, sprite: crLookSp });
   $("cr-avpick").innerHTML = AVATAR_CHOICES[race].map(k => `<button type="button" class="look ${k === av ? "on" : ""}" data-av="${k}" aria-pressed="${k === av}">
@@ -403,9 +414,11 @@ function crAutoHints() {
   const s = crSpecial();
   $("cr-maxhp").placeholder = T("Auto: {n}", { n: autoMaxHp(s) });
   $("cr-carry").placeholder = T("Auto: {n}", { n: autoCarry(s) });
+  if (crGearEd) crGearEd.redraw(); // the carry weight changed
 }
 function resetForm() {
   editingId = null; crPhoto = null; crCards = []; crLookAv = null; crLookSp = null;
+  crGear = emptyGear(); mountGear();
   $("cr-title").textContent = T("Create Character");
   $("cr-hint").innerHTML = T("Fill in your character and save it. It will appear under <b>Saved Characters</b>.");
   $("cr-levelup").hidden = true;
@@ -420,6 +433,10 @@ function resetForm() {
 }
 function fillForm(c, levelUp = false) {
   editingId = c.id; crPhoto = c.photo || null; crLookAv = c.avatar || null; crLookSp = c.sprite || null;
+  crGear = { weapons: (c.weapons || []).map(w => ({ name: w.name, ammo: w.ammo || 0, mods: (w.mods || []).slice() })),
+    apparel: (c.apparel || []).map(a => ({ name: a.name, mods: (a.mods || []).slice() })),
+    robomods: (c.robomods || []).slice(), items: (c.items || []).map(i => ({ name: i.name, qty: i.qty || 1 })) };
+  mountGear();
   crCards = JSON.parse(JSON.stringify(c.perkCards || []));
   $("cr-title").textContent = T(levelUp ? "Level up {name}" : "Edit {name}", { name: c.name });
   $("cr-hint").innerHTML = T("Change anything you need, then press <b>Save changes</b>. Nothing is changed until you save.");
@@ -533,6 +550,7 @@ $("cr-save").onclick = async () => {
     special: {}, skills: {}, tags: [], photo: crPhoto, notes: $("cr-notes").value.trim(),
     perkCards: crCards, race: $("cr-race").value || null,
     avatar: avatarFor({ race: crRace(), avatar: crLookAv }), sprite: spriteFor({ race: crRace(), sprite: crLookSp }),
+    weapons: crGear.weapons, apparel: crGear.apparel, robomods: crGear.robomods, items: crGear.items,
     maxHp: $("cr-maxhp").value === "" ? null : clamp($("cr-maxhp").value, 1, 999, null),
     carryWeight: $("cr-carry").value === "" ? null : clamp($("cr-carry").value, 0, 9999, null),
   };
@@ -617,9 +635,11 @@ function renderRoster() {
         }).join("") : `<div class="muted">${T("No perks yet. Tap <b>Suggest a perk</b> to get one picked for this character.")}</div>`}
         <h4>${T("Weapons")}</h4><div id="ro-weapons"></div>
         <div class="row" style="margin-top:8px"><div style="flex:3 1 200px"><select id="ro-wpick">${Object.keys(WEAPONS_FOR_COMBAT)
-          .map(n => `<option value="${esc(n)}">${esc(T(n))}</option>`).join("")}</select></div>
+          .sort((a, b) => T(a).localeCompare(T(b))).map(n => `<option value="${esc(n)}">${esc(T(n))}</option>`).join("")}</select></div>
           <div style="flex:1 1 110px"><button class="btn" id="ro-wadd" style="width:100%">${T("+ Add weapon")}</button></div></div>
         <div class="muted" style="font-size:12px;margin-top:6px">${T("The Combat Assistant arms this character with these weapons, and they can switch between them on their turn.")}</div>
+        ${typeof Gear !== "undefined" ? Gear.summary(c, c.carryWeight || ((c.race || raceFromOrigin(c.origin)) === "robot" ? 150 : autoCarry(c.special))) : ""}
+        <div class="muted" style="font-size:12px;margin-top:6px">${T("Change weapons, armor, mods and items with <b>Edit</b>.")}</div>
         ${c.notes ? `<h4>${T("Notes")}</h4><div style="white-space:pre-wrap;font-size:14px;line-height:1.45">${esc(c.notes)}</div>` : ""}
         <div class="bar" style="margin-top:16px"><button class="btn primary" id="ro-lvl">&#11014; ${T("Level up")}</button>
           <button class="btn" id="ro-sug">&#9733; ${T("Suggest a perk")}</button></div>
@@ -632,7 +652,7 @@ function renderRoster() {
       if (!WEAPONS_FOR_COMBAT[n]) return;
       c.weapons = (c.weapons || []).filter(w => WEAPONS_FOR_COMBAT[w.name]);
       if (c.weapons.some(w => w.name === n)) { toast(T("{name} already has that weapon", { name: c.name })); return; }
-      c.weapons.push({ name: n, ammo: startAmmo(n) });
+      c.weapons.push({ name: n, ammo: startAmmo(n), mods: [] });
       await storeRoster(); renderWeapons(c);
     };
     $("ro-back").onclick = closeProfile;
@@ -681,9 +701,9 @@ function renderWeapons(c) {
   const RANGE = { C: "Close", M: "Medium", L: "Long", X: "Extreme" };
   const ws = (c.weapons || []).filter(w => WEAPONS_FOR_COMBAT[w.name]);
   box.innerHTML = ws.length ? ws.map((w, i) => {
-    const d = WEAPONS_FOR_COMBAT[w.name], melee = isMeleeSkill(d.skill);
-    return `<div class="pcard wpn"><div class="t"><b>${esc(T(w.name))}</b>
-      <small>${T(d.skill)} &middot; ${d.dmg} ${T("CD")} ${T(d.type === "Energy" ? "Energy" : "Physical")}${d.eff && d.eff !== "-" ? " &middot; " + esc(TL(d.eff)) : ""}${melee ? "" : ` &middot; ${T("Fire rate")} ${typeof d.rate === "number" ? d.rate : 0} &middot; ${T(RANGE[d.range] || "Close")}`}</small></div>
+    const d = (typeof Gear !== "undefined" && Gear.weaponStats(w)) || WEAPONS_FOR_COMBAT[w.name], melee = isMeleeSkill(d.skill);
+    return `<div class="pcard wpn"><div class="t"><b>${esc(T(w.name))}</b>${(w.mods || []).length ? ` <span class="muted">+ ${w.mods.map(m => esc(T(m))).join(", ")}</span>` : ""}
+      <small>${typeof Gear !== "undefined" ? Gear.weaponLine(d) : `${T(d.skill)} &middot; ${d.dmg} ${T("CD")}`}</small></div>
       ${melee ? "" : `<label class="wpn-ammo"><small>${T(d.skill === "Throwing" || d.skill === "Explosives" ? "Throwables" : "Ammo")}</small><input type="number" min="0" max="9999" data-wammo="${i}" value="${w.ammo || 0}"></label>`}
       <button class="btn danger" data-wrm="${i}" title="${T("Remove weapon")}">&#10005;</button></div>`;
   }).join("") : `<div class="muted">${T("No weapons yet. Pick one below and tap <b>+ Add weapon</b>.")}</div>`;
@@ -805,6 +825,7 @@ async function startApp() {
   await Team.load();
   if (currentPage === "combat") Combat.show(); // a fight opened before the sprites were ready
   if (currentPage === "elber") Elber.show();   // opened before the saved characters were read
+  mountGear();
   if (currentPage === "roster") renderRoster(); // same for Saved Characters
   if (currentPage === "perks") fillCharSelect();
   buildLootEditor();

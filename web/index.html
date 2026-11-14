@@ -10,7 +10,7 @@
 <div class="topbar">
   <button class="burger" id="burger" aria-label="Open menu">&#9776;</button>
   <div style="min-width:0">
-    <h1>&#9762; Wasteland Recruit</h1>
+    <h1><button type="button" class="home-link" id="go-home" title="Home" aria-label="Wasteland Recruit: Home">&#9762; Wasteland Recruit</button></h1>
     <div class="where" id="where">Home</div>
   </div>
 </div>
@@ -197,6 +197,11 @@
         <div style="flex:1 1 90px"><button class="btn" id="cr-cardadd" style="width:100%">+ Add perk</button></div>
       </div>
       <div class="muted" id="cr-cardnote" style="font-size:12px;margin-top:6px"></div>
+    </div>
+    <div class="card">
+      <h4 class="sec" style="margin-top:0">Equipment</h4>
+      <p class="hint" style="margin-top:0">Weapons, armor and clothing (with their mods), robot modules and everything else the character carries, from the Table Search tables. Mods change the stats on their own.</p>
+      <div id="cr-gear"></div>
     </div>
     <div class="card">
       <label class="f">Notes (optional)</label>
@@ -401,6 +406,7 @@
 <script charset="utf-8" src="clant.js"></script>
 <script charset="utf-8" src="elber.js"></script>
 <script charset="utf-8" src="tables_data.js"></script>
+<script charset="utf-8" src="gear.js"></script>
 <script charset="utf-8" src="tables.js"></script>
 <script charset="utf-8" src="dice.js"></script>
 <script charset="utf-8" src="maps.js"></script>

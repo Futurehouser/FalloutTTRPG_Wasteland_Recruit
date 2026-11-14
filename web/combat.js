@@ -121,7 +121,9 @@ const Combat = (() => {
     Object.assign(m, { charId: c.id, name: c.name, hp, maxHp: hp, def: s.AGI >= 9 ? 2 : 1, init: s.PER + s.AGI,
       meleeBonus: s.STR >= 11 ? 3 : s.STR >= 9 ? 2 : s.STR >= 7 ? 1 : 0 });
     const ws = charWeapons(c);
-    if (ws.length) { m.weapon = ws[0].name; fromWeapon(m, ws[0].name); m.w.ammo = ws[0].ammo || 0; }
+    if (ws.length) { m.weapon = ws[0].name; fromWeapon(m, ws[0].name, ws[0].mods); m.w.ammo = ws[0].ammo || 0; }
+    const dr = typeof Gear !== "undefined" && Gear.torsoDR(c); // the armor and clothing in the character's profile
+    if (dr) m.dr = { p: dr.p, e: dr.e, r: dr.r, po: 0 };
     updateTN(m);
   }
   function updateTN(m) {
@@ -131,8 +133,8 @@ const Combat = (() => {
     m.w.tn = (c.special[G.SKILL_ATTR[sk]] || 5) + (c.skills[sk] || 0);
     m.w.crit = (c.tags || []).includes(sk) ? Math.max(1, c.skills[sk] || 1) : 1;
   }
-  function fromWeapon(m, name) {
-    const w = WEAPONS_FOR_COMBAT[name];
+  function fromWeapon(m, name, mods) {
+    const w = (typeof Gear !== "undefined" && Gear.weaponStats({ name, mods })) || WEAPONS_FOR_COMBAT[name]; // with the character's weapon mods
     if (!w) return;
     const effs = (w.eff || "").replace("Persist.", "Persistent").split(",").map(x => x.trim()).filter(x => x && x !== "-");
     Object.assign(m.w, { skill: w.skill, cd: w.dmg, type: w.type === "Energy" ? "e" : "p",
@@ -281,7 +283,7 @@ const Combat = (() => {
     root().querySelectorAll("[data-mweapon]").forEach(sel => (sel.onchange = () => {
       readSetupForm();
       const m = setup.members[+sel.dataset.mweapon], own = charWeapons(ROSTER.find(x => x.id === m.charId)).find(x => x.name === sel.value);
-      fromWeapon(m, sel.value);
+      fromWeapon(m, sel.value, own && own.mods);
       if (own) m.w.ammo = own.ammo || 0;
       renderSetup();
     }));
@@ -357,7 +359,7 @@ const Combat = (() => {
       const w = fightWeapon(m.weapon, m.w);
       // the other weapons in the character's profile, ready to switch to
       const others = charWeapons(ROSTER.find(x => x.id === m.charId)).filter(x => x.name !== m.weapon).map(x => {
-        const t = newMember(0); t.charId = m.charId; fromWeapon(t, x.name); t.w.ammo = x.ammo || 0;
+        const t = newMember(0); t.charId = m.charId; fromWeapon(t, x.name, x.mods); t.w.ammo = x.ammo || 0;
         return fightWeapon(x.name, t.w);
       });
       return { uid: "P" + i, charId: m.charId, name: m.name, hp: m.hp, maxHp: m.maxHp, def: m.def, init: m.init,

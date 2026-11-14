@@ -812,3 +812,33 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .look canvas { width: 48px; height: 60px; image-rendering: pixelated; }
 .look.on { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(240, 190, 40, .25); }
 .look:hover { border-color: var(--amber-d); }
+
+/* ---- the app's name at the top goes Home */
+.home-link { all: unset; cursor: pointer; }
+.home-link:hover, .home-link:focus-visible { text-decoration: underline; text-underline-offset: 4px; outline: none; }
+
+/* ---- equipment (gear.js) */
+.gx-add { display: flex; gap: 6px; margin: 6px 0; }
+.gx-add select { flex: 1; min-width: 0; }
+.gx-add input[type=number] { width: 70px; flex: none; padding: 8px; text-align: center; }
+.gx-add .btn { flex: none; }
+.gx-list { display: grid; gap: 6px; margin-bottom: 4px; }
+.gx-item { padding: 10px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); min-width: 0; }
+.gx-top { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.gx-top b { overflow-wrap: anywhere; }
+.gx-top .btn, .gx-row > .btn { flex: none; padding: 6px 10px; }
+.gx-stats { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.45; margin-top: 3px; overflow-wrap: anywhere; }
+.gx-mods { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-top: 8px; }
+.gx-mod small, .gx-qty small { display: block; font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.gx-mod select { width: 100%; padding: 7px; font-size: 13px; }
+.gx-qty { display: inline-block; margin-top: 8px; }
+.gx-qty input { width: 90px; padding: 7px; text-align: center; }
+.gx-row { display: flex; align-items: center; gap: 8px; }
+.gx-row .gx-qty { margin-top: 0; }
+.gx-grow { flex: 1; min-width: 0; }
+.gx-dr { font-size: 13px; margin: 4px 0 8px; }
+.gx-dr th, .gx-dr td { text-align: center; } .gx-dr td:first-child { text-align: left; }
+.gx-sub { font-size: 12px; margin: 8px 0 2px; }
+.gx-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.gx-load { font-size: 13px; color: var(--green); margin: 10px 0 0; font-weight: 700; }
+.gx-load.over { color: var(--red); }

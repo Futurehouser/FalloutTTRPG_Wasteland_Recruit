@@ -3489,3 +3489,32 @@ Object.assign(ES, {
   "Robot": "Robot",
   "Mister Handy": "Mister Handy",
 });
+
+// ---- v4.32.0: equipment
+Object.assign(ES, {
+  "Equipment": "Equipo",
+  "Weapons, armor and clothing (with their mods), robot modules and everything else the character carries, from the Table Search tables. Mods change the stats on their own.": "Armas, armadura y ropa (con sus modificaciones), módulos de robot y todo lo demás que lleva el personaje, de las tablas de Buscar en tablas. Las modificaciones cambian las estadísticas solas.",
+  "Remove": "Quitar",
+  "No mod": "Sin modificación",
+  "+ Add": "+ Añadir",
+  "How many": "Cuántos",
+  "No weapons yet.": "Aún no hay armas.",
+  "No armor or clothing yet.": "Aún no hay armadura ni ropa.",
+  "No robot modules yet.": "Aún no hay módulos de robot.",
+  "No items yet.": "Aún no hay objetos.",
+  "Armor and clothing": "Armadura y ropa",
+  "Robot modules": "Módulos de robot",
+  "Items": "Objetos",
+  "Food, drinks, chems, tools and other items": "Comida, bebida, drogas, herramientas y otros objetos",
+  "Damage resistance by location (everything worn there added up):": "Resistencia al daño por zona (sumando todo lo que se lleva ahí):",
+  "Damage resistance by location (physical / energy / radiation):": "Resistencia al daño por zona (física / energía / radiación):",
+  "Carried: {w} of {c} lbs": "Carga: {w} de {c} lb",
+  "over-encumbered": "sobrecargado",
+  "Phys.": "Fís.",
+  "Rad.": "Rad.",
+  "Frame": "Armazón",
+  "carry": "de carga",
+  "Throwables": "Arrojadizas",
+  "Change weapons, armor, mods and items with <b>Edit</b>.": "Cambia armas, armadura, modificaciones y objetos con <b>Editar</b>.",
+  "Tools and utility items": "Herramientas y objetos útiles",
+});
