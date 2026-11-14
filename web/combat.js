@@ -775,8 +775,9 @@ const Combat = (() => {
   }
 
   // ------------------------------------------------------------------ rewards
+  // XP for everyone, caps from the enemies' wealth, and the loot as items that can be handed to the characters
   function computeRewards() {
-    const lines = [], loot = [];
+    const lines = [], loot = [], items = [];
     let xp = 0, caps = 0;
     S.enemies.forEach(e => {
       const x = xpFor(e.level, e.type);
@@ -787,44 +788,119 @@ const Combat = (() => {
         const rolls = Array.from({ length: e.wealth }, d20), sum = rolls.reduce((a, b) => a + b, 0);
         caps += sum; loot.push(T("{name}: <b>{n} caps</b> ({w}d20: {rolls})", { name: esc(e.name), n: sum, w: e.wealth, rolls: rolls.join(", ") }));
       }
-      (e.inventory || []).forEach(i => loot.push(`${esc(e.name)}: ${esc(T(i))}`));
+      (e.inventory || []).forEach(i => items.push({ name: i, qty: 1, from: e.name }));
       e.attacks.filter(a => a.ranged && a.ammo).forEach(a => {
         const pool = (LOOT_POOLS.Ammunition || []).find(x => x[0] === a.ammo);
         const qty = pool ? pool[1] + scoreCD(Array.from({ length: pool[2] }, d6)).total : 1 + d6();
-        loot.push(`${esc(e.name)}: <b>${qty}</b> ${esc(T(a.ammo))}`);
+        items.push({ name: a.ammo, qty, from: e.name });
       });
       if (e.junk) {
         const faces = Array.from({ length: e.junk }, d6), fx = faces.filter(f => f >= 5).length;
-        for (let i = 0; i < fx; i++) { const j = lootLookup("Junk", d20() + d20()); if (j) loot.push(T("{name}: {item} (junk)", { name: esc(e.name), item: esc(T(j.name)) })); }
+        for (let i = 0; i < fx; i++) { const j = lootLookup("Junk", d20() + d20()); if (j) items.push({ name: j.name, qty: 1, from: e.name }); }
       }
       if (e.butchery) loot.push(T("{name} can be butchered: {x}", { name: esc(e.name), x: esc(T(e.butchery)) }));
       if (e.salvage) loot.push(T("{name} can be salvaged: {x}", { name: esc(e.name), x: esc(T(e.salvage)) }));
       if (e.notes) loot.push(`${esc(e.name)}: ${esc(e.notes)}`);
     });
-    return { xp, caps, lines, loot };
+    return { xp, caps, lines, loot, items };
+  }
+
+  // a loot roll made on the victory screen: the item and its quantity (fixed amount + combat dice, rolled for you)
+  function rollLoot(cat, roll) {
+    const e = lootLookup(cat, roll);
+    if (!e) return null;
+    const cd = e.cd ? scoreCD(Array.from({ length: e.cd }, d6)).total : 0;
+    return { name: e.name, qty: Math.max(1, (e.base || 1) + cd), from: T("Loot Roller: {cat}, roll {r}", { cat: T(cat), r: roll }) };
   }
 
   function renderVictory() {
     const R = S.rewards;
-    const saved = S.players.filter(p => p.charId && ROSTER.find(c => c.id === p.charId));
+    R.items = R.items || []; R.assign = R.assign || {};
+    const saved = S.players.filter(p => p.charId && ROSTER.find(c => c.id === p.charId))
+      .filter((p, i, a) => a.findIndex(x => x.charId === p.charId) === i);
+    if (!R.who) R.who = saved.map(p => p.charId);
+    const who = () => saved.filter(p => R.who.includes(p.charId));
+    const nameOf = id => (saved.find(p => p.charId === id) || {}).name || "";
+    // who gets each item: what was picked, or the next party member in turn
+    const target = i => {
+      const list = who(), a = R.assign[i];
+      if (a === "" || (a && list.some(p => p.charId === a))) return a;
+      return list.length ? list[i % list.length].charId : "";
+    };
+    const capsTo = () => (R.capsTo && R.capsTo !== "split" && who().some(p => p.charId === R.capsTo) ? R.capsTo : "split");
+    const pickOpts = (cur, withSplit) => (withSplit ? `<option value="split"${cur === "split" ? " selected" : ""}>${esc(T("Split evenly"))}</option>` : "") +
+      who().map(p => `<option value="${esc(p.charId)}"${cur === p.charId ? " selected" : ""}>${esc(p.name)}</option>`).join("") +
+      (withSplit ? "" : `<option value=""${cur === "" ? " selected" : ""}>${esc(T("Nobody (leave it)"))}</option>`);
+    const n = who().length, each = n ? Math.floor(R.caps / n) : 0;
+    const itemRows = R.items.map((it, i) => `<div class="rw-item"><div class="rw-name"><b>${esc(T(it.name))}</b> <span class="rw-qty">&times;${it.qty}</span>
+        <small>${esc(T(it.from || ""))}</small></div>
+        ${R.given ? `<span class="muted">${esc(target(i) ? nameOf(target(i)) : T("Nobody (leave it)"))}</span>`
+          : saved.length ? `<select data-rwi="${i}">${pickOpts(target(i), false)}</select>` : ""}
+        ${R.given ? "" : `<button class="btn danger" data-rwx="${i}" title="${esc(T("Remove"))}">&#10005;</button>`}</div>`).join("");
+
     root().innerHTML = `<div class="card victory"><div class="vt">&#9733; ${T("VICTORY!")} &#9733;</div>
       <p>${TP(S.round, "All enemies were dealt with in {n} round.", "All enemies were dealt with in {n} rounds.")}</p>
       <ul class="tight">${S.players.map(p => `<li><b>${esc(p.name)}</b>: ${p.status === "up" ? `${p.hp}/${p.maxHp} ${T("HP")}` : T("down (needs help)")}, ${T("{n} ammo left", { n: p.ammo })}</li>`).join("")}</ul>
-      <div class="badges"><span class="badge">${T("XP <b>{n}</b> each", { n: R.xp })}</span><span class="badge">${T("Caps")} <b>${R.caps}</b></span><span class="badge">${T("Items")} <b>${R.loot.length}</b></span></div>
+      <div class="badges"><span class="badge">${T("XP <b>{n}</b> each", { n: R.xp })}</span><span class="badge">${T("Caps")} <b>${R.caps}</b></span><span class="badge">${T("Items")} <b>${R.items.length}</b></span></div>
       <h4>${T("Experience (every party member gets the total)")}</h4><ul class="tight">${R.lines.map(l => `<li>${l}</li>`).join("")}</ul>
-      <h4>${T("Loot from the fallen (split it as the party decides)")}</h4>${R.loot.length ? `<ul class="tight">${R.loot.map(l => `<li>${l}</li>`).join("")}</ul>` : `<p class="muted">${T("Nothing to loot (only killed enemies can be looted).")}</p>`}
-      <p class="hint">${T("Caps and junk were rolled for you: caps are d20s equal to each enemy's wealth, junk is combat dice where each Effect is one junk item from the Junk table.")}</p>
-      <div class="bar">${saved.length ? `<button class="btn primary" id="cb-note">${saved.length === 1 ? T("Add rewards to the notes of {name}", { name: esc(saved[0].name) }) : T("Add rewards to the notes of {n} saved characters", { n: saved.length })}</button>` : ""}
+      ${R.loot.length ? `<h4>${T("What the enemies left")}</h4><ul class="tight">${R.loot.map(l => `<li>${l}</li>`).join("")}</ul>` : ""}
+
+      <h4>${T("Hand out the rewards")}</h4>
+      ${saved.length ? `<p class="hint" style="margin-top:0">${T("Tick who took part. Each one gets the XP; the caps are split or go to one of them; each item goes to whoever you pick.")}</p>
+        <div class="rw-who">${saved.map(p => `<label><input type="checkbox" data-rww="${esc(p.charId)}" ${R.who.includes(p.charId) ? "checked" : ""} ${R.given ? "disabled" : ""}> ${esc(p.name)}</label>`).join("")}</div>
+        <div class="rw-line">&#11088; <b>+${R.xp} ${T("XP")}</b> ${T("to each one ticked")}</div>
+        <div class="rw-line">&#129689; <b>${R.caps} ${T("caps")}</b> ${R.given ? "" : `<select id="rw-caps">${pickOpts(capsTo(), true)}</select>`}
+          ${capsTo() === "split" && n ? `<span class="muted">${T("{n} each", { n: each })}${R.caps % n ? ` (+${R.caps % n} ${T("to")} ${esc(who()[0].name)})` : ""}</span>` : ""}</div>`
+        : `<p class="muted">${T("Nobody in this fight is a saved character, so the rewards can't be added to a profile. Write them down by hand.")}</p>`}
+      <div class="rw-items">${itemRows || `<p class="muted">${T("No items yet. Roll some loot below.")}</p>`}</div>
+
+      ${R.given ? "" : `<details class="card rw-roll" open><summary>&#127922; ${T("Roll loot here")}</summary>
+        <p class="hint">${T("Same tables as the Loot Roller. The quantity's combat dice are rolled for you, and the item joins the loot above.")}</p>
+        <div class="row"><div><label class="f">${T("Item category")}</label><select id="rw-cat">${LOOT_CATEGORIES.map(c => `<option value="${esc(c)}"${c === R.lastCat ? " selected" : ""}>${esc(T(c))}</option>`).join("")}</select></div>
+          <div><label class="f">${T("2d20 result (optional)")}</label><input type="number" id="rw-roll" min="2" max="40" inputmode="numeric" placeholder="2 - 40"></div></div>
+        <div class="bar"><button class="btn primary" id="rw-go">&#127922; ${T("Roll 2d20 and add")}</button><button class="btn" id="rw-use">${T("Use my roll")}</button></div>
+        <div id="rw-last" class="muted">${R.lastRoll ? esc(R.lastRoll) : ""}</div></details>`}
+
+      <div class="bar">${saved.length ? (R.given ? `<span class="rw-done">&#10003; ${T("Rewards given")}</span>` : `<button class="btn primary" id="rw-give">&#127873; ${T("Give the rewards")}</button>`) : ""}
         <button class="btn" id="cb-new">${T("New combat")}</button></div></div>`;
-    if ($("cb-note")) $("cb-note").onclick = async () => {
-      const plain = s => s.replace(/<[^>]+>/g, "");
-      for (const p of saved) {
-        const c = ROSTER.find(x => x.id === p.charId);
-        c.notes = ((c.notes || "") + "\n\n" + T("Combat ({date}): +{xp} XP. Party loot: {caps} caps", { date: new Date().toLocaleDateString(LANG), xp: R.xp, caps: R.caps }) +
-          (R.loot.length ? "; " + R.loot.map(plain).join("; ") : "") + ".").trim();
-        await addToRoster(c);
-      }
-      $("cb-note").disabled = true; toast(T("Rewards added to {list}", { list: saved.map(p => p.name).join(", ") }));
+
+    const redraw = () => { save(); renderVictory(); };
+    root().querySelectorAll("[data-rww]").forEach(b => (b.onchange = () => {
+      R.who = saved.map(p => p.charId).filter(id => root().querySelector(`[data-rww="${id}"]`).checked);
+      redraw();
+    }));
+    root().querySelectorAll("[data-rwi]").forEach(sel => (sel.onchange = () => { R.assign[sel.dataset.rwi] = sel.value; save(); }));
+    root().querySelectorAll("[data-rwx]").forEach(b => (b.onclick = () => {
+      const k = +b.dataset.rwx;
+      R.items.splice(k, 1);
+      const a = {}; Object.entries(R.assign).forEach(([i, v]) => { i = +i; if (i < k) a[i] = v; else if (i > k) a[i - 1] = v; }); R.assign = a;
+      redraw();
+    }));
+    if ($("rw-caps")) $("rw-caps").onchange = () => { R.capsTo = $("rw-caps").value; redraw(); };
+    const addRoll = roll => {
+      const cat = $("rw-cat").value, it = rollLoot(cat, roll);
+      if (!it) { toast(T("Enter a number from 2 to 40.")); return; }
+      R.items.push(it); R.lastCat = cat;
+      R.lastRoll = T("{cat}, roll {r}: {qty} × {item}", { cat: T(cat), r: roll, qty: it.qty, item: T(it.name) });
+      redraw();
+    };
+    if ($("rw-go")) $("rw-go").onclick = () => addRoll(d20() + d20());
+    if ($("rw-use")) $("rw-use").onclick = () => { const r = num($("rw-roll").value, 0); addRoll(r >= 2 && r <= 40 ? r : NaN); };
+    if ($("rw-give")) $("rw-give").onclick = async () => {
+      const list = who();
+      if (!list.length) { toast(T("Tick at least one character")); return; }
+      const chars = id => ROSTER.find(c => c.id === id);
+      list.forEach(p => { const c = chars(p.charId); c.xp = (c.xp || 0) + R.xp; });
+      if (capsTo() === "split") list.forEach((p, i) => { const c = chars(p.charId); c.caps = (c.caps || 0) + Math.floor(R.caps / list.length) + (i === 0 ? R.caps % list.length : 0); });
+      else { const c = chars(capsTo()); c.caps = (c.caps || 0) + R.caps; }
+      R.items.forEach((it, i) => { const id = target(i); if (id && typeof Gear !== "undefined") Gear.give(chars(id), it.name, it.qty); });
+      R.assign = Object.fromEntries(R.items.map((_, i) => [i, target(i)])); // remember who got what
+      list.forEach(p => (chars(p.charId).updated = Date.now()));
+      await storeRoster();
+      R.given = true;
+      redraw();
+      const up = list.map(p => chars(p.charId)).filter(c => (c.xp || 0) >= xpForLevel((c.level || 1) + 1));
+      toast(T("Rewards given to {list}", { list: list.map(p => p.name).join(", ") }) + (up.length ? ". " + T("Ready to level up: {list}", { list: up.map(c => c.name).join(", ") }) : ""));
     };
     $("cb-new").onclick = () => { S = null; save(); renderSetup(); };
   }

@@ -166,8 +166,22 @@ function showLoot(roll, dice) {
   } else {
     h += `<div>${T("Quantity: <b>{n}</b>. No dice to roll.", { n: e.base || 1 })}</div>`;
   }
-  h += `<div class="muted" style="font-size:13px;margin-top:8px">${T("Tip: a player can spend 1 Luck point to shift the 2d20 result by up to the location's level.")}</div></div>`;
+  h += `<div class="muted" style="font-size:13px;margin-top:8px">${T("Tip: a player can spend 1 Luck point to shift the 2d20 result by up to the location's level.")}</div>`;
+  const people = ROSTER.slice().sort((a, b) => !!b.main - !!a.main || a.name.localeCompare(b.name));
+  h += people.length ? `<div class="lt-give"><label class="f">${T("Give it to")}</label><div class="row">
+      <div style="flex:3 1 160px"><select id="lt-who">${people.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}</select></div>
+      <div style="flex:1 1 70px"><input type="number" id="lt-qty" min="1" max="9999" value="${e.base || 1}" aria-label="${T("How many")}"></div>
+      <div style="flex:2 1 150px"><button class="btn primary" id="lt-give" style="width:100%">&#127873; ${T("Add to the character")}</button></div></div></div>`
+    : `<div class="muted" style="font-size:13px;margin-top:8px">${T("Save a character to be able to give them the loot.")}</div>`;
+  h += `</div>`;
   $("lt-out").innerHTML = h;
+  if ($("lt-give")) $("lt-give").onclick = async () => {
+    const c = ROSTER.find(x => x.id === $("lt-who").value), q = clamp($("lt-qty").value, 1, 9999, 1);
+    if (!c || typeof Gear === "undefined") return;
+    Gear.give(c, e.name, q); c.updated = Date.now();
+    await storeRoster();
+    toast(T("{qty} × {item} added to {name}", { qty: q, item: T(e.name), name: c.name }));
+  };
   if (e.cd) $("lt-cd").onclick = () => {
     const r = rollCombatDice(e.cd);
     const faces = r.faces.map(f => {
@@ -175,6 +189,7 @@ function showLoot(roll, dice) {
       return `<span class="die ${f >= 5 ? "fx" : v === 0 ? "zero" : ""}" title="${T("face {n}", { n: f })}">${v}${f >= 5 ? "*" : ""}</span>`;
     }).join("");
     $("lt-cdout").innerHTML = `<div class="dice">${faces}</div><div>${T("Total:")} <b>${e.base} + ${r.total} = ${e.base + r.total}</b> ${esc(T(e.name))} <span class="muted">(${T("* = Effect")})</span></div>`;
+    if ($("lt-qty")) $("lt-qty").value = Math.max(1, e.base + r.total); // the amount to give follows the roll
   };
 }
 $("lt-look").onclick = () => {
@@ -366,6 +381,8 @@ $("pk-special").addEventListener("change", perkSearch);
 
 // ------------------------------------------------------------------ 5. create / edit character
 let ROSTER = [], editingId = null, crPhoto = null, crCards = [];
+// total XP needed to reach a level (the rulebook's table: 0, 100, 300, 600, 1000...)
+const xpForLevel = l => 50 * l * (l - 1);
 // the equipment being edited in the form (gear.js draws and changes it)
 const emptyGear = () => ({ weapons: [], apparel: [], robomods: [], items: [] });
 let crGear = emptyGear(), crGearEd = null;
@@ -423,7 +440,7 @@ function resetForm() {
   $("cr-hint").innerHTML = T("Fill in your character and save it. It will appear under <b>Saved Characters</b>.");
   $("cr-levelup").hidden = true;
   $("cr-name").value = ""; $("cr-origin").value = ""; $("cr-level").value = 1; $("cr-notes").value = "";
-  $("cr-race").value = ""; $("cr-maxhp").value = ""; $("cr-carry").value = ""; $("cr-caps").value = 0;
+  $("cr-race").value = ""; $("cr-maxhp").value = ""; $("cr-carry").value = ""; $("cr-caps").value = 0; $("cr-xp").value = 0;
   G.SPECIAL.forEach(a => ($("cr-s-" + a).value = 5));
   G.SKILL_NAMES.forEach(s => { $("cr-k-" + safeName(s)).value = 0; $("cr-t-" + safeName(s)).checked = false; });
   crAvatar(); crAutoHints();
@@ -442,7 +459,7 @@ function fillForm(c, levelUp = false) {
   $("cr-hint").innerHTML = T("Change anything you need, then press <b>Save changes</b>. Nothing is changed until you save.");
   $("cr-name").value = c.name; $("cr-origin").value = c.origin || ""; $("cr-notes").value = c.notes || "";
   $("cr-race").value = c.race || "";
-  $("cr-maxhp").value = c.maxHp || ""; $("cr-carry").value = c.carryWeight || ""; $("cr-caps").value = c.caps || 0;
+  $("cr-maxhp").value = c.maxHp || ""; $("cr-carry").value = c.carryWeight || ""; $("cr-caps").value = c.caps || 0; $("cr-xp").value = c.xp || 0;
   $("cr-level").value = Math.min(50, (c.level || 1) + (levelUp ? 1 : 0));
   G.SPECIAL.forEach(a => ($("cr-s-" + a).value = c.special[a]));
   G.SKILL_NAMES.forEach(s => {
@@ -551,7 +568,7 @@ $("cr-save").onclick = async () => {
     perkCards: crCards, race: $("cr-race").value || null,
     avatar: avatarFor({ race: crRace(), avatar: crLookAv }), sprite: spriteFor({ race: crRace(), sprite: crLookSp }),
     weapons: crGear.weapons, apparel: crGear.apparel, robomods: crGear.robomods, items: crGear.items,
-    caps: clamp($("cr-caps").value, 0, 9999999, 0),
+    caps: clamp($("cr-caps").value, 0, 9999999, 0), xp: clamp($("cr-xp").value, 0, 9999999, 0),
     maxHp: $("cr-maxhp").value === "" ? null : clamp($("cr-maxhp").value, 1, 999, null),
     carryWeight: $("cr-carry").value === "" ? null : clamp($("cr-carry").value, 0, 9999, null),
   };
@@ -616,7 +633,9 @@ function renderRoster() {
     const skills = G.SKILLS.filter(([s]) => c.skills[s] || (c.tags || []).includes(s));
     prof.innerHTML = `<button class="btn" id="ro-back">&larr; ${T("All characters")}</button>
       <div class="card${c.main ? " is-main" : ""}"><div class="profile-head"><div class="avatar" id="ro-av"></div>
-        <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="muted">${esc(c.origin || T("Unknown origin"))} &middot; ${T("Level")} ${c.level || 1}</div>${mainBadge(c)}</div></div>
+        <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="muted">${esc(c.origin || T("Unknown origin"))} &middot; ${T("Level")} ${c.level || 1}
+          &middot; ${T("{xp} of {next} XP", { xp: (c.xp || 0).toLocaleString(LANG), next: xpForLevel((c.level || 1) + 1).toLocaleString(LANG) })}</div>${mainBadge(c)}
+          ${(c.xp || 0) >= xpForLevel((c.level || 1) + 1) && (c.level || 1) < 50 ? `<div class="lvl-ready">&#11014; ${T("Enough XP to level up!")}</div>` : ""}</div></div>
         <button class="btn main-toggle${c.main ? " on" : ""}" id="ro-main">${c.main ? `&#9733; ${T("Main character (tap to unmark)")}` : `&#9734; ${T("Set as my current main character")}`}</button>
         <h4>S.P.E.C.I.A.L.</h4><div class="statgrid">${G.SPECIAL.map(a => `<div class="stat"><b>${c.special[a]}</b><small>${T(SPECIAL_FULL[a])}</small></div>`).join("")}</div>
         <h4>${T("Derived (from S.P.E.C.I.A.L., before gear and perks)")}</h4>

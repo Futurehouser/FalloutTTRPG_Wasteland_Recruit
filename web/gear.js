@@ -335,5 +335,45 @@ const Gear = (() => {
   }
   registerWeapons();
 
-  return { editor, summary, weaponStats, weaponLine, torsoDR, load, isMelee };
+  // ---------------------------------------------------------------- giving loot to a character
+  // Loot names (from the Loot Roller or an enemy's inventory) don't always match the tables exactly
+  // ("Pipe gun", "10mm rounds"), so they're matched loosely. Caps go to the caps, ammo to a weapon that
+  // fires it, weapons and armor to their lists, and everything else to the items.
+  const fold = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const sing = s => s.replace(/s$/, "");
+  function findLoose(names, name) {
+    const f = fold(name);
+    return names.find(n => { const g = fold(n); return g === f || g === sing(f) || sing(g) === sing(f); }) || null;
+  }
+  const ammoKey = s => fold(s).replace(/\brounds?\b/g, "").replace(/s\b/g, "").replace(/\s+/g, " ").trim();
+  const ammoSame = (a, b) => { const x = ammoKey(a), y = ammoKey(b); return !!x && !!y && (x === y || x.startsWith(y + " ") || y.startsWith(x + " ")); };
+  const AMMO_WORDS = /round|shell|cell|cartridge|fuel|spike|flare|missile|nuke|dart|syringe/;
+  // returns what it became: "caps", "ammo", "weapon", "apparel" or "item"
+  function give(c, name, qty) {
+    qty = Math.max(1, parseInt(qty, 10) || 1);
+    c.weapons = c.weapons || []; c.apparel = c.apparel || []; c.items = c.items || [];
+    const f = fold(name);
+    if (/^(bottle )?caps?$/.test(f) || f === "bottle caps") { c.caps = (c.caps || 0) + qty; return "caps"; }
+    if (AMMO_WORDS.test(f)) {
+      const w = c.weapons.find(x => { const s = weaponStats(x); return s && s.ammo && ammoSame(name, s.ammo); });
+      if (w) { w.ammo = (w.ammo || 0) + qty; return "ammo"; }
+    }
+    const wn = findLoose(Object.keys(typeof WEAPONS_FOR_COMBAT !== "undefined" ? WEAPONS_FOR_COMBAT : {}).concat(TABLES.weapons.map(x => x.n)), name);
+    if (wn) {
+      const s = weaponStats({ name: wn });
+      if (s && (s.skill === "Throwing" || s.skill === "Explosives")) { // grenades, knives, Molotovs: one entry, the count is its "ammo"
+        const have = c.weapons.find(x => x.name === wn);
+        if (have) have.ammo = (have.ammo || 0) + qty; else c.weapons.push({ name: wn, ammo: qty, mods: [] });
+      } else for (let i = 0; i < qty; i++) c.weapons.push({ name: wn, ammo: 0, mods: [] });
+      return "weapon";
+    }
+    const an = findLoose(TABLES.apparel.map(x => x.n), name);
+    if (an) { for (let i = 0; i < qty; i++) c.apparel.push({ name: an, mods: [] }); return "apparel"; }
+    const iname = findLoose(TABLES.cons.map(x => x.n).concat(TABLES.tools.map(x => x.n)), name) || String(name);
+    const have = c.items.find(i => fold(i.name) === fold(iname));
+    if (have) have.qty = (have.qty || 1) + qty; else c.items.push({ name: iname, qty });
+    return "item";
+  }
+
+  return { editor, summary, weaponStats, weaponLine, torsoDR, load, isMelee, give };
 })();

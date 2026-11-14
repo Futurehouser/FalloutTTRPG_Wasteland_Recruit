@@ -849,3 +849,22 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .caps-in input { width: 140px; }
 .caps-show { display: inline-block; margin-top: 14px; padding: 8px 14px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); }
 .caps-show b { color: var(--amber); font-size: 18px; margin-left: 4px; }
+
+/* ---- handing out combat rewards (combat.js) and giving loot (Loot Roller) */
+.rw-who { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 6px 0 10px; }
+.rw-who label { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.rw-who input { width: 18px; height: 18px; accent-color: var(--amber); }
+.rw-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0; }
+.rw-line select { width: auto; min-width: 150px; padding: 7px; }
+.rw-items { display: grid; gap: 6px; margin: 10px 0; }
+.rw-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); }
+.rw-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.rw-name small { display: block; color: var(--muted); font-size: 12px; }
+.rw-qty { color: var(--amber); font-weight: 800; }
+.rw-item select { width: 140px; flex: none; padding: 6px; font-size: 13px; }
+.rw-item .btn { flex: none; padding: 6px 10px; }
+.rw-roll summary { cursor: pointer; font-weight: 700; }
+.rw-done { color: var(--green); font-weight: 800; align-self: center; }
+.lt-give { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.lvl-ready { margin-top: 4px; color: var(--green); font-weight: 800; font-size: 13px; }
+@media (max-width: 480px) { .rw-item { flex-wrap: wrap; } .rw-item select { flex: 1; width: auto; } }
