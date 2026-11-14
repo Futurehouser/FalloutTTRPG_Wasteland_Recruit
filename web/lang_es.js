@@ -3472,3 +3472,20 @@ Object.assign(ES, {
   "Add to the Combat Assistant": "Añadir al Asistente de combate",
   "Quest enemies": "Enemigos de misiones",
 });
+
+// ---- v4.31.0: profile pictures and sprites
+Object.assign(ES, {
+  "Profile picture": "Foto de perfil",
+  "Vault dweller": "Morador del Refugio",
+  "(shown when there's no photo)": "(se ve cuando no hay foto)",
+  "Walking sprite": "Muñeco animado",
+  "(on Home, My Team and in fights)": "(en Inicio, Mi equipo y en los combates)",
+  "Vault dweller (woman)": "Morador del Refugio (mujer)",
+  "Vault dweller (man)": "Morador del Refugio (hombre)",
+  "Raider": "Saqueador",
+  "Power armor": "Servoarmadura",
+  "Ghoul": "Necrófago",
+  "Super Mutant": "Supermutante",
+  "Robot": "Robot",
+  "Mister Handy": "Mister Handy",
+});

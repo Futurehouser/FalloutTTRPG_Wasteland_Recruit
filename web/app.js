@@ -374,7 +374,29 @@ function setAvatar(el, c) {
   el.innerHTML = `<img src="${portraitFor(c)}" alt="">`;
 }
 const crRace = () => $("cr-race").value || raceFromOrigin($("cr-origin").value);
-const crAvatar = () => setAvatar($("cr-avatar"), { photo: crPhoto, race: crRace() });
+// the picture and walking sprite chosen in the form (null: the kind's default); only the kind's own choices are offered
+let crLookAv = null, crLookSp = null;
+const crAvatar = () => { setAvatar($("cr-avatar"), { photo: crPhoto, race: crRace(), avatar: crLookAv }); renderLooks(); };
+function renderLooks() {
+  const race = crRace(), av = avatarFor({ race, avatar: crLookAv }), sp = spriteFor({ race, sprite: crLookSp });
+  $("cr-avpick").innerHTML = AVATAR_CHOICES[race].map(k => `<button type="button" class="look ${k === av ? "on" : ""}" data-av="${k}" aria-pressed="${k === av}">
+    <img src="${avatarUrl(k)}" alt=""><span>${esc(T(CHOICE_NAMES[k]))}</span></button>`).join("");
+  $("cr-sppick").innerHTML = SPRITE_CHOICES[race].map(k => `<button type="button" class="look ${k === sp ? "on" : ""}" data-sp="${k}" aria-pressed="${k === sp}">
+    <canvas width="64" height="80" data-sprite="${k}"></canvas><span>${esc(T(k === "human" ? "Vault dweller" : CHOICE_NAMES[k]))}</span></button>`).join("");
+  $("cr-avpick").querySelectorAll("[data-av]").forEach(b => (b.onclick = () => { crLookAv = b.dataset.av; crAvatar(); }));
+  $("cr-sppick").querySelectorAll("[data-sp]").forEach(b => (b.onclick = () => { crLookSp = b.dataset.sp; renderLooks(); }));
+  drawLooks();
+}
+// the sprite previews walk while the Create Character page is open
+let lookFrame = 0;
+function drawLooks() {
+  if (typeof Sprites === "undefined") return; // team.js loads after this file
+  document.querySelectorAll("#cr-sppick canvas").forEach(cv => {
+    const g = cv.getContext("2d"), f = Sprites.sheet(cv.dataset.sprite).walk[lookFrame % 4];
+    g.imageSmoothingEnabled = false; g.clearRect(0, 0, cv.width, cv.height); g.drawImage(f, 0, 0, cv.width, cv.height);
+  });
+}
+setInterval(() => { if (currentPage === "create" && !document.hidden) { lookFrame++; drawLooks(); } }, 180);
 const autoMaxHp = s => s.END + s.LCK;
 const autoCarry = s => 150 + 10 * s.STR;
 function crAutoHints() {
@@ -383,7 +405,7 @@ function crAutoHints() {
   $("cr-carry").placeholder = T("Auto: {n}", { n: autoCarry(s) });
 }
 function resetForm() {
-  editingId = null; crPhoto = null; crCards = [];
+  editingId = null; crPhoto = null; crCards = []; crLookAv = null; crLookSp = null;
   $("cr-title").textContent = T("Create Character");
   $("cr-hint").innerHTML = T("Fill in your character and save it. It will appear under <b>Saved Characters</b>.");
   $("cr-levelup").hidden = true;
@@ -397,7 +419,7 @@ function resetForm() {
   renderCrCards();
 }
 function fillForm(c, levelUp = false) {
-  editingId = c.id; crPhoto = c.photo || null;
+  editingId = c.id; crPhoto = c.photo || null; crLookAv = c.avatar || null; crLookSp = c.sprite || null;
   crCards = JSON.parse(JSON.stringify(c.perkCards || []));
   $("cr-title").textContent = T(levelUp ? "Level up {name}" : "Edit {name}", { name: c.name });
   $("cr-hint").innerHTML = T("Change anything you need, then press <b>Save changes</b>. Nothing is changed until you save.");
@@ -491,7 +513,7 @@ $("cr-photo").onchange = async e => {
 };
 $("cr-nophoto").onclick = () => { crPhoto = null; crAvatar(); };
 $("cr-race").onchange = crAvatar;
-$("cr-origin").addEventListener("input", () => { if (!crPhoto && !$("cr-race").value) crAvatar(); });
+$("cr-origin").addEventListener("input", () => { if (!$("cr-race").value) crAvatar(); });
 G.SPECIAL.forEach(a => $("cr-s-" + a).addEventListener("input", crAutoHints));
 crAvatar(); crAutoHints();
 $("cr-clear").onclick = () => {
@@ -510,6 +532,7 @@ $("cr-save").onclick = async () => {
     name, origin: $("cr-origin").value.trim(), level: clamp($("cr-level").value, 1, 50, 1),
     special: {}, skills: {}, tags: [], photo: crPhoto, notes: $("cr-notes").value.trim(),
     perkCards: crCards, race: $("cr-race").value || null,
+    avatar: avatarFor({ race: crRace(), avatar: crLookAv }), sprite: spriteFor({ race: crRace(), sprite: crLookSp }),
     maxHp: $("cr-maxhp").value === "" ? null : clamp($("cr-maxhp").value, 1, 999, null),
     carryWeight: $("cr-carry").value === "" ? null : clamp($("cr-carry").value, 0, 9999, null),
   };
@@ -520,6 +543,7 @@ $("cr-save").onclick = async () => {
   });
   const wasEditing = !!editingId;
   await addToRoster(c);
+  if (typeof Team !== "undefined") Team.prune(); // a team member's new sprite starts walking at once
   toast(T(wasEditing ? "{name} updated" : "{name} saved", { name }));
   resetForm();
   openProfileId = c.id;

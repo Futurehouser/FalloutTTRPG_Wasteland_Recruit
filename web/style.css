@@ -803,3 +803,12 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .tu-ca span { font-size: 22px; font-weight: 800; }
 .tu-ca .btn { width: 100%; max-width: 44px; padding: 6px 0; font-size: 18px; }
 @media (max-width: 560px) { .tu-csp { gap: 3px; } .tu-crow { grid-template-columns: 1fr; gap: 2px; } }
+
+/* ---- profile picture and walking sprite pickers (Create Character) */
+.look-pick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.look { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 92px; padding: 8px 4px; border-radius: 12px; cursor: pointer;
+  background: var(--panel2); border: 2px solid var(--line); color: var(--ink); font-size: 12px; line-height: 1.2; text-align: center; }
+.look img { width: 64px; height: 64px; border-radius: 50%; }
+.look canvas { width: 48px; height: 60px; image-rendering: pixelated; }
+.look.on { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(240, 190, 40, .25); }
+.look:hover { border-color: var(--amber-d); }

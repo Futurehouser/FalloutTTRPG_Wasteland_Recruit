@@ -3,7 +3,8 @@
 // My Team pages (and of the Combat Assistant during a fight), stopping now and then to idle. The Combat Assistant can load the whole team.
 
 // ------------------------------------------------------------------ sprites
-// Original pixel art drawn in code: one walk cycle and one idle loop of 4 frames per race,
+// Original pixel art drawn in code: one walk cycle and one idle loop of 4 frames per look (the four kinds, plus a
+// raider and power armor for humans and a floating Mister Handy for robots),
 // every frame facing right (the stage mirrors them to walk left).
 const Sprites = (() => {
   const FW = 32, FH = 40, GROUND = 39, CX = 16;
@@ -20,6 +21,14 @@ const Sprites = (() => {
     robot: { legW: 2, legH: 9, torsoW: 10, torsoH: 9, headW: 8, headH: 7, armW: 2, armH: 9, lean: 0,
       c: { skin: "#b9c3cb", skinD: "#6d7782", hair: "#6d7782", top: "#9aa6b0", topD: "#66717c", trim: "#4f5963",
            legs: "#7d8892", legsD: "#59636d", boots: "#3b434b", eye: "#7df0e3", hand: "#59636d" } },
+    // more looks for humans (a raider, and a big suit of power armor) and robots (a floating Mister Handy)
+    raider: { legW: 3, legH: 8, torsoW: 8, torsoH: 8, headW: 8, headH: 8, armW: 2, armH: 8, lean: 0,
+      c: { skin: "#e0b48a", skinD: "#b98a5f", hair: "#b22e1e", top: "#5a3a22", topD: "#3e2716", trim: "#c9ced2",
+           legs: "#4a3a2c", legsD: "#33281e", boots: "#1e1914", eye: "#f4e7a1", hand: "#e0b48a" } },
+    powerarmor: { legW: 4, legH: 9, torsoW: 12, torsoH: 11, headW: 9, headH: 9, armW: 4, armH: 11, lean: 0,
+      c: { skin: "#a3aa86", skinD: "#6b7156", hair: "#5d634b", top: "#8a9070", topD: "#5d634b", trim: "#3a3e2e",
+           legs: "#7d8466", legsD: "#5d634b", boots: "#3a3e2e", eye: "#f3a13a", hand: "#5d634b" } },
+    handy: { c: { body: "#b9c3cb", lite: "#e3e9ee", dark: "#6d7782", line: "#3b434b", eye: "#f2f4f5", pupil: "#1b1b1b", fire1: "#ffd23f", fire2: "#ff7a2f" } },
   };
 
   // pose: lf/lb = front/back foot offset, liftF/liftB = foot raised, af/ab = hand swing, bob = upper body drop
@@ -36,7 +45,54 @@ const Sprites = (() => {
     { lf: 0, lb: 0, af: 0, ab: 0, bob: 1, blink: 1 },
   ];
 
-  function drawFrame(race, pose) {
+  // Mister Handy: a metal sphere with three eye stalks and three arms, hovering on a downward jet
+  function drawHandy(pose, i) {
+    const c = RACES.handy.c, cv = document.createElement("canvas");
+    cv.width = FW; cv.height = FH;
+    const g = cv.getContext("2d");
+    const px = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+    const cx = 16, cy = 20 + [0, 1, 1, 0][i % 4], r = 8;
+    // the jet and its flame, which flickers frame to frame
+    px(cx - 2, cy + r - 1, 5, 3, c.dark); px(cx - 1, cy + r + 2, 3, 1, c.line);
+    const flame = [5, 7, 6, 8][i % 4];
+    for (let k = 0; k < flame; k++) {
+      const w = Math.max(1, 3 - Math.floor(k / 3));
+      px(cx + 1 - Math.ceil(w / 2) + (k % 2 && k > 3 ? 1 : 0), cy + r + 3 + k, w, 1, k < 2 ? "#fff6c2" : k < 4 ? c.fire1 : c.fire2);
+    }
+    // the back arm, reaching down and back, with a claw
+    const line = (x0, y0, x1, y1, col) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let k = 0; k <= n; k++) px(Math.round(x0 + ((x1 - x0) * k) / n), Math.round(y0 + ((y1 - y0) * k) / n), 1, 1, col); };
+    const sw = pose.af || 0;
+    line(cx - 5, cy + 4, cx - 9 - sw, cy + 11, c.dark); px(cx - 10 - sw, cy + 11, 1, 2, c.line); px(cx - 8 - sw, cy + 12, 1, 1, c.line);
+    // the sphere
+    for (let y = -r; y <= r; y++) {
+      const half = Math.round(Math.sqrt(r * r - y * y));
+      px(cx - half, cy + y, half * 2 + 1, 1, y > r - 3 ? c.dark : c.body);
+      px(cx - half, cy + y, 1, 1, c.dark);
+    }
+    px(cx + 1, cy - 6, 4, 2, c.lite); px(cx + 4, cy - 4, 2, 2, c.lite);   // shine
+    px(cx - r, cy, r * 2 + 1, 1, c.line);                                   // seam
+    px(cx - 3, cy + 2, 2, 1, c.line); px(cx + 2, cy + 2, 2, 1, c.line);     // rivets
+    // three eye stalks: back, top and front
+    const eye = (sx, sy, ex, ey) => {
+      for (let k = 0; k <= 3; k++) px(Math.round(sx + ((ex - sx) * k) / 3), Math.round(sy + ((ey - sy) * k) / 3), 1, 1, c.dark);
+      px(ex - 1, ey - 1, 3, 3, c.line); px(ex - 1, ey - 1, 2, 2, pose.blink ? c.dark : c.eye);
+      if (!pose.blink) px(ex, ey, 1, 1, c.pupil);
+    };
+    eye(cx - 3, cy - r + 1, cx - 7, cy - r - 3);
+    eye(cx, cy - r, cx, cy - r - 4);
+    eye(cx + 4, cy - r + 1, cx + 8, cy - r - 2);
+    // the front arms: a pincer reaching forward and a buzzsaw lower down, swinging a little
+    line(cx + 6, cy + 3, cx + 11 + sw, cy + 8, c.dark);
+    px(cx + 11 + sw, cy + 7, 2, 1, c.line); px(cx + 11 + sw, cy + 9, 2, 1, c.line);                 // pincer
+    line(cx + 3, cy + 6, cx + 7 - sw, cy + 12, c.dark);
+    const sx = cx + 7 - sw, sy = cy + 13, spin = i % 2;
+    px(sx - 1, sy - 1, 3, 3, "#8c98a3"); px(sx, sy, 1, 1, c.line);
+    px(sx - 2, sy - 1 + spin, 1, 1, c.lite); px(sx + 2, sy + 1 - spin, 1, 1, c.lite); px(sx - 1 + spin, sy - 2, 1, 1, c.lite); // saw teeth
+    return cv;
+  }
+
+  function drawFrame(race, pose, i) {
+    if (race === "handy") return drawHandy(pose, i);
     const R = RACES[race], c = R.c;
     const cv = document.createElement("canvas");
     cv.width = FW; cv.height = FH;
@@ -67,9 +123,11 @@ const Sprites = (() => {
         px(x, y0 + r, R.armW, 1, col);
       }
       if (race === "robot") px(x0 + swing - (dark ? 1 : 0), y0 + R.armH, 1, 1, c.trim); // claw
+      if (race === "powerarmor") px(x0 - 1, y0, R.armW + 2, 2, dark ? c.trim : c.skin); // pauldron
     }
 
     // back limbs first, then body, then near limbs
+    if (race === "powerarmor") { px(torsoL - 3, torsoTop + 1, 3, 7, c.trim); px(torsoL - 2, torsoTop + 2, 1, 2, "#f3c13a"); } // backpack and fusion core
     arm(pose.ab, true);
     leg(pose.lb, pose.liftB, true);
     px(torsoL, torsoTop, R.torsoW, R.torsoH, c.top);
@@ -81,6 +139,15 @@ const Sprites = (() => {
       px(torsoL, torsoTop, R.torsoW, 1, c.trim);                  // collar
       px(torsoL + R.torsoW - 2, torsoTop, 1, R.torsoH, c.trim);   // zip stripe
       px(torsoL, torsoTop + R.torsoH - 2, R.torsoW, 1, "#5a4a2a"); // belt
+    } else if (race === "raider") {
+      for (let i = 0; i < R.torsoH - 1; i++) px(torsoL + 1 + Math.min(i, R.torsoW - 2), torsoTop + i, 1, 1, c.topD); // bandolier
+      px(torsoL - 1, torsoTop - 1, 4, 2, c.trim); px(torsoL, torsoTop - 2, 1, 1, c.trim); px(torsoL + 2, torsoTop - 2, 1, 1, c.trim); // spiked shoulder
+      px(torsoL, torsoTop + R.torsoH - 2, R.torsoW, 1, "#2a1a0e");  // belt
+    } else if (race === "powerarmor") {
+      px(torsoL + 1, torsoTop + 1, R.torsoW - 2, 1, c.skin);       // top highlight
+      px(torsoL + 3, torsoTop + 3, R.torsoW - 4, 4, c.skin);       // chest plate
+      px(torsoL + 4, torsoTop + 4, R.torsoW - 6, 1, c.topD); px(torsoL + 4, torsoTop + 6, R.torsoW - 6, 1, c.topD);
+      px(torsoL, torsoTop + R.torsoH - 2, R.torsoW, 2, c.trim);    // waist joint
     } else if (race === "ghoul") {
       px(torsoL + 2, torsoTop + 3, 2, 1, c.skinD); px(torsoL + 5, torsoTop + 5, 1, 2, c.skinD); // holes in the rags
       px(torsoL, torsoTop + R.torsoH - 1, R.torsoW, 1, c.topD);
@@ -99,7 +166,17 @@ const Sprites = (() => {
 
     // head
     const eyeX = headL + R.headW - 3, eyeY = headTop + (R.headH >> 1) - (race === "mutant" ? 0 : 1);
-    if (race === "robot") {
+    if (race === "powerarmor") {
+      px(headL, headTop + 1, R.headW, R.headH - 1, c.top);                    // helmet
+      px(headL + 1, headTop, R.headW - 2, 1, c.top);
+      px(headL + 3, headTop - 1, 2, 4, c.skin);                               // crest
+      px(headL + 2, headTop + 3, R.headW - 2, 2, "#1d2b30");                  // visor slit
+      px(headL + R.headW - 4, headTop + 3, 3, 1, pose.blink ? "#7a4a1e" : c.eye);
+      px(headL + 3, headTop + 6, R.headW - 3, 3, c.topD);                     // grille
+      px(headL + 4, headTop + 6, 1, 3, c.trim); px(headL + 6, headTop + 6, 1, 3, c.trim);
+      px(headL, headTop + 5, 2, 2, c.trim);                                   // filter
+      px(headL + 1, headTop + 2, 1, 1, pose.light ? "#f7e15a" : "#8a7a3a");   // headlamp
+    } else if (race === "robot") {
       px(headL, headTop, R.headW, R.headH, c.top);
       px(headL, headTop, R.headW, 1, c.skin);
       px(headL + 2, headTop + 2, R.headW - 2, 3, "#18323a");                 // visor
@@ -112,7 +189,15 @@ const Sprites = (() => {
       px(headL, headTop + R.headH - 1, 2, 1, c.skinD);                       // jaw shade
       px(headL + 2, headTop + (R.headH >> 1), 1, 2, c.skinD);                // ear
       px(eyeX, eyeY, 1, pose.blink ? 1 : 2, pose.blink ? c.skinD : c.eye);
-      if (race === "human") {
+      if (race === "raider") {
+        px(headL, headTop, R.headW, 1, c.skinD);                             // shaved sides
+        px(headL + 2, headTop - 2, 4, 2, c.hair); px(headL + 3, headTop - 3, 2, 1, c.hair); // mohawk
+        px(headL + 2, eyeY, R.headW - 2, 1, "#1b1b1b");                      // war paint
+        px(eyeX, eyeY, 1, 1, pose.blink ? "#1b1b1b" : c.eye);
+        px(headL + R.headW, eyeY + 2, 1, 1, c.skin);                         // nose
+        px(headL + R.headW - 3, headTop + R.headH - 2, 3, 1, "#7a2a1e");     // sneer
+        px(headL + 3, headTop + R.headH - 3, 1, 2, "#9c3a2a");               // scar
+      } else if (race === "human") {
         px(headL, headTop, R.headW, 2, c.hair); px(headL, headTop, 2, 5, c.hair); px(headL + R.headW - 1, headTop + 2, 1, 1, c.hair);
         px(headL + R.headW, eyeY + 2, 1, 1, c.skin);                         // nose
         px(headL + R.headW - 3, headTop + R.headH - 2, 2, 1, "#a8665a");     // mouth
@@ -137,7 +222,7 @@ const Sprites = (() => {
   const cache = {};
   function sheet(race) {
     if (!RACES[race]) race = "human";
-    if (!cache[race]) cache[race] = { walk: WALK.map(p => drawFrame(race, p)), idle: IDLE.map(p => drawFrame(race, p)) };
+    if (!cache[race]) cache[race] = { walk: WALK.map((p, i) => drawFrame(race, p, i)), idle: IDLE.map((p, i) => drawFrame(race, p, i)) };
     return cache[race];
   }
   return { sheet, FW, FH, races: Object.keys(RACES) };
@@ -151,7 +236,8 @@ const Sprites = (() => {
 const Walkers = (() => {
   let cv = null, raf = null, last = 0, team = [], fight = [], talker = null, swallow = false;
   const scale = () => (window.innerWidth < 560 ? 2 : 3);
-  const HEAD_TOP = { human: 16, ghoul: 16, mutant: 11, robot: 11 }; // first drawn row of each sprite
+  const HEAD_TOP = { human: 16, ghoul: 16, mutant: 11, robot: 11, raider: 14, powerarmor: 10, handy: 8 }; // first drawn row of each sprite
+  const look = k => k.sprite || k.race; // the sprite the character picked (raider, power armor, Mister Handy) or their kind's
   const JUMP = 0.35, FLASH = 0.4, FALL = 0.35, LIE = 1.0, FADE = 0.6, RESPAWN = 1.0, SPAWN = 0.45, EXPLODE = 1.4;
 
   function make(id, race, name, width) {
@@ -166,7 +252,7 @@ const Walkers = (() => {
     team.forEach(w => (keep[w.id] = w));
     team = chars.map(c => {
       const k = keep[c.id] || make(c.id, null, c.name, window.innerWidth);
-      return Object.assign(k, { race: c.race || raceFromOrigin(c.origin), name: c.name, maxHp: maxHpOf(c) });
+      return Object.assign(k, { race: c.race || raceFromOrigin(c.origin), sprite: spriteFor(c), name: c.name, maxHp: maxHpOf(c) });
     });
     update();
   }
@@ -182,6 +268,7 @@ const Walkers = (() => {
       const down = p.status !== "up" || p.hp <= 0;
       if (!k) {
         k = make(id, c ? c.race || raceFromOrigin(c.origin) : "human", p.name, window.innerWidth);
+        k.sprite = c ? spriteFor(c) : null;
         k.respawn = false;
         if (down) k.life = "gone";
       } else {
@@ -198,7 +285,7 @@ const Walkers = (() => {
   // the one sprite on the Talking Heads page. It never comes back on its own, and onGone runs once it has vanished.
   function setTalker(c, onGone) {
     if (!c) talker = null;
-    else talker = Object.assign(make("elber:" + c.id, c.race || raceFromOrigin(c.origin), c.name, window.innerWidth), { respawn: false, onGone });
+    else talker = Object.assign(make("elber:" + c.id, c.race || raceFromOrigin(c.origin), c.name, window.innerWidth), { sprite: spriteFor(c), respawn: false, onGone });
     update();
   }
   function talkerHit(dies, n) {
@@ -287,7 +374,7 @@ const Walkers = (() => {
 
   function hit(k, amount) {
     if (k.life !== "alive") return;
-    hitSound(k.race, amount >= 5);
+    hitSound(k.sprite === "powerarmor" ? "robot" : k.race, amount >= 5); // power armor rings like metal
     k.jump = JUMP; k.flash = FLASH;
     k.pops.push({ text: "-" + amount, t: 0 });
   }
@@ -326,7 +413,7 @@ const Walkers = (() => {
   // ---------------- tapping a sprite (Home / My Team)
   function box(k) {
     const s = scale(), r = cv.getBoundingClientRect(), dh = Sprites.FH * s;
-    const top = r.top + cv.clientHeight - dh - 4 + HEAD_TOP[k.race] * s;
+    const top = r.top + cv.clientHeight - dh - 4 + HEAD_TOP[look(k)] * s;
     return { l: r.left + k.x - 9 * s, r: r.left + k.x + 9 * s, t: top, b: r.top + cv.clientHeight - 2 };
   }
   window.addEventListener("pointerdown", e => {
@@ -434,7 +521,7 @@ const Walkers = (() => {
   function draw(g, k, s, h) {
     if (k.life === "gone") return;
     if (k.life === "exploding") { drawBoom(g, k, s, h); drawPops(g, k, h - 4 - (Sprites.FH - HEAD_TOP.robot) * s, 1); return; }
-    const dw = Sprites.FW * s, dh = Sprites.FH * s, sheet = Sprites.sheet(k.race);
+    const dw = Sprites.FW * s, dh = Sprites.FH * s, sheet = Sprites.sheet(look(k));
     let img = k.life === "alive" ? sheet[k.state][k.frame] : sheet.idle[0];
     if (k.flash && Math.floor(k.flash * 16) % 2 === 0) img = red(img);
     const lift = k.jump ? Math.sin((Math.PI * (JUMP - k.jump)) / JUMP) * 7 * s : 0;
@@ -453,7 +540,7 @@ const Walkers = (() => {
     g.scale(k.dir < 0 ? -1 : 1, 1);
     g.drawImage(img, -dw / 2, -dh, dw, dh);
     g.restore();
-    const headY = h - 4 - dh + HEAD_TOP[k.race] * s - lift - drop;
+    const headY = h - 4 - dh + HEAD_TOP[look(k)] * s - lift - drop;
     if (k.life === "alive" || k.life === "spawning") {
       g.font = "bold 11px Segoe UI, Roboto, sans-serif";
       g.textAlign = "center";
