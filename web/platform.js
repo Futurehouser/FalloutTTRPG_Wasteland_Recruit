@@ -95,5 +95,25 @@ const Platform = (() => {
     if (w) w.opener = null; else location.href = url;
   }
 
-  return { ready, load, save, loadJSON, saveJSON, saveImage, canShare, shareImage, installUpdate, openUrl, isAndroid, isDesktop };
+  // the clipboard: the apps' own (the web view's often refuses), then the browser's. true when it worked.
+  async function copyText(text) {
+    await ready;
+    try {
+      if (isAndroid() && AndroidBridge.copyText) return AndroidBridge.copyText(text) === "OK";
+      if (isDesktop() && window.pywebview.api.copy_text) return (await window.pywebview.api.copy_text(text)) === "OK";
+    } catch (e) { /* try the browser's */ }
+    try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; } } catch (e) { /* refused */ }
+    return false;
+  }
+  async function readText() {
+    await ready;
+    try {
+      if (isAndroid() && AndroidBridge.readText) return AndroidBridge.readText() || "";
+      if (isDesktop() && window.pywebview.api.read_text) return (await window.pywebview.api.read_text()) || "";
+    } catch (e) { /* try the browser's */ }
+    try { if (navigator.clipboard && navigator.clipboard.readText) return await navigator.clipboard.readText(); } catch (e) { /* refused */ }
+    return "";
+  }
+
+  return { ready, load, save, loadJSON, saveJSON, saveImage, canShare, shareImage, installUpdate, openUrl, isAndroid, isDesktop, copyText, readText };
 })();

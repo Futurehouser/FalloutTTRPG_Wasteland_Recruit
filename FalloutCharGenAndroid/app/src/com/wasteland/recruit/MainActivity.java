@@ -3,6 +3,9 @@ package com.wasteland.recruit;
 import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -239,6 +242,45 @@ public class MainActivity extends Activity {
             }
             new Thread(() -> downloadAndInstall(url, version)).start();
             return "STARTED";
+        }
+
+        // the clipboard: export copies a character's text, import can paste it back
+        @JavascriptInterface
+        public String copyText(String text) {
+            final String[] out = { "OK" };
+            final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+            runOnUiThread(() -> {
+                try {
+                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    cm.setPrimaryClip(ClipData.newPlainText("Wasteland Recruit", text));
+                } catch (Exception e) {
+                    out[0] = "ERROR: " + e.getMessage();
+                }
+                done.countDown();
+            });
+            try { done.await(2, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException e) { return "ERROR: interrupted"; }
+            return out[0];
+        }
+
+        @JavascriptInterface
+        public String readText() {
+            final String[] out = { "" };
+            final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+            runOnUiThread(() -> {
+                try {
+                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clip = cm.getPrimaryClip();
+                    if (clip != null && clip.getItemCount() > 0) {
+                        CharSequence t = clip.getItemAt(0).coerceToText(MainActivity.this);
+                        if (t != null) out[0] = t.toString();
+                    }
+                } catch (Exception e) {
+                    out[0] = "";
+                }
+                done.countDown();
+            });
+            try { done.await(2, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException e) { return ""; }
+            return out[0];
         }
 
         @JavascriptInterface

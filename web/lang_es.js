@@ -3551,3 +3551,26 @@ Object.assign(ES, {
   "{xp} of {next} XP": "{xp} de {next} PX",
   "Enough XP to level up!": "¡PX suficientes para subir de nivel!",
 });
+
+// ---- v4.35.0: sounds, export and import
+Object.assign(ES, {
+  "Sounds on": "Sonidos activados",
+  "Sounds off": "Sonidos desactivados",
+  "Export": "Exportar",
+  "Import character": "Importar personaje",
+  "Import a character": "Importar un personaje",
+  "Import a character into the team": "Importar un personaje al equipo",
+  "Import": "Importar",
+  "Paste": "Pegar",
+  "Close": "Cerrar",
+  "CHARACTER": "PERSONAJE",
+  "{name} copied to the clipboard": "{name} copiado al portapapeles",
+  "Copy {name}'s text": "Copia el texto de {name}",
+  "Your device didn't allow copying automatically. Select all this text and copy it.": "Tu dispositivo no ha dejado copiar automáticamente. Selecciona todo este texto y cópialo.",
+  "Paste the text of a character exported from Wasteland Recruit (the Export button on a profile), then tap Import.": "Pega el texto de un personaje exportado desde Wasteland Recruit (el botón Exportar de un perfil) y pulsa Importar.",
+  "This text has no character name. Paste the whole text you exported.": "Este texto no tiene nombre de personaje. Pega todo el texto que exportaste.",
+  "Couldn't read the clipboard: long-press the box and choose Paste": "No se pudo leer el portapapeles: mantén pulsado el cuadro y elige Pegar",
+  "{name} imported": "{name} importado",
+  "{name} imported into the form": "{name} importado en el formulario",
+  "Imported <b>{name}</b>. Check it and press <b>Save character</b>.": "<b>{name}</b> importado. Revísalo y pulsa <b>Guardar personaje</b>.",
+});

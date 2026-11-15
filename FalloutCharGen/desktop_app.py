@@ -148,6 +148,62 @@ class Api:
         except OSError as e:
             return f"ERROR: {e}"
 
+    def copy_text(self, text):
+        """Put text on the Windows clipboard (export a character)."""
+        try:
+            import ctypes
+            from ctypes import wintypes
+            k, u = ctypes.windll.kernel32, ctypes.windll.user32
+            k.GlobalAlloc.restype, k.GlobalAlloc.argtypes = wintypes.HGLOBAL, [wintypes.UINT, ctypes.c_size_t]
+            k.GlobalLock.restype, k.GlobalLock.argtypes = ctypes.c_void_p, [wintypes.HGLOBAL]
+            k.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
+            u.SetClipboardData.restype, u.SetClipboardData.argtypes = wintypes.HANDLE, [wintypes.UINT, wintypes.HANDLE]
+            data = (str(text) + "\0").encode("utf-16-le")
+            for _ in range(10):  # another program may be holding the clipboard for a moment
+                if u.OpenClipboard(None):
+                    break
+                time.sleep(0.05)
+            else:
+                return "ERROR: the clipboard is busy"
+            try:
+                u.EmptyClipboard()
+                h = k.GlobalAlloc(0x0002, len(data))  # GMEM_MOVEABLE
+                p = k.GlobalLock(h)
+                ctypes.memmove(p, data, len(data))
+                k.GlobalUnlock(h)
+                if not u.SetClipboardData(13, h):  # CF_UNICODETEXT
+                    return "ERROR: could not copy"
+            finally:
+                u.CloseClipboard()
+            return "OK"
+        except Exception as e:  # not on Windows, or the API failed
+            return f"ERROR: {e}"
+
+    def read_text(self):
+        """Read text from the Windows clipboard (import a character)."""
+        try:
+            import ctypes
+            from ctypes import wintypes
+            k, u = ctypes.windll.kernel32, ctypes.windll.user32
+            u.GetClipboardData.restype, u.GetClipboardData.argtypes = wintypes.HANDLE, [wintypes.UINT]
+            k.GlobalLock.restype, k.GlobalLock.argtypes = ctypes.c_void_p, [wintypes.HGLOBAL]
+            k.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
+            if not u.OpenClipboard(None):
+                return ""
+            try:
+                h = u.GetClipboardData(13)
+                if not h:
+                    return ""
+                p = k.GlobalLock(h)
+                try:
+                    return ctypes.wstring_at(p) if p else ""
+                finally:
+                    k.GlobalUnlock(h)
+            finally:
+                u.CloseClipboard()
+        except Exception:
+            return ""
+
     def open_url(self, url):
         """Open a web link (the radio stations) in the default browser."""
         if not re.match(r"^https://", str(url)):

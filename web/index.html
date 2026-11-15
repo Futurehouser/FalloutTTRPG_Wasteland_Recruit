@@ -38,6 +38,7 @@
     <button data-page="maps"><span class="n">16</span>Maps</button>
     <button data-page="quests"><span class="n">17</span>Quests</button>
     <button id="nav-update"><span class="n">&#8635;</span>Check for updates</button>
+    <button id="nav-sound"><span class="n" id="nav-sound-ic">&#128266;</span><span id="nav-sound-tx">Sounds on</span></button>
   </nav>
   <div class="foot">Version <span id="app-version"></span><br>Fan-made tool for the Fallout 2d20 tabletop game.</div>
 </aside>
@@ -212,7 +213,7 @@
     <div class="bar">
       <button class="big" id="cr-save">SAVE CHARACTER</button>
     </div>
-    <div class="bar"><button class="btn" id="cr-clear">Clear form</button></div>
+    <div class="bar"><button class="btn" id="cr-clear">Clear form</button><button class="btn" id="cr-import"><span aria-hidden="true">&#128229;</span> Import character</button></div>
   </section>
 
   <!-- 8. encounter randomizer -->
@@ -270,6 +271,7 @@
       <div style="flex:3 1 200px"><label class="f">Saved character</label><select id="tm-pick"></select></div>
       <div style="flex:1 1 120px;align-self:end"><button class="btn primary" id="tm-add" style="width:100%">+ Add to team</button></div>
     </div>
+    <div class="bar"><button class="btn" id="tm-import"><span aria-hidden="true">&#128229;</span> Import a character into the team</button></div>
     <div id="tm-list" style="margin-top:12px"></div>
   </section>
 
@@ -286,6 +288,7 @@
     <h2>Saved Characters</h2>
     <div id="ro-list"></div>
     <div id="ro-profile"></div>
+    <button type="button" class="btn primary fab" id="ro-import" title="Import a character"><span aria-hidden="true">&#128229;</span> Import character</button>
   </section>
   <!-- 12. tutorials -->
   <section class="page" id="page-tutorials" data-title="Tutorials">
@@ -385,6 +388,7 @@
 <script charset="utf-8" src="lang_es.js"></script>
 <script charset="utf-8" src="version.js"></script>
 <script charset="utf-8" src="platform.js"></script>
+<script charset="utf-8" src="sfx.js"></script>
 <script charset="utf-8" src="updater.js"></script>
 <script charset="utf-8" src="sheet_data.js"></script>
 <script charset="utf-8" src="gamedata.js"></script>
@@ -409,6 +413,7 @@
 <script charset="utf-8" src="elber.js"></script>
 <script charset="utf-8" src="tables_data.js"></script>
 <script charset="utf-8" src="gear.js"></script>
+<script charset="utf-8" src="charcode.js"></script>
 <script charset="utf-8" src="tables.js"></script>
 <script charset="utf-8" src="dice.js"></script>
 <script charset="utf-8" src="maps.js"></script>

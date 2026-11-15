@@ -5,12 +5,14 @@ const SPECIAL_FULL = { STR: "Strength", PER: "Perception", END: "Endurance", CHA
 
 function toast(msg) {
   const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  if (typeof Sfx !== "undefined") Sfx.play("toast");
   clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), 2800);
 }
 function confirmBox(text, yesLabel = T("Delete")) {
   return new Promise(res => {
     $("modal-text").textContent = text; $("modal-yes").textContent = yesLabel;
     $("modal").classList.add("show");
+    if (typeof Sfx !== "undefined") Sfx.play("alert");
     const done = v => { $("modal").classList.remove("show"); $("modal-yes").onclick = $("modal-no").onclick = null; res(v); };
     $("modal-yes").onclick = () => done(true);
     $("modal-no").onclick = () => done(false);
@@ -47,6 +49,13 @@ function showPage(id) {
 }
 $("burger").onclick = () => document.body.classList.toggle("menu-open");
 $("go-home").onclick = () => showPage("home"); // the app's name at the top takes you Home
+// the sounds switch in the side menu
+function paintSound() {
+  $("nav-sound-ic").innerHTML = Sfx.isOn() ? "&#128266;" : "&#128263;";
+  $("nav-sound-tx").textContent = T(Sfx.isOn() ? "Sounds on" : "Sounds off");
+}
+$("nav-sound").onclick = () => { Sfx.setOn(!Sfx.isOn()); paintSound(); };
+paintSound();
 $("scrim").onclick = () => document.body.classList.remove("menu-open");
 document.querySelectorAll("#nav button[data-page]").forEach(b => (b.onclick = () => showPage(b.dataset.page)));
 document.querySelectorAll(".tile[data-go]").forEach(b => (b.onclick = () => showPage(b.dataset.go)));
@@ -54,6 +63,7 @@ $("app-version").textContent = APP_VERSION;
 $("nav-update").onclick = () => { document.body.classList.remove("menu-open"); Updater.check(true); };
 // Android back button: close menu / profile / modal before leaving the app
 window.handleBack = () => {
+  if (typeof CharCode !== "undefined" && CharCode.isOpen()) { CharCode.closeBox(); return true; }
   if ($("modal").classList.contains("show")) { $("modal-no").click(); return true; }
   if ($("upd-modal").classList.contains("show")) { $("upd-later").click(); return true; }
   if (document.body.classList.contains("menu-open")) { document.body.classList.remove("menu-open"); return true; }
@@ -550,6 +560,25 @@ $("cr-race").onchange = crAvatar;
 $("cr-origin").addEventListener("input", () => { if (!$("cr-race").value) crAvatar(); });
 G.SPECIAL.forEach(a => $("cr-s-" + a).addEventListener("input", crAutoHints));
 crAvatar(); crAutoHints();
+// import a character from its exported text
+async function importChar(c) {
+  c.id = "c" + Date.now() + Math.floor(Math.random() * 1000);
+  await addToRoster(c);
+  if (typeof Team !== "undefined") Team.prune();
+  toast(T("{name} imported", { name: c.name }));
+  return c;
+}
+$("ro-import").onclick = () => CharCode.ask(async c => { await importChar(c); openProfileId = c.id; renderRoster(); $("main").scrollTop = 0; });
+// in Create Character the text fills the form, ready to check and save
+$("cr-import").onclick = () => CharCode.ask(c => {
+  fillForm(Object.assign(c, { id: null }));
+  editingId = null;
+  $("cr-title").textContent = T("Create Character");
+  $("cr-hint").innerHTML = T("Imported <b>{name}</b>. Check it and press <b>Save character</b>.", { name: esc(c.name) });
+  $("cr-save").textContent = T("SAVE CHARACTER");
+  $("main").scrollTop = 0;
+  toast(T("{name} imported into the form", { name: c.name }));
+});
 $("cr-clear").onclick = () => {
   const id = editingId;
   resetForm();
@@ -664,7 +693,8 @@ function renderRoster() {
         ${c.notes ? `<h4>${T("Notes")}</h4><div style="white-space:pre-wrap;font-size:14px;line-height:1.45">${esc(c.notes)}</div>` : ""}
         <div class="bar" style="margin-top:16px"><button class="btn primary" id="ro-lvl">&#11014; ${T("Level up")}</button>
           <button class="btn" id="ro-sug">&#9733; ${T("Suggest a perk")}</button></div>
-        <div class="bar"><button class="btn" id="ro-edit">&#9998; ${T("Edit")}</button><button class="btn danger" id="ro-del">&#128465; ${T("Delete")}</button></div>
+        <div class="bar"><button class="btn" id="ro-edit">&#9998; ${T("Edit")}</button><button class="btn" id="ro-export">&#128203; ${T("Export")}</button>
+          <button class="btn danger" id="ro-del">&#128465; ${T("Delete")}</button></div>
       </div>`;
     setAvatar($("ro-av"), c);
     renderWeapons(c);
@@ -685,9 +715,12 @@ function renderRoster() {
     };
     $("ro-sug").onclick = () => { showPage("perks"); $("pk-char").value = c.id; updateCharInfo(); $("pk-out").innerHTML = ""; $("pk-gen").click(); };
     $("ro-del").onclick = () => deleteChar(c);
+    $("ro-export").onclick = () => CharCode.exportChar(c);
+    $("ro-import").hidden = true;
     return;
   }
   prof.innerHTML = "";
+  $("ro-import").hidden = false;
   if (!ROSTER.length) {
     list.innerHTML = `<div class="empty">${T("No saved characters yet.<br><br>Create one in <b>Create Character</b>, or tap <b>Add to saved</b> after generating a random one.")}</div>`;
     return;

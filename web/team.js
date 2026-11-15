@@ -678,5 +678,10 @@ const Team = (() => {
   }
 
   $("tm-add").onclick = () => add($("tm-pick").value);
+  // import a character's exported text: it's saved and joins the team
+  $("tm-import").onclick = () => {
+    if (TEAM.length >= MAX) { toast(T("A team can have up to {n} characters", { n: MAX })); return; }
+    CharCode.ask(async c => { await importChar(c); add(c.id); });
+  };
   return { load, render, chars, prune: () => { prune(); Walkers.sync(chars()); }, MAX };
 })();
