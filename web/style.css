@@ -919,3 +919,9 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .nb-who small { color: var(--muted); }
 .nb-peer .btn { flex: 1 1 100%; }
 @media (min-width: 560px) { .nb-peer .btn { flex: none; } }
+
+/* web version on an iPhone: how to put it on the Home Screen */
+#a2hs { position: fixed; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 30; display: flex; align-items: center; gap: 10px;
+  background: var(--panel2); border: 1px solid var(--amber-d); border-radius: 12px; padding: 10px 10px 10px 14px; font-size: 14px; box-shadow: 0 6px 24px #000a; }
+#a2hs span { flex: 1; }
+#a2hs .btn { flex: none; padding: 6px 12px; }

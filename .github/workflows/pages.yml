@@ -1,0 +1,46 @@
+# Publishes the web/ folder to GitHub Pages: the web version iPhones use (open it in Safari, then
+# Share -> Add to Home Screen). Runs on every push to main that changes web/, so the site always has the
+# same files as the newest release; installed copies see the new version.js and offer to reload.
+name: Publish web version
+
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fill in the offline copy's version and file list
+        shell: python
+        run: |
+          import json, os, re
+          v = re.search(r'APP_VERSION = "([\d.]+)"', open("web/version.js", encoding="utf-8").read()).group(1)
+          files = sorted(os.path.relpath(os.path.join(d, f), "web").replace(os.sep, "/")
+                         for d, _, fs in os.walk("web") for f in fs if f != "sw.js")
+          s = open("web/sw.js", encoding="utf-8").read()
+          s = s.replace('const VERSION = "dev";', 'const VERSION = "%s-%s";' % (v, os.environ["GITHUB_SHA"][:7]))
+          s = s.replace("[/*FILES*/]", json.dumps(["./"] + files))
+          open("web/sw.js", "w", encoding="utf-8").write(s)
+          print(v, len(files), "files")
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: deploy
+        uses: actions/deploy-pages@v4

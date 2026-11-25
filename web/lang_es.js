@@ -3625,3 +3625,11 @@ Object.assign(ES, {
   "Bluetooth: pair the two phones first, then tap this button on both.": "Bluetooth: empareja antes los dos móviles y luego toca este botón en ambos.",
   "Without the Nearby devices permission only Wi-Fi works.": "Sin el permiso de Dispositivos cercanos solo funciona la wifi.",
 });
+// v4.40.0: the web version for iPhone (GitHub Pages)
+Object.assign(ES, {
+  "Install it on your iPhone: tap <b>Share</b> {icon} and then <b>Add to Home Screen</b>.": "Instálala en tu iPhone: toca <b>Compartir</b> {icon} y luego <b>Añadir a pantalla de inicio</b>.",
+  "Close this note": "Cerrar este aviso",
+  "Couldn't reach the website to check for updates.": "No se pudo conectar con la web para buscar actualizaciones.",
+  "You have version {v}. Reload the app now to start using the new one?": "Tienes la versión {v}. ¿Recargar la app ahora para usar la nueva?",
+  "Loading the new version…": "Cargando la versión nueva…",
+});

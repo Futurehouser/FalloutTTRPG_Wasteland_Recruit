@@ -5,9 +5,11 @@
 
 (Windows: `WastelandRecruit.exe` · Android: `WastelandRecruit.apk`)
 
+**iPhone / iPad:** open [futurehouser.github.io/FalloutTTRPG_Wasteland_Recruit](https://futurehouser.github.io/FalloutTTRPG_Wasteland_Recruit/) in Safari, tap **Share** and then **Add to Home Screen**. It opens full screen like an app, works offline once opened, and updates itself. Sharing with nearby devices in My Team is not available there (iPhone web apps can't use Wi-Fi or Bluetooth that way); export and import characters as text instead.
+
 # Wasteland Recruit
 
-**Wasteland Recruit** is a free, fan-made companion app for the **Fallout 2d20 tabletop roleplaying game**. It takes care of the slow parts of running a session (rolling up characters, building scavenging spots, looking up loot, running fights and tracking your party) so you can spend more time playing. It works on **Windows** (a single portable `.exe`, nothing to install) and **Android** (`.apk`), keeps everything on your device, and offers to update itself when a new version is released (on the Home screen you can also pull the page down from the top to check for one).
+**Wasteland Recruit** is a free, fan-made companion app for the **Fallout 2d20 tabletop roleplaying game**. It takes care of the slow parts of running a session (rolling up characters, building scavenging spots, looking up loot, running fights and tracking your party) so you can spend more time playing. It works on **Windows** (a single portable `.exe`, nothing to install), **Android** (`.apk`) and **iPhone/iPad** (as a web app added to the Home Screen), keeps everything on your device, and offers to update itself when a new version is released (on the Home screen you can also pull the page down from the top to check for one).
 
 The app is available in **Español** (the default) and **English**: switch with the flag buttons on the Home screen or at the bottom of the side menu.
 

@@ -68,9 +68,37 @@ const Updater = (() => {
     };
   }
 
+  // the web version (iPhone): the site itself is the update, so compare with the version.js it serves now
+  // and offer to reload the page
+  async function checkWeb(manual) {
+    const say = msg => manual && toast(msg);
+    if (navigator.onLine === false) return say(T("Couldn't reach the website to check for updates."));
+    let version;
+    try {
+      const r = await fetch("version.js?t=" + Date.now(), { cache: "no-store" });
+      version = ((await r.text()).match(/APP_VERSION\s*=\s*"([\d.]+)"/) || [])[1];
+    } catch (e) { return say(T("Couldn't reach the website to check for updates.")); }
+    if (!version || compare(version, APP_VERSION) <= 0) return say(T("You're up to date (version {v}).", { v: APP_VERSION }));
+    if (!manual && (await Platform.load("skip_version")) === version) return;
+    $u("upd-title").textContent = T("Version {v} is available", { v: version });
+    $u("upd-text").textContent = T("You have version {v}. Reload the app now to start using the new one?", { v: APP_VERSION });
+    $u("upd-notes").hidden = true;
+    setStatus("", null);
+    $u("upd-go").disabled = $u("upd-later").disabled = $u("upd-skip").disabled = false;
+    $u("upd-modal").classList.add("show");
+    $u("upd-later").onclick = close;
+    $u("upd-skip").onclick = async () => { await Platform.save("skip_version", version); close(); };
+    $u("upd-go").onclick = async () => {
+      setStatus(T("Loading the new version…"), null);
+      try { const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch (e) { /* reload anyway */ }
+      location.reload();
+    };
+  }
+
   // manual = the user pressed "Check for updates" (then always say something)
   async function check(manual) {
     const say = msg => manual && toast(msg);
+    if (!supported() && typeof WebApp !== "undefined" && WebApp.isWeb()) return checkWeb(manual);
     if (!supported()) return say(T("Updates work in the Windows and Android apps."));
     let rel;
     try { rel = await latestRelease(); }

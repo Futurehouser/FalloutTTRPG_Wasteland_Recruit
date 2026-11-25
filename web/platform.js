@@ -8,6 +8,7 @@ const Platform = (() => {
     if (window.AndroidBridge) return resolve();
     const hasApi = () => !!(window.pywebview && window.pywebview.api && window.pywebview.api.load);
     if (hasApi()) return resolve();
+    if (/\.github\.io$/.test(location.hostname)) return resolve(); // the web version (iPhone): there is no app around it to wait for
     window.addEventListener("pywebviewready", () => resolve());
     // the Windows app's "ready" event can fire before this script runs, so also watch for its API itself.
     // A plain browser has no pywebview at all: give up after 1.5 s (15 s if the Windows app is still starting)
