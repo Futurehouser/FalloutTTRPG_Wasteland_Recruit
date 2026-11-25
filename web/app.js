@@ -64,6 +64,7 @@ $("nav-update").onclick = () => { document.body.classList.remove("menu-open"); U
 // Android back button: close menu / profile / modal before leaving the app
 window.handleBack = () => {
   if (typeof CharCode !== "undefined" && CharCode.isOpen()) { CharCode.closeBox(); return true; }
+  if (typeof Gear !== "undefined" && Gear.isDialogOpen()) { Gear.closeDialog(); return true; }
   if ($("modal").classList.contains("show")) { $("modal-no").click(); return true; }
   if ($("upd-modal").classList.contains("show")) { $("upd-later").click(); return true; }
   if (document.body.classList.contains("menu-open")) { document.body.classList.remove("menu-open"); return true; }
@@ -701,7 +702,7 @@ function renderRoster() {
     $("ro-wadd").onclick = async () => {
       const n = $("ro-wpick").value;
       if (!WEAPONS_FOR_COMBAT[n]) return;
-      c.weapons = (c.weapons || []).filter(w => WEAPONS_FOR_COMBAT[w.name]);
+      c.weapons = (c.weapons || []).filter(w => w.custom || WEAPONS_FOR_COMBAT[w.name]);
       if (c.weapons.some(w => w.name === n)) { toast(T("{name} already has that weapon", { name: c.name })); return; }
       c.weapons.push({ name: n, ammo: startAmmo(n), mods: [] });
       await storeRoster(); renderWeapons(c);
@@ -753,9 +754,9 @@ function startAmmo(name, rolled) {
 function renderWeapons(c) {
   const box = $("ro-weapons");
   const RANGE = { C: "Close", M: "Medium", L: "Long", X: "Extreme" };
-  const ws = (c.weapons || []).filter(w => WEAPONS_FOR_COMBAT[w.name]);
+  const ws = (c.weapons || []).filter(w => w.custom || WEAPONS_FOR_COMBAT[w.name]);
   box.innerHTML = ws.length ? ws.map((w, i) => {
-    const d = (typeof Gear !== "undefined" && Gear.weaponStats(w)) || WEAPONS_FOR_COMBAT[w.name], melee = isMeleeSkill(d.skill);
+    const d = (typeof Gear !== "undefined" && Gear.weaponStats(w)) || WEAPONS_FOR_COMBAT[w.name], melee = isMeleeSkill(d.skill) || d.range === "-";
     return `<div class="pcard wpn"><div class="t"><b>${esc(T(w.name))}</b>${(w.mods || []).length ? ` <span class="muted">+ ${w.mods.map(m => esc(T(m))).join(", ")}</span>` : ""}
       <small>${typeof Gear !== "undefined" ? Gear.weaponLine(d) : `${T(d.skill)} &middot; ${d.dmg} ${T("CD")}`}</small></div>
       ${melee ? "" : `<label class="wpn-ammo"><small>${T(d.skill === "Throwing" || d.skill === "Explosives" ? "Throwables" : "Ammo")}</small><input type="number" min="0" max="9999" data-wammo="${i}" value="${w.ammo || 0}"></label>`}

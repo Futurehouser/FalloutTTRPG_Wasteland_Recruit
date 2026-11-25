@@ -876,3 +876,22 @@ body.walkers-on .page.active { padding-bottom: 140px; }
 .cc-box { max-width: 560px; }
 .cc-box textarea { width: 100%; min-height: 260px; font: 13px/1.4 Consolas, "Courier New", monospace; white-space: pre; }
 .cc-box .bar { flex-wrap: wrap; }
+
+/* ---- custom weapons and armor (gear.js) */
+.gx-mk { margin: 0 0 8px; font-size: 13px; padding: 7px 12px; }
+.gx-custom { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; padding: 1px 6px; border-radius: 99px;
+  background: rgba(240, 190, 40, .15); color: var(--amber); border: 1px solid var(--amber-d); vertical-align: middle; }
+.gx-btns { display: flex; gap: 6px; flex: none; }
+.gx-btns .btn { padding: 6px 10px; }
+.gx-form { max-width: 560px; max-height: 88vh; overflow-y: auto; }
+.gx-form h3 { margin: 0 0 10px; color: var(--amber); }
+.gx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+.gx-f { display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: var(--muted); min-width: 0; }
+.gx-f.wide { grid-column: 1 / -1; }
+.gx-f input, .gx-f select { width: 100%; }
+.gx-form > .gx-f { margin-top: 8px; max-width: 50%; }
+.gx-flabel { margin: 12px 0 4px; font-size: 13px; color: var(--muted); }
+.gx-checks { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 14px; }
+.gx-checks label { display: inline-flex; align-items: center; gap: 5px; }
+.gx-checks input { width: 17px; height: 17px; accent-color: var(--amber); }
+@media (max-width: 480px) { .gx-form > .gx-f { max-width: none; } }

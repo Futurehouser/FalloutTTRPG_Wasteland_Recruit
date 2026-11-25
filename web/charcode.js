@@ -27,11 +27,14 @@ const CharCode = (() => {
   const list = s => String(s || "").split(/\s*\|\s*/).map(x => x.trim()).filter(Boolean);
   // "Name [mod + mod] x20" -> { name, mods, qty }
   function entry(s) {
+    let custom = null;
+    s = s.replace(/\s*\{(.*)\}/, (all, json) => { try { custom = JSON.parse("{" + json + "}"); } catch (e) { custom = null; } return ""; });
     let m = /^(.*?)\s*(?:\[(.*)\])?\s*(?:[x×]\s*(\d+))?$/i.exec(s.trim());
-    const out = { name: unT(m[1]), mods: m[2] ? m[2].split(/\s+\+\s+/).map(x => unT(x)).filter(Boolean) : [], qty: m[3] ? +m[3] : null };
+    const out = { name: custom ? m[1].trim() : unT(m[1]), mods: m[2] ? m[2].split(/\s+\+\s+/).map(x => unT(x)).filter(Boolean) : [], qty: m[3] ? +m[3] : null, custom };
     return out;
   }
-  const withMods = (name, mods) => T(name) + ((mods || []).length ? ` [${mods.map(x => T(x)).join(" + ")}]` : "");
+  const withMods = (name, mods, custom) => custom ? `${name} ${JSON.stringify(custom).replace(/^\{/, "{").replace(/\|/g, "/")}`
+    : T(name) + ((mods || []).length ? ` [${mods.map(x => T(x)).join(" + ")}]` : "");
 
   // ---------------------------------------------------------------- export
   function exportText(c) {
@@ -51,8 +54,8 @@ const CharCode = (() => {
     add("tags", (c.tags || []).map(x => T(x)).join(" | ") || "-");
     add("skills", G.SKILL_NAMES.filter(k => (c.skills || {})[k]).map(k => `${T(k)} ${c.skills[k]}`).join(" | ") || "-");
     add("perks", (c.perkCards || []).map(p => `${typeof perkName === "function" ? perkName(p.name) : T(p.name)} ${p.rank || 1}`).join(" | ") || "-");
-    add("weapons", (c.weapons || []).map(w => withMods(w.name, w.mods) + (w.ammo ? ` x${w.ammo}` : "")).join(" | ") || "-");
-    add("apparel", (c.apparel || []).map(a => withMods(a.name, a.mods)).join(" | ") || "-");
+    add("weapons", (c.weapons || []).map(w => withMods(w.name, w.mods, w.custom) + (w.ammo ? ` x${w.ammo}` : "")).join(" | ") || "-");
+    add("apparel", (c.apparel || []).map(a => withMods(a.name, a.mods, a.custom)).join(" | ") || "-");
     if ((c.robomods || []).length || race === "robot") add("robomods", (c.robomods || []).map(x => T(x)).join(" | ") || "-");
     add("items", (c.items || []).map(i => `${T(i.name)} x${i.qty || 1}`).join(" | ") || "-");
     L.push(`${key("notes")}:`);
@@ -107,8 +110,8 @@ const CharCode = (() => {
       const known = typeof TT_BY !== "undefined" && (TT_BY[name] || Object.values(TT_BY).find(t => fold(t.n) === fold(name) || fold(T(t.n)) === fold(name)));
       c.perkCards.push({ name: known ? known.n : name, rank: m ? Math.max(1, +m[2]) : 1 });
     });
-    list(v.weapons).forEach(p => { const e = entry(p); c.weapons.push({ name: e.name, ammo: e.qty || 0, mods: e.mods }); });
-    list(v.apparel).forEach(p => { const e = entry(p); c.apparel.push({ name: e.name, mods: e.mods }); });
+    list(v.weapons).forEach(p => { const e = entry(p); c.weapons.push(Object.assign({ name: e.name, ammo: e.qty || 0, mods: e.mods }, e.custom ? { custom: e.custom } : {})); });
+    list(v.apparel).forEach(p => { const e = entry(p); c.apparel.push(Object.assign({ name: e.name, mods: e.mods }, e.custom ? { custom: e.custom } : {})); });
     list(v.robomods).forEach(p => c.robomods.push(unT(p)));
     list(v.items).forEach(p => { const e = entry(p); c.items.push({ name: e.name, qty: e.qty || 1 }); });
     return c;
@@ -145,7 +148,7 @@ const CharCode = (() => {
     }
     $("cc-t").textContent = title; $("cc-h").textContent = hint;
     $("cc-text").value = value || ""; $("cc-text").readOnly = !onImport;
-    $("cc-no").textContent = T(onImport ? "Cancel" : "Close");
+    $("cc-no").textContent = onImport ? T("Cancel") : es() ? "Cerrar" : "Close"; // not T("Close"): in Spanish that word is the "Close" range
     $("cc-paste").textContent = "📋 " + T("Paste"); $("cc-paste").hidden = !onImport;
     $("cc-ok").textContent = T("Import"); $("cc-ok").hidden = !onImport;
     el.classList.add("show");

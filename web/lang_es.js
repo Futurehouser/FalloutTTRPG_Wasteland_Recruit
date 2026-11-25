@@ -3562,7 +3562,6 @@ Object.assign(ES, {
   "Import a character into the team": "Importar un personaje al equipo",
   "Import": "Importar",
   "Paste": "Pegar",
-  "Close": "Cerrar",
   "CHARACTER": "PERSONAJE",
   "{name} copied to the clipboard": "{name} copiado al portapapeles",
   "Copy {name}'s text": "Copia el texto de {name}",
@@ -3573,4 +3572,25 @@ Object.assign(ES, {
   "{name} imported": "{name} importado",
   "{name} imported into the form": "{name} importado en el formulario",
   "Imported <b>{name}</b>. Check it and press <b>Save character</b>.": "<b>{name}</b> importado. Revísalo y pulsa <b>Guardar personaje</b>.",
+});
+
+// ---- v4.36.0: custom weapons and armor
+Object.assign(ES, {
+  "Custom": "Personalizado",
+  "Save": "Guardar",
+  "Custom armor or clothing": "Armadura o ropa personalizada",
+  "New custom weapon": "Nueva arma personalizada",
+  "Edit custom weapon": "Editar arma personalizada",
+  "New custom armor or clothing": "Nueva armadura o ropa personalizada",
+  "Edit custom armor or clothing": "Editar armadura o ropa personalizada",
+  "e.g. Grandpa's Hunting Rifle": "p. ej. El rifle de caza del abuelo",
+  "e.g. Patched Road Leathers": "p. ej. Cuero de carretera remendado",
+  "Melee: leave empty": "C. a c.: déjalo vacío",
+  "Melee (none)": "Cuerpo a cuerpo (ninguno)",
+  "Weight (lbs)": "Peso (lb)",
+  "Ammo type": "Tipo de munición",
+  "Ammo carried": "Munición que lleva",
+  "Give it a name": "Ponle un nombre",
+  "HP (power armor pieces)": "PV (piezas de servoarmadura)",
+  "Pick at least one body location it covers": "Elige al menos una zona del cuerpo que cubra",
 });

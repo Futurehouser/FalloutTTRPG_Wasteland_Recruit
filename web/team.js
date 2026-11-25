@@ -639,7 +639,7 @@ const Team = (() => {
   }
 
   function weaponLine(c) {
-    const ws = (c.weapons || []).filter(w => typeof WEAPONS_FOR_COMBAT === "undefined" || WEAPONS_FOR_COMBAT[w.name]);
+    const ws = (c.weapons || []).filter(w => w.custom || typeof WEAPONS_FOR_COMBAT === "undefined" || WEAPONS_FOR_COMBAT[w.name]);
     return ws.length ? ws.map(w => `<span class="chip">${esc(T(w.name))}</span>`).join("") : `<span class="muted">${T("No weapons set. Add them in the character's profile.")}</span>`;
   }
 

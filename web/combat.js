@@ -115,13 +115,13 @@ const Combat = (() => {
   }
   function newSetup() { setup = { ap: 0, groups: [], members: teamOn() ? teamMembers() : [newMember(0)] }; }
   // the weapons set in the character's profile that the combat assistant knows
-  const charWeapons = c => ((c && c.weapons) || []).filter(w => WEAPONS_FOR_COMBAT[w.name]);
+  const charWeapons = c => ((c && c.weapons) || []).filter(w => w.custom || WEAPONS_FOR_COMBAT[w.name]);
   function fromCharacter(m, c) {
     const s = c.special, hp = c.maxHp || s.END + s.LCK;
     Object.assign(m, { charId: c.id, name: c.name, hp, maxHp: hp, def: s.AGI >= 9 ? 2 : 1, init: s.PER + s.AGI,
       meleeBonus: s.STR >= 11 ? 3 : s.STR >= 9 ? 2 : s.STR >= 7 ? 1 : 0 });
     const ws = charWeapons(c);
-    if (ws.length) { m.weapon = ws[0].name; fromWeapon(m, ws[0].name, ws[0].mods); m.w.ammo = ws[0].ammo || 0; }
+    if (ws.length) { m.weapon = ws[0].name; fromWeapon(m, ws[0].name, ws[0].mods, ws[0].custom); m.w.ammo = ws[0].ammo || 0; }
     const dr = typeof Gear !== "undefined" && Gear.torsoDR(c); // the armor and clothing in the character's profile
     if (dr) m.dr = { p: dr.p, e: dr.e, r: dr.r, po: 0 };
     updateTN(m);
@@ -133,11 +133,11 @@ const Combat = (() => {
     m.w.tn = (c.special[G.SKILL_ATTR[sk]] || 5) + (c.skills[sk] || 0);
     m.w.crit = (c.tags || []).includes(sk) ? Math.max(1, c.skills[sk] || 1) : 1;
   }
-  function fromWeapon(m, name, mods) {
-    const w = (typeof Gear !== "undefined" && Gear.weaponStats({ name, mods })) || WEAPONS_FOR_COMBAT[name]; // with the character's weapon mods
+  function fromWeapon(m, name, mods, custom) {
+    const w = (typeof Gear !== "undefined" && Gear.weaponStats({ name, mods, custom })) || WEAPONS_FOR_COMBAT[name]; // with the character's weapon mods (or its own stats if custom)
     if (!w) return;
     const effs = (w.eff || "").replace("Persist.", "Persistent").split(",").map(x => x.trim()).filter(x => x && x !== "-");
-    Object.assign(m.w, { skill: w.skill, cd: w.dmg, type: w.type === "Energy" ? "e" : "p",
+    Object.assign(m.w, { skill: w.skill, cd: w.dmg, type: { Energy: "e", Radiation: "r", Poison: "po" }[w.type] || "p",
       eff: effs.map(e => e.split(" ")[0]), pierce: effectOf(effs, "Piercing") || 1,
       rate: typeof w.rate === "number" ? w.rate : 0, range: ["C", "M", "L", "X"].includes(w.range) ? w.range : "C" });
     updateTN(m);
@@ -283,7 +283,7 @@ const Combat = (() => {
     root().querySelectorAll("[data-mweapon]").forEach(sel => (sel.onchange = () => {
       readSetupForm();
       const m = setup.members[+sel.dataset.mweapon], own = charWeapons(ROSTER.find(x => x.id === m.charId)).find(x => x.name === sel.value);
-      fromWeapon(m, sel.value, own && own.mods);
+      fromWeapon(m, sel.value, own && own.mods, own && own.custom);
       if (own) m.w.ammo = own.ammo || 0;
       renderSetup();
     }));
@@ -359,7 +359,7 @@ const Combat = (() => {
       const w = fightWeapon(m.weapon, m.w);
       // the other weapons in the character's profile, ready to switch to
       const others = charWeapons(ROSTER.find(x => x.id === m.charId)).filter(x => x.name !== m.weapon).map(x => {
-        const t = newMember(0); t.charId = m.charId; fromWeapon(t, x.name, x.mods); t.w.ammo = x.ammo || 0;
+        const t = newMember(0); t.charId = m.charId; fromWeapon(t, x.name, x.mods, x.custom); t.w.ammo = x.ammo || 0;
         return fightWeapon(x.name, t.w);
       });
       return { uid: "P" + i, charId: m.charId, name: m.name, hp: m.hp, maxHp: m.maxHp, def: m.def, init: m.init,
