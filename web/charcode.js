@@ -60,7 +60,7 @@ const CharCode = (() => {
     add("items", (c.items || []).map(i => `${T(i.name)} x${i.qty || 1}`).join(" | ") || "-");
     L.push(`${key("notes")}:`);
     if (c.notes) L.push(c.notes);
-    if (c.photo) L.push(`${key("photo")}: ${c.photo}`);
+    // no custom photo: the "Profile picture" and "Walking sprite" lines name the kind's built-in ones chosen for this character
     return L.join("\n");
   }
 
@@ -75,8 +75,8 @@ const CharCode = (() => {
     let inNotes = false, notes = [];
     lines.forEach(line => {
       const m = /^\s*([^:]{1,40}):\s?(.*)$/.exec(line), id = m && !/^data$/i.test(m[1].trim()) ? idOf(m[1]) : null;
-      if (id === "photo") { v.photo = m[2].trim(); inNotes = false; return; }
-      if (inNotes) { notes.push(line); return; } // everything after "Notes:" belongs to the notes (until the photo)
+      if (id === "photo") { inNotes = false; return; } // old exports carried the photo: it is skipped
+      if (inNotes) { notes.push(line); return; } // everything after "Notes:" belongs to the notes (until a photo line from an old export)
       if (id === "notes") { inNotes = true; if (m[2].trim()) notes.push(m[2]); return; }
       if (id) v[id] = m[2].trim();
     });
@@ -84,7 +84,7 @@ const CharCode = (() => {
     const num = (x, d) => { const n = parseInt(x, 10); return isNaN(n) ? d : n; };
     const c = { name: v.name.slice(0, 60), origin: (v.origin || "").slice(0, 40), level: Math.min(50, Math.max(1, num(v.level, 1))),
       xp: Math.max(0, num(v.xp, 0)), caps: Math.max(0, num(v.caps, 0)), special: {}, skills: {}, tags: [], perkCards: [],
-      weapons: [], apparel: [], robomods: [], items: [], notes: notes.join("\n").trim().slice(0, 2000), photo: /^data:image\//.test(v.photo || "") ? v.photo : null };
+      weapons: [], apparel: [], robomods: [], items: [], notes: notes.join("\n").trim().slice(0, 2000), photo: null };
     const mh = num(v.maxhp, NaN), cw = num(v.carry, NaN);
     c.maxHp = isNaN(mh) ? null : mh; c.carryWeight = isNaN(cw) ? null : cw;
     const kind = Object.keys(KINDS).find(k => KINDS[k].some(n => fold(n) === fold(v.kind || "")));
