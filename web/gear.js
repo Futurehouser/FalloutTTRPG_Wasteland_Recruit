@@ -297,7 +297,8 @@ const Gear = (() => {
       const eff = ticked("gx-eff").map(x => (x === "Piercing" ? `Piercing ${int("gx-pierce", 1, 1, 5)}` : x));
       const range = $("gx-range").value, rateRaw = val("gx-rate");
       const ammoName = val("gx-ammo"), ammo = ammoName ? (ammoTypes().find(a => T(a).toLowerCase() === ammoName.toLowerCase()) || ammoName) : null;
-      done({ name, ammo: int("gx-ammon", 0, 0, 9999), mods: [], custom: {
+      const melee = isMelee({ skill: $("gx-skill").value }) || range === "-";
+      done({ name, ammo: melee ? 0 : int("gx-ammon", 0, 0, 9999), mods: [], custom: {
         skill: $("gx-skill").value, dmg: int("gx-dmg", 3, 1, 30), type: $("gx-type").value, eff: eff.length ? eff.join(", ") : "-",
         rate: rateRaw === "" || range === "-" ? "-" : int("gx-rate", 0, 0, 10), range, qual: ticked("gx-q").join(", "),
         wt: Math.max(0, parseFloat(val("gx-wt")) || 0), ammo } });

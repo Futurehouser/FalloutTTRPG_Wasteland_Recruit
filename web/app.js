@@ -461,8 +461,10 @@ function resetForm() {
 }
 function fillForm(c, levelUp = false) {
   editingId = c.id; crPhoto = c.photo || null; crLookAv = c.avatar || null; crLookSp = c.sprite || null;
-  crGear = { weapons: (c.weapons || []).map(w => ({ name: w.name, ammo: w.ammo || 0, mods: (w.mods || []).slice() })),
-    apparel: (c.apparel || []).map(a => ({ name: a.name, mods: (a.mods || []).slice() })),
+  // copies, with the stats of custom pieces kept (without them a custom piece would be saved as an unknown name)
+  const keep = x => (x.custom ? { custom: Object.assign({}, x.custom, x.custom.locs ? { locs: x.custom.locs.slice() } : {}) } : {});
+  crGear = { weapons: (c.weapons || []).map(w => Object.assign({ name: w.name, ammo: w.ammo || 0, mods: (w.mods || []).slice() }, keep(w))),
+    apparel: (c.apparel || []).map(a => Object.assign({ name: a.name, mods: (a.mods || []).slice() }, keep(a))),
     robomods: (c.robomods || []).slice(), items: (c.items || []).map(i => ({ name: i.name, qty: i.qty || 1 })) };
   mountGear();
   crCards = JSON.parse(JSON.stringify(c.perkCards || []));
