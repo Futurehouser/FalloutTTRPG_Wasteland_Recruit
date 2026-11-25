@@ -46,6 +46,7 @@
 <main id="main">
   <!-- home -->
   <section class="page" id="page-home" data-title="Home">
+    <div id="ptr" aria-hidden="true"><span id="ptr-ic">&#8595;</span> <span id="ptr-tx">Pull down to check for updates</span></div>
     <div class="home-title">
       <div class="home-logo">&#9762;</div>
       <h1>Wasteland Recruit</h1>
@@ -272,6 +273,10 @@
       <div style="flex:1 1 120px;align-self:end"><button class="btn primary" id="tm-add" style="width:100%">+ Add to team</button></div>
     </div>
     <div class="bar"><button class="btn" id="tm-import"><span aria-hidden="true">&#128229;</span> Import a character into the team</button></div>
+    <div class="card nb-card"><h3><span aria-hidden="true">&#128225;</span> Nearby</h3>
+      <p class="hint">Phones and PCs with Wasteland Recruit on the same Wi-Fi (or a phone paired with this one by Bluetooth) can share their main character here,
+        and you can add it to your Saved Characters. Keep My Team open on both devices.</p>
+      <div id="nb-box"></div></div>
     <div id="tm-list" style="margin-top:12px"></div>
   </section>
 
@@ -414,6 +419,7 @@
 <script charset="utf-8" src="tables_data.js"></script>
 <script charset="utf-8" src="gear.js"></script>
 <script charset="utf-8" src="charcode.js"></script>
+<script charset="utf-8" src="nearby.js"></script>
 <script charset="utf-8" src="tables.js"></script>
 <script charset="utf-8" src="dice.js"></script>
 <script charset="utf-8" src="maps.js"></script>

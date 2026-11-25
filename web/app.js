@@ -39,6 +39,7 @@ function showPage(id) {
   if (id === "hack" && typeof Hack !== "undefined") Hack.show();
   if (id === "radio" && typeof Radio !== "undefined") Radio.show();
   if (id === "team" && typeof Team !== "undefined") Team.render();
+  if (typeof Nearby !== "undefined") Nearby.page(id); // nearby sharing runs only while My Team is open
   if (id === "tutorials" && typeof Tutorials !== "undefined") Tutorials.show();
   if (id === "elber" && typeof Elber !== "undefined") Elber.show();
   if (id === "tables" && typeof Tables !== "undefined") Tables.show();
@@ -49,6 +50,41 @@ function showPage(id) {
 }
 $("burger").onclick = () => document.body.classList.toggle("menu-open");
 $("go-home").onclick = () => showPage("home"); // the app's name at the top takes you Home
+// Home: pulling the page down from the very top checks for a new version
+(() => {
+  const main = $("main"), ptr = $("ptr"), PULL = 70;
+  let y0 = null, dy = 0;
+  const show = h => {
+    ptr.style.height = h + "px"; ptr.style.opacity = Math.min(1, h / PULL);
+    const armed = h >= PULL;
+    ptr.classList.toggle("armed", armed);
+    $("ptr-tx").textContent = T(armed ? "Release to check for updates" : "Pull down to check for updates");
+  };
+  main.addEventListener("touchstart", e => {
+    y0 = currentPage === "home" && main.scrollTop <= 0 && e.touches.length === 1 && !document.body.classList.contains("menu-open") ? e.touches[0].clientY : null;
+    dy = 0;
+  }, { passive: true });
+  main.addEventListener("touchmove", e => {
+    if (y0 == null) return;
+    if (document.querySelector(".tile.dragging")) { y0 = null; dy = 0; show(0); return; } // moving a Home tile, not pulling
+    dy = e.touches[0].clientY - y0;
+    if (dy <= 0 || main.scrollTop > 0) { show(0); return; }
+    if (e.cancelable) e.preventDefault(); // the page itself doesn't move while pulling
+    show(Math.min(PULL * 1.4, dy * 0.5));
+  }, { passive: false });
+  const end = () => {
+    if (y0 == null) return;
+    const go = dy * 0.5 >= PULL;
+    y0 = null; dy = 0;
+    if (!go) { show(0); return; }
+    ptr.classList.add("busy"); $("ptr-tx").textContent = T("Checking for updates…");
+    if (typeof Sfx !== "undefined") Sfx.play("primary");
+    Promise.resolve(Updater.check(true)).finally(() => { ptr.classList.remove("busy"); show(0); });
+  };
+  main.addEventListener("touchend", end);
+  main.addEventListener("touchcancel", () => { y0 = null; show(0); });
+  show(0);
+})();
 // the sounds switch in the side menu
 function paintSound() {
   $("nav-sound-ic").innerHTML = Sfx.isOn() ? "&#128266;" : "&#128263;";
@@ -628,6 +664,7 @@ async function loadRoster() {
 async function storeRoster() {
   const ok = await Platform.saveJSON("roster", ROSTER);
   if (!ok) toast(T("Warning: could not save the character list"));
+  if (typeof Nearby !== "undefined") Nearby.refresh(); // the shared main character stays up to date
   return ok;
 }
 async function addToRoster(c) {

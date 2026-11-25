@@ -115,5 +115,24 @@ const Platform = (() => {
     return "";
   }
 
-  return { ready, load, save, loadJSON, saveJSON, saveImage, canShare, shareImage, installUpdate, openUrl, isAndroid, isDesktop, copyText, readText };
+  // nearby sharing (My Team): other copies of the app on the same Wi-Fi, and paired phones over Bluetooth (Android).
+  // op is open / close / share / peers / fetch / btSearch; every call returns a string ("OK", JSON, text or "ERROR: ...").
+  const NEARBY = { open: ["nearbyOpen", "nearby_open"], close: ["nearbyClose", "nearby_close"], share: ["nearbyShare", "nearby_share"],
+    peers: ["nearbyPeers", "nearby_peers"], fetch: ["nearbyFetch", "nearby_fetch"], btSearch: ["nearbyBtSearch", null] };
+  const canNearby = () => (isAndroid() && typeof AndroidBridge.nearbyOpen === "function") || (isDesktop() && !!window.pywebview.api.nearby_open);
+  const canBluetooth = () => isAndroid() && typeof AndroidBridge.nearbyBtSearch === "function";
+  async function nearby(op, ...args) {
+    await ready;
+    const [a, d] = NEARBY[op] || [];
+    try {
+      if (isAndroid() && a && typeof AndroidBridge[a] === "function") return String(AndroidBridge[a](...args));
+      if (isDesktop() && d && window.pywebview.api[d]) return String(await window.pywebview.api[d](...args));
+    } catch (e) {
+      return "ERROR: " + e.message;
+    }
+    return "ERROR: not available";
+  }
+
+  return { ready, load, save, loadJSON, saveJSON, saveImage, canShare, shareImage, installUpdate, openUrl, isAndroid, isDesktop, copyText, readText,
+    canNearby, canBluetooth, nearby };
 })();

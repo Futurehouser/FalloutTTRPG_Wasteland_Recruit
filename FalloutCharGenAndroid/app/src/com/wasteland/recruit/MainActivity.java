@@ -3,6 +3,11 @@ package com.wasteland.recruit;
 import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothSocket;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -15,6 +20,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -37,6 +43,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import java.util.UUID;
 
 import org.json.JSONObject;
 
@@ -46,6 +54,13 @@ public class MainActivity extends Activity {
     private static final String ACTION_INSTALL_DONE = "com.wasteland.recruit.INSTALL_DONE";
     private WebView web;
     private ValueCallback<Uri[]> pendingPick;
+    private static final int BT_PERMISSION = 8;
+    // nearby sharing of the main character (My Team): Wi-Fi in LanShare, Bluetooth with paired phones here
+    private static final UUID BT_UUID = UUID.fromString("6f1d2c3a-5b7e-4c1a-9e2f-57a5e1a7d001");
+    private LanShare lan;
+    private volatile String nearbyId = "", nearbyInfo = "", nearbyText = "";
+    private WifiManager.MulticastLock multicast;
+    private BluetoothServerSocket btServer;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -177,6 +192,70 @@ public class MainActivity extends Activity {
         }
     }
 
+    // ---------------------------------------------------------------- nearby sharing
+    private BluetoothAdapter bt() {
+        BluetoothManager m = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        return m == null ? null : m.getAdapter();
+    }
+
+    private boolean btAllowed() {
+        return Build.VERSION.SDK_INT < 31 || checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int req, String[] perms, int[] results) {
+        super.onRequestPermissionsResult(req, perms, results);
+        if (req != BT_PERMISSION) return;
+        boolean ok = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+        if (ok && !nearbyText.isEmpty()) startBtServer();
+        js("window.onNearbyPermission && onNearbyPermission(" + ok + ")");
+    }
+
+    private synchronized void startBtServer() {
+        if (btServer != null || nearbyText.isEmpty() || !btAllowed()) return;
+        BluetoothAdapter a = bt();
+        if (a == null || !a.isEnabled()) return;
+        try {
+            final BluetoothServerSocket srv = a.listenUsingInsecureRfcommWithServiceRecord("Wasteland Recruit", BT_UUID);
+            btServer = srv;
+            new Thread(() -> {
+                while (btServer == srv) {
+                    try (BluetoothSocket s = srv.accept()) {
+                        OutputStream out = s.getOutputStream();
+                        out.write((LanShare.MAGIC + "\n" + nearbyId + "\n0\n" + nearbyInfo + "\n" + nearbyText).getBytes(StandardCharsets.UTF_8));
+                        out.flush();
+                        Thread.sleep(400); // let the other phone read it before the link closes
+                    } catch (Exception e) {
+                        if (btServer != srv) return; // stopped
+                        try { Thread.sleep(500); } catch (InterruptedException ie) { return; }
+                    }
+                }
+            }, "wr-bt-serve").start();
+        } catch (Exception e) {
+            btServer = null;
+        }
+    }
+
+    private synchronized void stopBtServer() {
+        BluetoothServerSocket srv = btServer;
+        btServer = null;
+        if (srv != null) try { srv.close(); } catch (Exception ignored) { }
+    }
+
+    private void stopNearby() {
+        stopBtServer();
+        if (lan != null) lan.close();
+        lan = null;
+        nearbyText = "";
+        if (multicast != null && multicast.isHeld()) multicast.release();
+    }
+
+    @Override
+    protected void onDestroy() {
+        stopNearby();
+        super.onDestroy();
+    }
+
     @Override
     public void onBackPressed() {
         web.evaluateJavascript("window.handleBack ? String(window.handleBack()) : 'false'", r -> {
@@ -229,6 +308,85 @@ public class MainActivity extends Activity {
     }
 
     class Bridge {
+        // ---- nearby sharing (My Team). The page calls nearbyOpen when it opens and nearbyClose when it closes.
+        @JavascriptInterface
+        public String nearbyOpen(String deviceId) {
+            if (deviceId == null || deviceId.isEmpty() || deviceId.length() > 64) return "ERROR: bad id";
+            if (lan != null && deviceId.equals(nearbyId)) return "OK";
+            stopNearby();
+            nearbyId = deviceId;
+            try {
+                WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                if (wm != null) {
+                    multicast = wm.createMulticastLock("wasteland-recruit-nearby");
+                    multicast.setReferenceCounted(false);
+                    multicast.acquire(); // some phones drop broadcast packets without it
+                }
+            } catch (Exception ignored) { }
+            lan = new LanShare(deviceId);
+            lan.open();
+            return "OK";
+        }
+
+        @JavascriptInterface
+        public String nearbyClose() {
+            stopNearby();
+            return "OK";
+        }
+
+        /** Shares the main character (empty text stops sharing). */
+        @JavascriptInterface
+        public String nearbyShare(String info, String text) {
+            if (lan == null) return "ERROR: not open";
+            nearbyInfo = info == null ? "" : info.replace("\n", " ");
+            nearbyText = text == null ? "" : text;
+            lan.share(nearbyInfo, nearbyText);
+            if (nearbyText.isEmpty()) stopBtServer();
+            else startBtServer();
+            return "OK";
+        }
+
+        @JavascriptInterface
+        public String nearbyPeers() {
+            return lan == null ? "[]" : lan.peersJson();
+        }
+
+        @JavascriptInterface
+        public String nearbyFetch(String id) {
+            return lan == null ? "ERROR: not open" : lan.fetch(id);
+        }
+
+        /** Asks the paired Bluetooth devices for their shared character.
+         *  Returns "SEARCHING n", "NO_BT", "BT_OFF", "NO_PAIRED" or "NEED_PERMISSION". */
+        @JavascriptInterface
+        public String nearbyBtSearch() {
+            if (lan == null) return "ERROR: not open";
+            BluetoothAdapter a = bt();
+            if (a == null) return "NO_BT";
+            if (!btAllowed()) {
+                runOnUiThread(() -> requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT}, BT_PERMISSION));
+                return "NEED_PERMISSION";
+            }
+            if (!a.isEnabled()) return "BT_OFF";
+            startBtServer();
+            Set<BluetoothDevice> paired;
+            try { paired = a.getBondedDevices(); } catch (SecurityException e) { return "NEED_PERMISSION"; }
+            if (paired == null || paired.isEmpty()) return "NO_PAIRED";
+            final LanShare l = lan;
+            l.forgetVia("bt");
+            for (BluetoothDevice d : paired) {
+                new Thread(() -> {
+                    try (BluetoothSocket s = d.createInsecureRfcommSocketToServiceRecord(BT_UUID)) {
+                        s.connect();
+                        String all = LanShare.readAll(s.getInputStream());
+                        String[] parts = all.split("\n", 5);
+                        if (parts.length == 5 && LanShare.MAGIC.equals(parts[0])) l.addPeer(parts[1], "bt", parts[3], parts[4]);
+                    } catch (Exception e) { /* not running the app, out of range or not sharing */ }
+                }, "wr-bt-ask").start();
+            }
+            return "SEARCHING " + paired.size();
+        }
+
         @JavascriptInterface
         public String installUpdate(String url, String version) {
             Uri u = Uri.parse(url);

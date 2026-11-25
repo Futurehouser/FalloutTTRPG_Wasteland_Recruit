@@ -3594,3 +3594,34 @@ Object.assign(ES, {
   "HP (power armor pieces)": "PV (piezas de servoarmadura)",
   "Pick at least one body location it covers": "Elige al menos una zona del cuerpo que cubra",
 });
+
+// v4.38.0: pull down on Home to check for updates; My Team → Nearby sharing
+Object.assign(ES, {
+  "Pull down to check for updates": "Desliza hacia abajo para buscar actualizaciones",
+  "Release to check for updates": "Suelta para buscar actualizaciones",
+  "Checking for updates…": "Buscando actualizaciones…",
+  "Nearby": "Cerca de ti",
+  "Phones and PCs with Wasteland Recruit on the same Wi-Fi (or a phone paired with this one by Bluetooth) can share their main character here, and you can add it to your Saved Characters. Keep My Team open on both devices.":
+    "Los móviles y PC con Wasteland Recruit en la misma wifi (o un móvil emparejado con este por Bluetooth) pueden compartir aquí su personaje principal, y tú puedes añadirlo a tus Personajes guardados. Deja Mi equipo abierto en los dos dispositivos.",
+  "Sharing with nearby devices works in the Android and Windows apps.": "Compartir con dispositivos cercanos funciona en las apps de Android y Windows.",
+  "Share my main character, <b>{name}</b>, with nearby devices": "Compartir mi personaje principal, <b>{name}</b>, con dispositivos cercanos",
+  "Share my main character with nearby devices": "Compartir mi personaje principal con dispositivos cercanos",
+  "You have no main character yet: open one in Saved Characters and tap <b>Set as my current main character</b>.":
+    "Aún no tienes personaje principal: abre uno en Personajes guardados y toca <b>Marcar como mi personaje principal actual</b>.",
+  "Looking for nearby devices… Open My Team on the other device too and turn on sharing there.":
+    "Buscando dispositivos cercanos… Abre también Mi equipo en el otro dispositivo y activa allí la opción de compartir.",
+  "Search paired Bluetooth devices": "Buscar en dispositivos Bluetooth emparejados",
+  "+ Add to saved characters": "+ Añadir a personajes guardados",
+  "Saved": "Guardado",
+  "Wi-Fi": "Wifi",
+  "Couldn't get {name}. Is My Team still open on the other device?": "No se pudo recibir a {name}. ¿Sigue abierto Mi equipo en el otro dispositivo?",
+  "Sharing {name} with nearby devices": "Compartiendo a {name} con dispositivos cercanos",
+  "Stopped sharing": "Has dejado de compartir",
+  "This device has no Bluetooth.": "Este dispositivo no tiene Bluetooth.",
+  "Bluetooth is off. Turn it on and try again.": "El Bluetooth está apagado. Enciéndelo y vuelve a intentarlo.",
+  "No paired devices. Pair the phones in Android's Bluetooth settings first.": "No hay dispositivos emparejados. Empareja antes los móviles en los ajustes de Bluetooth de Android.",
+  "Allow Nearby devices for Wasteland Recruit, then tap Search again.": "Permite «Dispositivos cercanos» a Wasteland Recruit y vuelve a tocar Buscar.",
+  "Asking {n} paired devices… It can take a few seconds.": "Preguntando a {n} dispositivos emparejados… Puede tardar unos segundos.",
+  "Bluetooth: pair the two phones first, then tap this button on both.": "Bluetooth: empareja antes los dos móviles y luego toca este botón en ambos.",
+  "Without the Nearby devices permission only Wi-Fi works.": "Sin el permiso de Dispositivos cercanos solo funciona la wifi.",
+});

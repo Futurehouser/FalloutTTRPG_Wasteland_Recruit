@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
 import threading
@@ -58,10 +59,182 @@ def cleanup_old_exe():
             time.sleep(0.5)
 
 
+class Nearby:
+    """My Team's nearby sharing over the local network. Same protocol as the Android app (LanShare.java):
+    every 2 s a UDP broadcast to port 47833 says "WRNEARBY1\n<device id>\n<tcp port>\n<info json>", and connecting
+    to that TCP port returns the shared character's exported text. Runs only while the My Team page is open."""
+
+    PORT = 47833
+    MAGIC = "WRNEARBY1"
+    MAX_TEXT = 256 * 1024
+
+    def __init__(self, device_id):
+        self.device_id = device_id
+        self.open = True
+        self.info = ""
+        self.text = ""
+        self.peers = {}
+        self.lock = threading.Lock()
+        self.tcp = None
+        self.udp = None
+        try:
+            u = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            u.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            u.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            u.bind(("", self.PORT))
+            self.udp = u
+            threading.Thread(target=self._listen, args=(u,), daemon=True).start()
+        except OSError:
+            self.udp = None  # the port is taken: this copy can still announce itself
+        threading.Thread(target=self._announce, daemon=True).start()
+
+    def close(self):
+        self.open = False
+        self.share("", "")
+        if self.udp:
+            try:
+                self.udp.close()
+            except OSError:
+                pass
+        self.udp = None
+
+    def share(self, info, text):
+        self.info = (info or "").replace("\n", " ")
+        self.text = text or ""
+        if not self.text:
+            if self.tcp:
+                try:
+                    self.tcp.close()
+                except OSError:
+                    pass
+            self.tcp = None
+            return
+        if self.tcp:
+            return
+        srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        srv.bind(("", 0))
+        srv.listen(5)
+        self.tcp = srv
+        threading.Thread(target=self._serve, args=(srv,), daemon=True).start()
+
+    def _serve(self, srv):
+        while self.tcp is srv:
+            try:
+                conn, _ = srv.accept()
+            except OSError:
+                return
+            try:
+                conn.settimeout(5)
+                conn.sendall(self.text.encode("utf-8"))
+            except OSError:
+                pass
+            finally:
+                conn.close()
+
+    @staticmethod
+    def _broadcast_addresses():
+        out = ["255.255.255.255"]
+        try:  # the subnet's own broadcast address, assuming the usual /24 home network
+            for ip in socket.gethostbyname_ex(socket.gethostname())[2]:
+                if not ip.startswith("127."):
+                    out.append(ip.rsplit(".", 1)[0] + ".255")
+        except OSError:
+            pass
+        return list(dict.fromkeys(out))
+
+    def _announce(self):
+        out = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        out.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        while self.open:
+            srv = self.tcp
+            if srv and self.text:
+                data = f"{self.MAGIC}\n{self.device_id}\n{srv.getsockname()[1]}\n{self.info}".encode("utf-8")
+                for addr in self._broadcast_addresses():
+                    try:
+                        out.sendto(data, (addr, self.PORT))
+                    except OSError:
+                        pass
+            time.sleep(2)
+        out.close()
+
+    def _listen(self, u):
+        while self.open:
+            try:
+                data, (host, _) = u.recvfrom(8192)
+                parts = data.decode("utf-8", "replace").split("\n", 3)
+                if len(parts) < 4 or parts[0] != self.MAGIC or parts[1] == self.device_id or len(parts[1]) > 64:
+                    continue
+                port = int(parts[2].strip())
+                if not 0 < port < 65536:
+                    continue
+                with self.lock:
+                    self.peers[parts[1]] = {"id": parts[1], "via": "wifi", "host": host, "port": port, "info": parts[3], "seen": time.time()}
+            except (OSError, ValueError):
+                if not self.open:
+                    return
+
+    def peers_json(self):
+        now = time.time()
+        with self.lock:
+            return json.dumps([{"id": p["id"], "via": p["via"], "info": p["info"]} for p in self.peers.values() if now - p["seen"] < 8])
+
+    def fetch(self, peer_id):
+        with self.lock:
+            p = self.peers.get(peer_id)
+        if not p:
+            return "ERROR: gone"
+        try:
+            with socket.create_connection((p["host"], p["port"]), timeout=4) as c:
+                c.settimeout(5)
+                chunks, size = [], 0
+                while True:
+                    b = c.recv(8192)
+                    if not b:
+                        break
+                    chunks.append(b)
+                    size += len(b)
+                    if size > self.MAX_TEXT:
+                        return "ERROR: too big"
+            return b"".join(chunks).decode("utf-8", "replace")
+        except OSError as e:
+            return f"ERROR: {e}"
+
+
 class Api:
     """Methods callable from JavaScript as window.pywebview.api.<name>()."""
 
     _window = None  # set at startup; underscore keeps it hidden from JavaScript
+
+    _nearby = None
+
+    # ---- nearby sharing (My Team)
+    def nearby_open(self, device_id):
+        device_id = str(device_id or "")
+        if not device_id or len(device_id) > 64:
+            return "ERROR: bad id"
+        if self._nearby and self._nearby.device_id == device_id:
+            return "OK"
+        self.nearby_close()
+        Api._nearby = Nearby(device_id)
+        return "OK"
+
+    def nearby_close(self):
+        if self._nearby:
+            self._nearby.close()
+        Api._nearby = None
+        return "OK"
+
+    def nearby_share(self, info, text):
+        if not self._nearby:
+            return "ERROR: not open"
+        self._nearby.share(str(info or ""), str(text or ""))
+        return "OK"
+
+    def nearby_peers(self):
+        return self._nearby.peers_json() if self._nearby else "[]"
+
+    def nearby_fetch(self, peer_id):
+        return self._nearby.fetch(str(peer_id)) if self._nearby else "ERROR: not open"
 
     def _js(self, code):
         try:

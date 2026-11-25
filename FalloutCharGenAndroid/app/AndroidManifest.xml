@@ -12,6 +12,13 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
+    <!-- My Team's nearby sharing: hearing other phones' broadcasts on the same Wi-Fi, and asking paired phones over Bluetooth -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+
     <!-- Lets the app hand a downloaded update to Android's installer (the user still confirms it) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
