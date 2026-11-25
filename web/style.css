@@ -925,3 +925,56 @@ body.walkers-on .page.active { padding-bottom: 140px; }
   background: var(--panel2); border: 1px solid var(--amber-d); border-radius: 12px; padding: 10px 10px 10px 14px; font-size: 14px; box-shadow: 0 6px 24px #000a; }
 #a2hs span { flex: 1; }
 #a2hs .btn { flex: none; padding: 6px 12px; }
+
+/* Quests: the user's own quests and the quest editor */
+.qs-new { width: 100%; margin-bottom: 12px; }
+.qs-mine-h { margin: 16px 0 8px; color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+.qs-mine { display: grid; gap: 6px; }
+.qs-mine-btns { display: flex; gap: 6px; justify-content: flex-end; }
+.qs-head-r { display: flex; flex-wrap: wrap; gap: 8px; }
+.qs-sec-gm { border-color: var(--amber-d); }
+.qs-rew { margin: 12px 0; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--green); background: rgba(124, 214, 124, .07); }
+.qs-rew small { display: block; font: 700 11px/1 system-ui, sans-serif; text-transform: uppercase; letter-spacing: 1px; color: var(--green); margin-top: 2px; }
+.qs-rew ul { margin: 6px 0 2px; padding-left: 20px; } .qs-rew li { margin: 4px 0; }
+.qs-ustat { margin: 6px 0 10px; font-size: 14px; }
+.qs-ustat > summary { cursor: pointer; color: var(--amber); }
+.qe-head { align-items: center; }
+.qe-saved { font-size: 13px; flex: 1; text-align: center; }
+.qe-card { margin: 10px 0; }
+.qe-h { margin: 0 0 8px; color: var(--amber); }
+.qe-h-secs { margin: 18px 0 4px; }
+.qe-f { margin: 6px 0; flex: 1 1 110px; min-width: 0; }
+.qe-f.qe-wide { flex: 3 1 180px; }
+.qe-f input, .qe-f select, .qe-f textarea, .qe-card > select, .qe-blk input, .qe-blk select, .qe-blk textarea { width: 100%; }
+.qe-row { display: flex; flex-wrap: wrap; gap: 0 8px; }
+.qe-small { font-size: 13px; margin: 6px 0; }
+.qe-tomaps { margin-left: 6px; padding: 4px 10px; font-size: 13px; }
+.qe-sec { margin: 12px 0; border-left: 4px solid var(--amber-d); }
+.qe-sec-gm { border-left-color: var(--red); } .qe-sec-conclusion { border-left-color: var(--green); } .qe-sec-summary { border-left-color: var(--blue); }
+.qe-sec-h, .qe-blk-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.qe-kind { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.qe-tools { display: flex; gap: 4px; flex: none; }
+.qe-tools .btn { padding: 4px 9px; min-width: 0; font-size: 13px; }
+.qe-blk { margin: 10px 0; padding: 8px 10px 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(0, 0, 0, .18); }
+.qe-blk-h b { font-size: 13px; }
+.qe-blk > input, .qe-blk > textarea, .qe-blk > .qe-row, .qe-blk > .bar { margin-top: 6px; }
+.qe-blk-say textarea { background: #020c05; color: #8fe6b2; border-color: #0f7a3f; font-family: "Courier New", monospace; }
+.qe-blk-gm { border: 1px dashed var(--amber-d); background: rgba(240, 190, 40, .06); }
+.qe-blk-enc { border-color: var(--red); background: rgba(192, 57, 43, .08); }
+.qe-blk-rewards { border-color: var(--green); }
+.qe-blk-test { border-left: 4px solid var(--amber); }
+.qe-clues { display: grid; gap: 8px; margin: 6px 0; }
+.qe-clue { display: grid; grid-template-columns: 1fr 1fr auto; gap: 4px; padding: 6px; border-radius: 8px; background: rgba(255, 255, 255, .04); }
+.qe-clue input:first-child { grid-column: 1 / 3; }
+.qe-clue .btn { grid-row: 1; grid-column: 3; padding: 4px 9px; }
+.qe-enc { display: grid; gap: 6px; margin: 6px 0; }
+.qe-enc-row { display: grid; grid-template-columns: 1fr minmax(0, 40%) auto; gap: 6px; }
+.qe-enc-row .btn { padding: 4px 9px; }
+.qe-add, .qe-addsec { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
+.qe-add small, .qe-addsec small { width: 100%; color: var(--muted); }
+.qe-add .btn, .qe-addsec .btn { padding: 6px 10px; font-size: 13px; }
+.qe-enemyform { margin-top: 8px; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(0, 0, 0, .2); }
+.qe-enemyform h5 { margin: 0 0 4px; color: var(--amber); font-size: 15px; }
+.qe-atk { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 4px; }
+.qe-foot { margin: 16px 0 6px; justify-content: space-between; }
+@media (max-width: 520px) { .qe-enc-row { grid-template-columns: 1fr auto; } .qe-enc-row select[data-encn] { grid-column: 1; grid-row: 2; } .qe-enc-row .btn { grid-row: 1 / 3; grid-column: 2; } }

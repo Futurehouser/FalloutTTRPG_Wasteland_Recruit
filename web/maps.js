@@ -981,5 +981,7 @@ const Maps = (() => {
     openQuest(id);
   }
 
-  return { show, back, openQuest: openFromGuide, kit: { D, rng, ICON, KIND, beep, L, renderList } };
+  // the quest guide maps, for the quest editor's map list
+  const quests = () => QUESTS.map(q => ({ id: q.id, name: T(q.name) }));
+  return { show, back, openQuest: openFromGuide, quests, kit: { D, rng, ICON, KIND, beep, L, renderList } };
 })();

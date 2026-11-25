@@ -29,7 +29,7 @@ function questTemplates() {
       dr: { p: drv(dr[0]), e: drv(dr[1]), r: drv(dr[2]), po: drv(dr[3]) },
       attacks: c.a.map(([en, es_, tn, crit, cd, type, eff, rate, range]) =>
         atk(es ? es_ : en, tn, crit, cd, type, eff || [], rate == null ? {} : { ranged: true, rate, range: range || "C" })) };
-  });
+  }).concat(typeof QuestEdit !== "undefined" ? QuestEdit.templates() : []); // the enemies made in the quest editor
 }
 const QB = {
   h: (en, es) => ["h", [en, es]],
@@ -47,7 +47,7 @@ const Quests = (() => {
   const tx = v => (Array.isArray(v) ? (typeof LANG !== "undefined" && LANG === "es" ? v[1] : v[0]) : String(v == null ? "" : v));
   const es = () => typeof LANG !== "undefined" && LANG === "es";
   // light inline formatting inside the texts: **bold**
-  const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
   let open = null, encs = [];
   // how many of an enemy an encounter has, for a number of player characters
   function howMany(rule, pcs) {
@@ -63,15 +63,40 @@ const Quests = (() => {
   const defaultPcs = () => { const n = typeof Team !== "undefined" ? Team.chars().length : 0; return n >= 1 ? Math.min(8, n) : 4; };
   const root = () => $("qs-root");
 
-  function list() {
+  const mine = () => (typeof QuestEdit !== "undefined" ? QuestEdit.book() : []);
+  const findQuest = id => QUEST_BOOK.find(x => x.id === id) || mine().find(x => x.id === id);
+  async function list() {
     open = null;
-    root().innerHTML = `<div class="qs-list">${QUEST_BOOK.map(q => `
+    if (typeof QuestEdit !== "undefined") {
+      if (QuestEdit.active()) QuestEdit.close(true);
+      await QuestEdit.load(); await QuestEdit.loadYours();
+    }
+    const own = mine();
+    root().innerHTML = `<button type="button" class="btn primary qs-new" id="qs-new">+ ${esc(T(L2("New quest", "Nueva misión")))}</button>
+      ${own.length ? `<h4 class="qs-mine-h">${esc(T(L2("My quests", "Mis misiones")))}</h4><div class="qs-list">${own.map(q => `<div class="qs-mine">
+        <button type="button" class="qs-card" data-q="${esc(q.id)}">
+          <span class="qs-card-top"><b>${esc(q.title)}</b><span class="qs-src">${esc(q.source)}</span></span>
+          ${q.blurb ? `<span class="qs-blurb">${esc(q.blurb)}</span>` : ""}
+          ${q.tags.length ? `<span class="qs-tags">${q.tags.map(t => `<span>${esc(t)}</span>`).join("")}</span>` : ""}
+        </button>
+        <div class="qs-mine-btns"><button type="button" class="btn" data-qedit="${esc(q.mine)}">&#9998;&#xFE0E; ${esc(T("Edit"))}</button>
+          <button type="button" class="btn danger" data-qdel="${esc(q.mine)}" aria-label="${esc(T("Delete"))}: ${esc(q.title)}">&#10005;&#xFE0E;</button></div></div>`).join("")}</div>
+        <h4 class="qs-mine-h">${esc(T(L2("Quest guides", "Guías de misiones")))}</h4>` : ""}
+      <div class="qs-list">${QUEST_BOOK.map(q => `
       <button type="button" class="qs-card" data-q="${q.id}">
         <span class="qs-card-top"><b>${esc(tx(q.title))}</b><span class="qs-src">${esc(tx(q.source))}</span></span>
         <span class="qs-blurb">${esc(tx(q.blurb))}</span>
         <span class="qs-tags">${q.tags.map(t => `<span>${esc(tx(t))}</span>`).join("")}</span>
       </button>`).join("")}</div>`;
     root().querySelectorAll("[data-q]").forEach(b => (b.onclick = () => show(b.dataset.q)));
+    $("qs-new").onclick = () => QuestEdit.create();
+    root().querySelectorAll("[data-qedit]").forEach(b => (b.onclick = () => QuestEdit.open(b.dataset.qedit)));
+    root().querySelectorAll("[data-qdel]").forEach(b => (b.onclick = async () => {
+      const q = own.find(x => x.mine === b.dataset.qdel);
+      if (!(await confirmBox(T(L2("Delete the quest “{name}”? This can't be undone.", "¿Borrar la misión «{name}»? No se puede deshacer."), { name: q.title })))) return;
+      await QuestEdit.remove(q.mine);
+      list();
+    }));
   }
 
   // ---------------------------------------------------------------- stat blocks
@@ -107,6 +132,7 @@ const Quests = (() => {
     if (k === "gm") return `<div class="qs-gm"><small>${esc(T(L2("Game master", "Director de juego")))}</small><p>${fmt(tx(v))}</p></div>`;
     if (k === "test") return `<div class="qs-test">&#127922;&#xFE0E; ${fmt(tx(v))}</div>`;
     if (k === "ul") return `<ul class="qs-ul">${v.map(t => `<li>${fmt(tx(t))}</li>`).join("")}</ul>`;
+    if (k === "rewards") return `<div class="qs-rew"><small>&#127873;&#xFE0E; ${esc(T(L2("Rewards", "Recompensas")))}</small><ul>${v.map(t => `<li>${fmt(tx(t))}</li>`).join("")}</ul></div>`;
     if (k === "stat") return statBlock(v);
     if (k === "enc") {
       const i = encs.push(v) - 1, pcsInput = dependsOnPcs(v.g);
@@ -114,6 +140,7 @@ const Quests = (() => {
         ${pcsInput ? `<label class="qs-enc-pcs">${esc(T(L2("Player characters", "Personajes jugadores")))}
           <input type="number" min="1" max="8" value="${defaultPcs()}" inputmode="numeric"></label>` : ""}
         <ul class="qs-enc-list"></ul>
+        ${v.full && typeof QuestEdit !== "undefined" ? [...new Set(v.g.map(g => g[0]))].map(id => QuestEdit.statHtml(id)).join("") : ""}
         <button type="button" class="btn primary qs-enc-go">&#9876;&#xFE0E; ${esc(T(L2("Add to the Combat Assistant", "Añadir al Asistente de combate")))}</button></div>`;
     }
     if (k === "clues") return `<div class="qs-clues">${v.map(r => `<div class="qs-clue"><b>${fmt(tx(r[0]))}</b>
@@ -121,25 +148,28 @@ const Quests = (() => {
     return "";
   }
   function show(id, sectionIndex) {
-    const q = QUEST_BOOK.find(x => x.id === id);
+    const q = findQuest(id);
     if (!q) return list();
     open = id;
     encs = [];
     root().innerHTML = `
       <div class="qs-head">
         <button type="button" class="btn" id="qs-back">&#9664;&#xFE0E; ${esc(T(L2("Quests", "Misiones")))}</button>
-        ${q.map ? `<button type="button" class="btn qs-maps" id="qs-maps">&#128506;&#xFE0E; ${esc(T(L2("Open the maps", "Abrir los mapas")))}</button>` : ""}
+        <span class="qs-head-r">${q.mine ? `<button type="button" class="btn" id="qs-edit">&#9998;&#xFE0E; ${esc(T("Edit"))}</button>` : ""}
+        ${q.map ? `<button type="button" class="btn qs-maps" id="qs-maps">&#128506;&#xFE0E; ${esc(T(q.mine ? L2("Open the map", "Abrir el mapa") : L2("Open the maps", "Abrir los mapas")))}</button>` : ""}</span>
       </div>
       <h3 class="qs-title">${esc(tx(q.title))}</h3>
       <p class="qs-sub">${esc(tx(q.source))}</p>
+      ${q.blurb && q.mine ? `<p class="qs-blurb">${fmt(q.blurb)}</p>` : ""}
       <div class="qs-tags">${q.tags.map(t => `<span>${esc(tx(t))}</span>`).join("")}</div>
       <nav class="qs-toc">${q.sections.map((s, i) => `<button type="button" class="chip" data-sec="${i}">${esc(tx(s.t))}</button>`).join("")}</nav>
-      ${q.sections.map((s, i) => `<details class="qs-sec" id="qs-sec-${i}"${i === 0 ? " open" : ""}><summary>${esc(tx(s.t))}</summary>
-        <div class="qs-body">${s.b.map(block).join("")}</div></details>`).join("")}
+      ${q.sections.map((s, i) => `<details class="qs-sec${s.gm ? " qs-sec-gm" : ""}" id="qs-sec-${i}"${i === 0 ? " open" : ""}><summary>${esc(tx(s.t))}</summary>
+        <div class="qs-body">${s.b.map(block).join("") || (q.mine ? `<p class="muted">${esc(T(L2("Nothing written here yet.", "Aún no hay nada escrito aquí.")))}</p>` : "")}</div></details>`).join("")}
       <button type="button" class="btn qs-top" id="qs-top">&#9650;&#xFE0E; ${esc(T(L2("Back to the top", "Volver arriba")))}</button>`;
     wireEncounters();
     $("qs-back").onclick = list;
-    if (q.map) $("qs-maps").onclick = () => { showPage("maps"); if (typeof Maps !== "undefined") Maps.openQuest(q.map); };
+    if (q.map) $("qs-maps").onclick = () => openMap(q.map);
+    if (q.mine) $("qs-edit").onclick = () => QuestEdit.open(q.mine);
     $("qs-top").onclick = () => root().scrollIntoView({ block: "start", behavior: "smooth" });
     root().querySelectorAll("[data-sec]").forEach(b => (b.onclick = () => {
       const d = $("qs-sec-" + b.dataset.sec);
@@ -152,12 +182,13 @@ const Quests = (() => {
   function encGroups(el) {
     const v = encs[+el.dataset.enc], inp = el.querySelector("input");
     const pcs = inp ? Math.min(8, Math.max(1, parseInt(inp.value, 10) || 1)) : 4;
-    return v.g.map(([id, rule]) => ({ id: "q_" + id, stat: id, count: Math.min(12, Math.max(1, howMany(rule, pcs))) }));
+    return v.g.map(([id, rule]) => ({ id: v.full ? id : "q_" + id, stat: id, full: v.full, count: Math.min(12, Math.max(1, howMany(rule, pcs))) }));
   }
   function wireEncounters() {
     root().querySelectorAll(".qs-enc").forEach(el => {
       const draw = () => {
         el.querySelector(".qs-enc-list").innerHTML = encGroups(el).map(g => {
+          if (g.full) { const t = QuestEdit.findTemplate(g.id); return `<li><b>${g.count} &times;</b> ${esc(t ? T(t.name) : g.id)}</li>`; }
           const s = QSTATS[g.stat], c = QCOMBAT[g.stat];
           return `<li><b>${g.count} &times;</b> ${esc(tx((c && c.n) || (s && s.n)))}</li>`;
         }).join("");
@@ -177,8 +208,29 @@ const Quests = (() => {
     });
   }
 
+  // a quest's map: a quest guide map ("b:id" or a guide's own id) or one drawn with Create Map ("m:id")
+  async function openMap(ref) {
+    if (/^m:/.test(ref)) {
+      if (typeof MapEdit === "undefined") return;
+      await MapEdit.load();
+      const id = ref.slice(2);
+      if (!MapEdit.quests().some(m => m.id === id)) { toast(T(L2("That map was deleted from the Maps page.", "Ese mapa se borró de la página Mapas."))); return; }
+      showPage("maps"); MapEdit.open(id);
+      return;
+    }
+    showPage("maps"); if (typeof Maps !== "undefined") Maps.openQuest(ref.replace(/^b:/, ""));
+  }
+
   return {
-    show: () => (open ? show(open, -1) : list()),
-    back: () => { if (!open) return false; list(); return true; },
+    show: async () => {
+      if (typeof QuestEdit !== "undefined") { await QuestEdit.load(); await QuestEdit.loadYours(); if (QuestEdit.active()) return QuestEdit.render(); }
+      return open ? show(open, -1) : list();
+    },
+    back: () => {
+      if (typeof QuestEdit !== "undefined" && QuestEdit.active()) { QuestEdit.close(); return true; } // editor > quest list
+      if (!open) return false; list(); return true;
+    },
+    open: id => show(id),
+    list,
   };
 })();

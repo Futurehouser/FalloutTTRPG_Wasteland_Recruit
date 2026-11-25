@@ -3455,7 +3455,7 @@ Object.assign(ES, {
 // ---- v4.29.0: quests
 Object.assign(ES, {
   "Whole quests for the game master to run": "Misiones completas para que las dirija el director de juego",
-  "Whole quests for the game master: story, scenes, tests, enemies, rewards and endings. Tap a quest to open it.": "Misiones completas para el director de juego: historia, escenas, pruebas, enemigos, recompensas y finales. Toca una misión para abrirla.",
+  "Whole quests for the game master: story, scenes, tests, enemies, rewards and endings. Tap a quest to open it, or write your own with New quest.": "Misiones completas para el director de juego: historia, escenas, pruebas, enemigos, recompensas y finales. Toca una misión para abrirla, o escribe la tuya con Nueva misión.",
   "Quests": "Misiones",
   "Open the maps": "Abrir los mapas",
   "Read or paraphrase": "Lee o parafrasea",
